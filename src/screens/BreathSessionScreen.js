@@ -23,7 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { HelpCircle } from 'lucide-react-native';
-import { useBreathGarden } from '../context/BreathGardenContext';
+import { useMysession } from '../context/mysessionContext';
 import { spacing, borderRadius, gradients, palette } from '../theme';
 import ZentangleRadialArt from '../components/ZentangleRadialArt';
 import HrvWaveStrip from '../components/HrvWaveStrip';
@@ -95,7 +95,7 @@ export default function BreathSessionScreen() {
     mergePearlCollection,
     recordOceanModeSessionComplete,
     recordMoodEntry,
-  } = useBreathGarden();
+  } = useMysession();
   const sessionWallStartRef = useRef(Date.now());
   const [wallMs, setWallMs] = useState(0);
   /** Fades session UI to white before `replace` → SessionRewards */

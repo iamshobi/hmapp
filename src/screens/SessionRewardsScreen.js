@@ -21,7 +21,7 @@ import { StatusBar } from 'expo-status-bar';
 import Svg, { Path, Circle as SvgCircle, Line } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { useBreathGarden } from '../context/BreathGardenContext';
+import { useMysession } from '../context/mysessionContext';
 import SacredSymbolMini from '../components/SacredSymbolMini';
 import { SACRED_GEOMETRY_SYMBOLS, SACRED_SYMBOL_COUNT } from '../constants/sacredGeometryRewards';
 import { getOceanLevelById, getOceanLevelGroupId } from '../constants/oceanDepthLevels';
@@ -489,7 +489,7 @@ export default function SessionRewardsScreen() {
     lastSurveyResult,
     surveyResults,
     recordSessionSurveyAfter,
-  } = useBreathGarden();
+  } = useMysession();
 
   const themeId         = route.params?.themeId ?? 'universe';
   const collectionCount = Math.min(Math.max(0, route.params?.collectionCount ?? 1), SACRED_SYMBOL_COUNT);

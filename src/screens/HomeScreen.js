@@ -32,7 +32,7 @@ import { Logo } from '../components/ui';
 import { GradientActionCard } from '../components/ui';
 import { colors, spacing, borderRadius, shadows, gradients, palette } from '../theme';
 import { styleGuide } from '../theme/styleGuide';
-import { useBreathGarden } from '../context/BreathGardenContext';
+import { useMysession } from '../context/mysessionContext';
 
 const USER_NAME = 'Shobi';
 
@@ -45,7 +45,7 @@ function getGreeting() {
 
 export default function HomeScreen() {
   const nav = useNavigation();
-  const { gentleMode, totalSessions } = useBreathGarden();
+  const { gentleMode, totalSessions } = useMysession();
   const greeting = useMemo(() => getGreeting(), []);
   const [moodMeterExpanded, setMoodMeterExpanded] = useState(false);
 

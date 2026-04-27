@@ -10,7 +10,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { Home, BookOpen, HeartPulse, Gamepad2, BarChart3 } from 'lucide-react-native';
 
-import { BreathGardenProvider } from './src/context/BreathGardenContext';
+import { MysessionProvider } from './src/context/mysessionContext';
 import CriticalShiftAlertOverlay from './src/components/CriticalShiftAlertOverlay';
 import HomeScreen from './src/screens/HomeScreenRefreshed';
 import LearnTabScreen from './src/screens/LearnTabScreen';
@@ -148,7 +148,7 @@ export default function App() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.white }}>
       <SafeAreaProvider>
-        <BreathGardenProvider>
+        <MysessionProvider>
           <NavigationContainer theme={navTheme} onReady={onNavigationReady}>
             <StatusBar style="light" />
             <Tab.Navigator
@@ -206,7 +206,7 @@ export default function App() {
             </Tab.Navigator>
             <CriticalShiftAlertOverlay />
           </NavigationContainer>
-        </BreathGardenProvider>
+        </MysessionProvider>
       </SafeAreaProvider>
 
       {splashVisible ? (

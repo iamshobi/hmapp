@@ -10,7 +10,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { useBreathGarden } from '../../context/BreathGardenContext';
+import { useMysession } from '../../context/mysessionContext';
 import { spacing } from '../../theme';
 
 const METRICS = [
@@ -28,7 +28,7 @@ function avg(rows = [], key) {
 export default function MeasureAfterSurveyScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const { recordSessionSurveyAfter, surveyResults } = useBreathGarden();
+  const { recordSessionSurveyAfter, surveyResults } = useMysession();
   const [scores, setScores] = useState({ stress: null, energy: null, mood: null });
   const [notes, setNotes] = useState('');
   const [showNotesInput, setShowNotesInput] = useState(false);

@@ -1,9 +1,9 @@
 /**
- * Breath Garden context: Streak + Garden gamification for breathing/meditation.
+ * Mysession context: streak + garden gamification, surveys, mood, and ocean collectibles (persisted).
  */
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GLOBAL_LEVEL_COUNT } from '../constants/breathGardenLevels';
+import { GLOBAL_LEVEL_COUNT } from '../constants/mySessionLevels';
 import { OCEAN_LEVEL_UNLOCK_COUNT } from '../constants/oceanDepthLevels';
 import { computeOceanMaxUnlockedLevelIndex } from '../constants/oceanZoneCollectibles';
 import { OCEAN_DEV_UNLOCK_ALL, OCEAN_DEV_UNLOCK_PATCH } from '../constants/oceanDevUnlock';
@@ -24,7 +24,32 @@ function recomputeGentleFromStored(prevParsed, criticalStrainDayFlags) {
   return { gentleMode, criticalShiftAlertPending };
 }
 
-const STORAGE_KEY = 'breath_garden_data';
+/**
+ * Persisted session state (AsyncStorage).
+ *
+ * Migration (one-time per install): canonical key is `mySession`. If empty, try in order:
+ * `mysession_data` (prior rename), then `breath_garden_data` (original). Copy first hit to
+ * `mySession`, remove that legacy key; if `mySession` already had data, drop any leftover legacy keys.
+ */
+const STORAGE_KEY = 'mySession';
+const LEGACY_MIGRATION_KEYS = ['mysession_data', 'breath_garden_data'];
+
+async function loadMigratedSessionJson() {
+  const primary = await AsyncStorage.getItem(STORAGE_KEY);
+  if (primary) {
+    await AsyncStorage.multiRemove([...LEGACY_MIGRATION_KEYS]).catch(() => {});
+    return primary;
+  }
+  for (const key of LEGACY_MIGRATION_KEYS) {
+    const legacy = await AsyncStorage.getItem(key);
+    if (legacy) {
+      await AsyncStorage.setItem(STORAGE_KEY, legacy).catch(() => {});
+      await AsyncStorage.multiRemove(LEGACY_MIGRATION_KEYS).catch(() => {});
+      return legacy;
+    }
+  }
+  return null;
+}
 
 const DEFAULT_STATE = {
   streak: 0,
@@ -98,7 +123,7 @@ function wasYesterday(dateStr) {
   return dateStr === yesterday.toISOString().slice(0, 10);
 }
 
-const BreathGardenContext = createContext(null);
+export const MysessionContext = createContext(null);
 
 function patchCriticalStrainDayForSnapshot(prevFlags, dateStr, stress, energy, mood) {
   const base = pruneCriticalStrainFlags(
@@ -142,13 +167,13 @@ function applyOceanDevUnlock(base) {
   };
 }
 
-export function BreathGardenProvider({ children }) {
+export function MysessionProvider({ children }) {
   const [data, setData] = useState(() => applyOceanDevUnlock(DEFAULT_STATE));
 
   useEffect(() => {
     (async () => {
       try {
-        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        const stored = await loadMigratedSessionJson();
         if (stored) {
           const parsed = JSON.parse(stored);
           const shellCollectionIds = Array.isArray(parsed.shellCollectionIds) ? parsed.shellCollectionIds : [];
@@ -532,14 +557,17 @@ export function BreathGardenProvider({ children }) {
   };
 
   return (
-    <BreathGardenContext.Provider value={value}>
+    <MysessionContext.Provider value={value}>
       {children}
-    </BreathGardenContext.Provider>
+    </MysessionContext.Provider>
   );
 }
 
-export function useBreathGarden() {
-  const ctx = useContext(BreathGardenContext);
-  if (!ctx) throw new Error('useBreathGarden must be used within BreathGardenProvider');
+export function useMysession() {
+  const ctx = useContext(MysessionContext);
+  if (!ctx) throw new Error('useMysession must be used within MysessionProvider');
   return ctx;
 }
+
+/** Alias matching the module name */
+export const mysessionContext = MysessionContext;

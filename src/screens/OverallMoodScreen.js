@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronLeft } from 'lucide-react-native';
-import { useBreathGarden } from '../context/BreathGardenContext';
+import { useMysession } from '../context/mysessionContext';
 import {
   getMoodOptionById,
   resolveCalendarDayDisplay,
@@ -26,7 +26,7 @@ function weekRange() {
 export default function OverallMoodScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const { moodEntries } = useBreathGarden();
+  const { moodEntries } = useMysession();
 
   const { topItems, dateLabel } = useMemo(() => {
     const { start, end } = weekRange();

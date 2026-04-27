@@ -35,7 +35,7 @@ import {
   getOceanLevelUnlockIndex,
 } from '../constants/oceanDepthLevels';
 import { getOceanSwimDiveUnlockState } from '../constants/oceanZoneCollectibles';
-import { useBreathGarden } from '../context/BreathGardenContext';
+import { useMysession } from '../context/mysessionContext';
 import OceanGlassBubble from '../components/ocean/OceanGlassBubble';
 import OceanAnalyzingInterstitial from '../components/ocean/OceanAnalyzingInterstitial';
 
@@ -284,7 +284,7 @@ export default function OceanLevelDetailScreen() {
   const insets = useSafeAreaInsets();
   const nav    = useNavigation();
   const route  = useRoute();
-  const { oceanMaxUnlockedLevelIndex, shellCollectionIds, pearlCollectionIds } = useBreathGarden();
+  const { oceanMaxUnlockedLevelIndex, shellCollectionIds, pearlCollectionIds } = useMysession();
 
   const { levelId, themeId = 'ocean', durationSec = 90 } = route.params ?? {};
 

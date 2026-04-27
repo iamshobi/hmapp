@@ -19,6 +19,9 @@ function getSnapshotForType(type) {
   if (t === 'inactiveSurvey') {
     return { sessions: 12, streak: 4, coherence: 2.8 };
   }
+  if (t === 'partialSurveyOptOut') {
+    return { sessions: 18, streak: 6, coherence: 3.0 };
+  }
   if (t === 'pro') {
     return { sessions: 100, streak: 14, coherence: 4.8 };
   }
@@ -130,6 +133,8 @@ export default function ProgressSnapshotBar({
         ? 110
         : activeType === 'inactiveSurvey'
           ? 92
+          : activeType === 'partialSurveyOptOut'
+            ? 128
         : activeType === 'building'
           ? 75
           : activeType === 'firstTime'
@@ -224,7 +229,7 @@ const styles = StyleSheet.create({
   },
   donutLabel: {
     fontFamily: PROGRESS_FONT_MEDIUM,
-    color: 'rgba(255,250,232,0.92)',
+    color: '#FFF1D3',
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '500',
@@ -243,9 +248,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    backgroundColor: 'rgba(255,255,255,0.16)',
+    backgroundColor: 'rgba(61,28,73,0.34)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.14)',
+    borderColor: 'rgba(255,255,255,0.24)',
     justifyContent: 'center',
   },
   tileValue: {
@@ -258,7 +263,7 @@ const styles = StyleSheet.create({
   },
   tileLabel: {
     fontFamily: PROGRESS_FONT_MEDIUM,
-    color: 'rgba(255,255,255,0.88)',
+    color: '#FFF3DE',
     fontSize: 11,
     lineHeight: 14,
     fontWeight: '500',

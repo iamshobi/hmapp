@@ -19,7 +19,7 @@ import {
   filterMoodEntriesForRange,
 } from '../constants/sessionMoodOptions';
 import { colors, spacing, borderRadius, typography, shadows, palette } from '../theme';
-import { useBreathGarden } from '../context/BreathGardenContext';
+import { useMysession } from '../context/mysessionContext';
 
 const TABS = [
   { id: 'calendar', label: 'Calendar' },
@@ -509,7 +509,7 @@ function computeStressInsightFromDayLevels(dayLevelByKey) {
     return {
       trend: 'better',
       title: `Your stress levels are ${deltaPct}% lower in the second half of this period.`,
-      body: 'This is great progress. Keep your breathing rhythm and daily check-ins.',
+      body: 'This is great progress. Keep your breathing rhythm and daily Practice Days.',
     };
   }
   const risePct = Math.abs(deltaPct);
@@ -532,7 +532,7 @@ export default function MoodMeter({
   /** Lock calendar to April 2026 for demos */
   demoApril2026 = false,
 }) {
-  const { moodEntries } = useBreathGarden();
+  const { moodEntries } = useMysession();
   const [tab, setTab] = useState('calendar');
   const [selectedDay, setSelectedDay] = useState(null);
   const boot = new Date();

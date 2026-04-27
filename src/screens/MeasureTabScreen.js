@@ -9,7 +9,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { useBreathGarden } from '../context/BreathGardenContext';
+import { useMysession } from '../context/mysessionContext';
 
 const METRICS = [
   { key: 'stress', title: 'Stress', left: 'Low stress', right: 'High stress' },
@@ -20,7 +20,7 @@ const METRICS = [
 export default function MeasureTabScreen({ showNotes = true }) {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const { recordSessionSurveyBefore, currentSurveyBefore } = useBreathGarden();
+  const { recordSessionSurveyBefore, currentSurveyBefore } = useMysession();
   const [scores, setScores] = useState({
     stress: currentSurveyBefore?.stress ?? null,
     energy: currentSurveyBefore?.energy ?? null,

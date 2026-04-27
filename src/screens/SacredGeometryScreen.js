@@ -6,7 +6,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Pressable, Dimens
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useBreathGarden } from '../context/BreathGardenContext';
+import { useMysession } from '../context/mysessionContext';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ChevronRight } from 'lucide-react-native';
 import { colors, spacing, borderRadius, gradients, shadows, typography } from '../theme';
@@ -16,7 +16,7 @@ import {
   LEVELS_BY_DIFFICULTY,
   getGlobalLevelIndex,
   isLevelUnlockedForProgress,
-} from '../constants/breathGardenLevels';
+} from '../constants/mySessionLevels';
 import { RECOVERY_BREATH_DURATION_SEC } from '../constants/criticalShift';
 
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -24,7 +24,7 @@ const COHERENCE_HINT = { low: 22, medium: 48, high: 30 };
 
 export default function SacredGeometryScreen() {
   const insets = useSafeAreaInsets();
-  const { maxUnlockedGlobalIndex, gentleMode } = useBreathGarden();
+  const { maxUnlockedGlobalIndex, gentleMode } = useMysession();
   const nav = useNavigation();
   const route = useRoute();
   const themeId = route.params?.themeId ?? 'universe';
