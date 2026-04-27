@@ -634,7 +634,7 @@ export function TrendLayerComparisonCard({
     mood: true,
   });
   const [expanded, setExpanded] = useState(defaultExpanded);
-  const [showCoherence, setShowCoherence] = useState(true);
+  const [surveyStage, setSurveyStage] = useState('before');
   const [reportRange, setReportRange] = useState(reportModes[0].key);
   const chartW = 312;
   const chartH = 136;
@@ -642,15 +642,15 @@ export function TrendLayerComparisonCard({
   const innerW = chartW - pad * 2;
   const innerH = chartH - pad * 2;
 
-  const { wellbeingPointsByMetric, coherencePointsByMetric, improvementByMetric } = useMemo(() => {
+  const { beforePointsByMetric, afterPointsByMetric, improvementByMetric } = useMemo(() => {
     const imp = {
       stress: computeImprovement('stress', averages?.stressBefore, averages?.stressAfter),
       energy: computeImprovement('energy', averages?.energyBefore, averages?.energyAfter),
       mood: computeImprovement('mood', averages?.moodBefore, averages?.moodAfter),
     };
-    const build = (metricKey) => {
-      const base = Math.max(20, Math.min(76, Math.round(imp[metricKey].pct)));
-      const slopeBoost = metricKey === 'stress' ? 1.3 : metricKey === 'energy' ? 1.9 : 2.2;
+    const buildSeries = (metricKey, baseValue, phase = 'before') => {
+      const base = Math.max(10, Math.min(95, Math.round((normalizeScaleValue(baseValue) ?? 5) * 10)));
+      const slopeBoost = metricKey === 'stress' ? 1.2 : metricKey === 'energy' ? 1.6 : 1.8;
       const wobble =
         reportRange === 'weekly' || reportRange === 'week'
           ? [0, 4, -2, 6, 3, 8, 5, 10]
@@ -661,69 +661,38 @@ export function TrendLayerComparisonCard({
             : reportRange === 'day' || reportRange === 'today'
               ? [0, 1, -1, 2, 3, 2]
               : [0, 3, 2, 5, 4, 7, 6, 8, 9, 10];
-      let wellbeing = [];
+      let series = [];
       if (metricKey === 'stress') {
-        // Stress should visually decrease left→right for healthy trend interpretation.
+        // Stress should appear lower after sessions compared with before sessions.
         const raw = wobble.map((w, i) =>
-          Math.max(6, Math.min(96, base + 52 - i * (2.2 + slopeBoost) - w * 0.7))
+          Math.max(6, Math.min(96, base - i * (phase === 'after' ? 1.6 : 0.8) - w * 0.5))
         );
-        wellbeing = raw.map((val, i) => (i === 0 ? val : Math.min(val, raw[i - 1] - 0.6)));
+        series = raw.map((val, i) => (i === 0 ? val : Math.min(val, raw[i - 1] - 0.4)));
       } else {
-        wellbeing = wobble.map((w, i) =>
-          Math.max(6, Math.min(96, base + 8 + i * (1 + slopeBoost) + w))
+        series = wobble.map((w, i) =>
+          Math.max(6, Math.min(96, base + i * (phase === 'after' ? 1.2 : 0.5) + w * 0.6))
         );
       }
-      const coherence = wobble.map((w, i) =>
-        Math.max(
-          8,
-          Math.min(
-            98,
-            Math.round(
-              (base + 20) +
-                i *
-                  (reportRange === 'weekly'
-                    || reportRange === 'week'
-                    ? 3.4
-                    : reportRange === 'monthly' || reportRange === 'month'
-                      ? 2.4
-                      : reportRange === 'year'
-                        ? 1.8
-                      : reportRange === 'today'
-                        ? 2.2
-                        : 2.8) +
-                w * 0.55 +
-                (i % 2 === 0 ? 2 : -2)
-            )
-          )
-        )
-      );
-      return { wellbeing, coherence };
+      return series;
     };
-    const s = build('stress');
-    const e = build('energy');
-    const m = build('mood');
+    const sBefore = buildSeries('stress', averages?.stressBefore, 'before');
+    const eBefore = buildSeries('energy', averages?.energyBefore, 'before');
+    const mBefore = buildSeries('mood', averages?.moodBefore, 'before');
+    const sAfter = buildSeries('stress', averages?.stressAfter, 'after');
+    const eAfter = buildSeries('energy', averages?.energyAfter, 'after');
+    const mAfter = buildSeries('mood', averages?.moodAfter, 'after');
     return {
-      wellbeingPointsByMetric: { stress: s.wellbeing, energy: e.wellbeing, mood: m.wellbeing },
-      coherencePointsByMetric: { stress: s.coherence, energy: e.coherence, mood: m.coherence },
+      beforePointsByMetric: { stress: sBefore, energy: eBefore, mood: mBefore },
+      afterPointsByMetric: { stress: sAfter, energy: eAfter, mood: mAfter },
       improvementByMetric: imp,
     };
   }, [averages, reportRange]);
 
   const activeMetricKeys = metricKeys.filter((k) => selectedMetrics[k]);
   const fallbackMetric = activeMetricKeys[0] ?? 'stress';
-  const periods = (wellbeingPointsByMetric[fallbackMetric] ?? []).length || 1;
-  const activeWellbeingVals = activeMetricKeys.flatMap((k) => wellbeingPointsByMetric[k] ?? []);
-  const activeCoherenceVals = activeMetricKeys.flatMap((k) => coherencePointsByMetric[k] ?? []);
-  const selectedCoherenceSeries = useMemo(() => {
-    if (activeMetricKeys.length === 0) return [];
-    const firstSeries = coherencePointsByMetric[activeMetricKeys[0]] ?? [];
-    return firstSeries.map((_, idx) => {
-      const valsAtIdx = activeMetricKeys
-        .map((k) => coherencePointsByMetric[k]?.[idx])
-        .filter((v) => Number.isFinite(v));
-      return Math.round(avgOf(valsAtIdx));
-    });
-  }, [activeMetricKeys, coherencePointsByMetric]);
+  const activePointsByMetric = surveyStage === 'after' ? afterPointsByMetric : beforePointsByMetric;
+  const periods = (activePointsByMetric[fallbackMetric] ?? []).length || 1;
+  const activeWellbeingVals = activeMetricKeys.flatMap((k) => activePointsByMetric[k] ?? []);
   const activeImprovements = activeMetricKeys.map((k) => improvementByMetric[k]?.pct ?? 0);
   const improvementPct = Math.round(avgOf(activeImprovements));
   const metricLabelsText =
@@ -744,15 +713,12 @@ export function TrendLayerComparisonCard({
               : reportRange === 'year'
                 ? 4
                 : 3) +
-          (showCoherence ? 4 : 0)
+          0
       )
     )
   );
-  const coherenceAvg = Math.round(
-    avgOf(activeCoherenceVals.length ? activeCoherenceVals : coherencePointsByMetric.stress ?? [])
-  );
   const subjectiveAvg = Math.round(
-    avgOf(activeWellbeingVals.length ? activeWellbeingVals : wellbeingPointsByMetric.stress ?? [])
+    avgOf(activeWellbeingVals.length ? activeWellbeingVals : activePointsByMetric.stress ?? [])
   );
   const averageImprovementPct = Math.round(
     avgOf([
@@ -783,9 +749,7 @@ export function TrendLayerComparisonCard({
     });
     return avgOf(deltas);
   };
-  const cohDelta = avgDelta(coherencePointsByMetric, 'coherence');
-  const wellDelta = avgDelta(wellbeingPointsByMetric, 'wellbeing');
-  const correlation = Math.min(98, Math.max(52, 60 + Math.round((wellDelta + cohDelta) / 3)));
+  const wellDelta = avgDelta(activePointsByMetric, 'wellbeing');
   const stressPct = improvementByMetric.stress?.pct ?? 0;
   const energyPct = improvementByMetric.energy?.pct ?? 0;
   const moodPct = improvementByMetric.mood?.pct ?? 0;
@@ -796,7 +760,6 @@ export function TrendLayerComparisonCard({
     energy: isProgressTheme ? '#007E73' : '#8FE6D8',
     mood: isProgressTheme ? '#7E3FB2' : '#FFD6F0',
   };
-  const coherenceColor = isProgressTheme ? '#8E24AA' : '#FFFFFF';
   const chartGridColor = isProgressTheme ? 'rgba(52,37,61,0.16)' : 'rgba(255,255,255,0.18)';
 
   useEffect(() => {
@@ -908,24 +871,24 @@ export function TrendLayerComparisonCard({
       ) : null}
       {showControls ? (
       <TouchableOpacity
-        style={[styles.coherenceToggleRow, showCoherence && styles.coherenceToggleRowActive]}
-        onPress={() => setShowCoherence((v) => !v)}
+        style={[styles.coherenceToggleRow, surveyStage === 'after' && styles.coherenceToggleRowActive]}
+        onPress={() => setSurveyStage((v) => (v === 'before' ? 'after' : 'before'))}
         activeOpacity={0.85}
       >
         <View
           style={[
             styles.coherenceToggleKnob,
             isProgressTheme && styles.progressCoherenceKnob,
-            showCoherence && styles.coherenceToggleKnobActive,
-            showCoherence && isProgressTheme && styles.progressCoherenceKnobActive,
+            surveyStage === 'after' && styles.coherenceToggleKnobActive,
+            surveyStage === 'after' && isProgressTheme && styles.progressCoherenceKnobActive,
           ]}
         >
           <View
             style={[
               styles.coherenceToggleDot,
               isProgressTheme && styles.progressCoherenceDot,
-              isProgressTheme && !showCoherence && styles.progressCoherenceDotOff,
-              isProgressTheme && showCoherence && styles.progressCoherenceDotOn,
+              isProgressTheme && surveyStage === 'before' && styles.progressCoherenceDotOff,
+              isProgressTheme && surveyStage === 'after' && styles.progressCoherenceDotOn,
             ]}
           />
         </View>
@@ -933,11 +896,11 @@ export function TrendLayerComparisonCard({
           style={[
             styles.coherenceToggleText,
             isProgressTheme && styles.progressCoherenceText,
-            showCoherence && styles.coherenceToggleTextActive,
-            showCoherence && isProgressTheme && styles.progressCoherenceTextActive,
+            surveyStage === 'after' && styles.coherenceToggleTextActive,
+            surveyStage === 'after' && isProgressTheme && styles.progressCoherenceTextActive,
           ]}
         >
-          Coherence
+          {surveyStage === 'before' ? 'Before' : 'After'}
         </Text>
       </TouchableOpacity>
       ) : null}
@@ -963,7 +926,7 @@ export function TrendLayerComparisonCard({
                 />
               ))}
               {activeMetricKeys.map((metric) => {
-                const points = wellbeingPointsByMetric[metric] ?? [];
+                const points = activePointsByMetric[metric] ?? [];
                 const yNudge = metric === 'energy' ? -1.2 : metric === 'mood' ? 1.2 : 0;
                 return (
                   <Polyline
@@ -978,23 +941,8 @@ export function TrendLayerComparisonCard({
                   />
                 );
               })}
-              {showCoherence
-                ? selectedCoherenceSeries.length > 0 ? (
-                    <Polyline
-                      key="coherence-overlay"
-                      points={toPolyline(selectedCoherenceSeries)}
-                      fill="none"
-                      stroke={coherenceColor}
-                      strokeOpacity="0.86"
-                      strokeWidth="1.4"
-                      strokeDasharray="4 4"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  ) : null
-                : null}
               {activeMetricKeys.map((metric) => {
-                const points = wellbeingPointsByMetric[metric] ?? [];
+                const points = activePointsByMetric[metric] ?? [];
                 return (
                   <SvgCircle
                     key={`${metric}-wellbeing-end`}
@@ -1005,17 +953,6 @@ export function TrendLayerComparisonCard({
                   />
                 );
               })}
-              {showCoherence
-                ? selectedCoherenceSeries.length > 0 ? (
-                    <SvgCircle
-                      key="coherence-overlay-end"
-                      cx={chartW - pad}
-                      cy={pad + innerH - ((selectedCoherenceSeries[selectedCoherenceSeries.length - 1] ?? 0) / 100) * innerH}
-                      r={2.2}
-                      fill={coherenceColor}
-                    />
-                  ) : null
-                : null}
             </Svg>
           </View>
         ) : (
@@ -1036,11 +973,6 @@ export function TrendLayerComparisonCard({
               </Text>
             </View>
           ))}
-          {showCoherence && activeMetricKeys.length > 0 ? (
-            <Text numberOfLines={1} style={[styles.legendTxt, styles.coherenceLegendTxt, isProgressTheme && styles.progressLegendTxt]}>
-              dashed line = Coherence
-            </Text>
-          ) : null}
         </View>
       ) : null}
       {showPostGraphContent ? (
@@ -1058,16 +990,11 @@ export function TrendLayerComparisonCard({
                 ? 'Day'
                 : 'All-time'}
         : {metricLabelsText} improvement {improvementPct}% (avg across all metrics {averageImprovementPct}%).
-        {showCoherence ? ` Coherence overlay indicates ~${correlation}% alignment.` : ''}
       </Text>
       <View style={styles.reportKpisRow}>
         <View style={[styles.reportKpiPill, isProgressTheme && styles.progressKpiPill]}>
           <Text style={[styles.reportKpiLabel, isProgressTheme && styles.progressKpiLabel]}>Breathing consistency</Text>
           <Text style={[styles.reportKpiVal, isProgressTheme && styles.progressKpiVal]}>{breathingConsistency}%</Text>
-        </View>
-        <View style={[styles.reportKpiPill, isProgressTheme && styles.progressKpiPill]}>
-          <Text style={[styles.reportKpiLabel, isProgressTheme && styles.progressKpiLabel]}>Coherence avg</Text>
-          <Text style={[styles.reportKpiVal, isProgressTheme && styles.progressKpiVal]}>{coherenceAvg}%</Text>
         </View>
         <View style={[styles.reportKpiPill, isProgressTheme && styles.progressKpiPill]}>
           <Text style={[styles.reportKpiLabel, isProgressTheme && styles.progressKpiLabel]}>Subjective avg</Text>
@@ -1085,7 +1012,7 @@ export function TrendLayerComparisonCard({
             : reportRange === 'day' || reportRange === 'today'
               ? 'Practice Days today'
               : 'total Practice Days'}
-        , stronger breathing consistency and coherence points track with improved {metricLabelsText.toLowerCase()}, showing a clear mind-body correlation.
+        , stronger breathing consistency tracks with improved {metricLabelsText.toLowerCase()}, showing a clear mind-body correlation.
       </Text>
       </>
       ) : null}

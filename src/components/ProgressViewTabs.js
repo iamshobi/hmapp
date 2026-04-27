@@ -7,7 +7,7 @@ const PROGRESS_FONT_BOLD = 'Sailec-Bold';
 
 const TABS = [
   { key: 'trend', label: 'Trends', Icon: TrendingUp },
-  { key: 'checkins', label: 'Practice Days', Icon: CalendarDays },
+  { key: 'checkins', label: 'Activity', Icon: CalendarDays },
   { key: 'insights', label: 'Notes', Icon: Lightbulb },
 ];
 
