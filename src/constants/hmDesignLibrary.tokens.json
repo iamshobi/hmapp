@@ -1,0 +1,201 @@
+{
+  "meta": {
+    "title": "HM Design Library",
+    "sources": {
+      "themeCss": "HM Design Library/src/styles/theme.css",
+      "colorsPage": "HM Design Library/src/app/pages/ColorsPage.tsx"
+    },
+    "note": "RN uses hex/rgba where CSS uses oklch(); see shell.cssVariables for raw strings."
+  },
+
+  "shell": {
+    "cssVariables": {
+      "light": {
+        "--font-size": "16px",
+        "--background": "#ffffff",
+        "--foreground": "oklch(0.145 0 0)",
+        "--card": "#ffffff",
+        "--card-foreground": "oklch(0.145 0 0)",
+        "--popover": "oklch(1 0 0)",
+        "--popover-foreground": "oklch(0.145 0 0)",
+        "--primary": "#030213",
+        "--primary-foreground": "oklch(1 0 0)",
+        "--secondary": "oklch(0.95 0.0058 264.53)",
+        "--secondary-foreground": "#030213",
+        "--muted": "#ececf0",
+        "--muted-foreground": "#717182",
+        "--accent": "#e9ebef",
+        "--accent-foreground": "#030213",
+        "--destructive": "#d4183d",
+        "--destructive-foreground": "#ffffff",
+        "--border": "rgba(0, 0, 0, 0.1)",
+        "--input": "transparent",
+        "--input-background": "#f3f3f5",
+        "--switch-background": "#cbced4",
+        "--font-weight-medium": "500",
+        "--font-weight-normal": "400",
+        "--ring": "oklch(0.708 0 0)",
+        "--chart-1": "oklch(0.646 0.222 41.116)",
+        "--chart-2": "oklch(0.6 0.118 184.704)",
+        "--chart-3": "oklch(0.398 0.07 227.392)",
+        "--chart-4": "oklch(0.828 0.189 84.429)",
+        "--chart-5": "oklch(0.769 0.188 70.08)",
+        "--radius": "0.625rem",
+        "--sidebar": "oklch(0.985 0 0)",
+        "--sidebar-foreground": "oklch(0.145 0 0)",
+        "--sidebar-primary": "#030213",
+        "--sidebar-primary-foreground": "oklch(0.985 0 0)",
+        "--sidebar-accent": "oklch(0.97 0 0)",
+        "--sidebar-accent-foreground": "oklch(0.205 0 0)",
+        "--sidebar-border": "oklch(0.922 0 0)",
+        "--sidebar-ring": "oklch(0.708 0 0)"
+      },
+      "dark": {
+        "--background": "oklch(0.145 0 0)",
+        "--foreground": "oklch(0.985 0 0)",
+        "--card": "oklch(0.145 0 0)",
+        "--card-foreground": "oklch(0.985 0 0)",
+        "--popover": "oklch(0.145 0 0)",
+        "--popover-foreground": "oklch(0.985 0 0)",
+        "--primary": "oklch(0.985 0 0)",
+        "--primary-foreground": "oklch(0.205 0 0)",
+        "--secondary": "oklch(0.269 0 0)",
+        "--secondary-foreground": "oklch(0.985 0 0)",
+        "--muted": "oklch(0.269 0 0)",
+        "--muted-foreground": "oklch(0.708 0 0)",
+        "--accent": "oklch(0.269 0 0)",
+        "--accent-foreground": "oklch(0.985 0 0)",
+        "--destructive": "oklch(0.396 0.141 25.723)",
+        "--destructive-foreground": "oklch(0.637 0.237 25.331)",
+        "--border": "oklch(0.269 0 0)",
+        "--input": "oklch(0.269 0 0)",
+        "--ring": "oklch(0.439 0 0)",
+        "--font-weight-medium": "500",
+        "--font-weight-normal": "400",
+        "--chart-1": "oklch(0.488 0.243 264.376)",
+        "--chart-2": "oklch(0.696 0.17 162.48)",
+        "--chart-3": "oklch(0.769 0.188 70.08)",
+        "--chart-4": "oklch(0.627 0.265 303.9)",
+        "--chart-5": "oklch(0.645 0.246 16.439)",
+        "--sidebar": "oklch(0.205 0 0)",
+        "--sidebar-foreground": "oklch(0.985 0 0)",
+        "--sidebar-primary": "oklch(0.488 0.243 264.376)",
+        "--sidebar-primary-foreground": "oklch(0.985 0 0)",
+        "--sidebar-accent": "oklch(0.269 0 0)",
+        "--sidebar-accent-foreground": "oklch(0.985 0 0)",
+        "--sidebar-border": "oklch(0.269 0 0)",
+        "--sidebar-ring": "oklch(0.439 0 0)"
+      }
+    },
+    "themeInlineRadius": {
+      "radiusSm": "calc(var(--radius) - 4px)",
+      "radiusMd": "calc(var(--radius) - 2px)",
+      "radiusLg": "var(--radius)",
+      "radiusXl": "calc(var(--radius) + 4px)"
+    },
+    "fromThemeCss": {
+      "background": "#ffffff",
+      "foregroundHexApprox": "#252525",
+      "card": "#ffffff",
+      "primary": "#030213",
+      "primaryForegroundHexApprox": "#ffffff",
+      "muted": "#ececf0",
+      "mutedForeground": "#717182",
+      "accent": "#e9ebef",
+      "destructive": "#d4183d",
+      "destructiveForeground": "#ffffff",
+      "border": "rgba(0,0,0,0.1)",
+      "inputBackground": "#f3f3f5",
+      "switchBackground": "#cbced4",
+      "ringHexApprox": "#b3b3b3",
+      "radiusRem": 0.625,
+      "radiusMdPx": 10,
+      "baseFontSizePx": 16
+    }
+  },
+
+  "colorsPage": {
+    "brandColors": [
+      { "name": "Brand Purple", "hex": "#763784", "var": "bg-[#763784]", "usage": "Primary buttons, Active states, Primary borders, Sidebar" },
+      { "name": "Brand Magenta", "hex": "#C62B75", "var": "bg-[#C62B75]", "usage": "Selected states, Link text, Active Icons" },
+      { "name": "Deep Purple", "hex": "#5a2a65", "var": "bg-[#5a2a65]", "usage": "Primary Button Hover State, Gradient End" },
+      { "name": "App Blue", "hex": "#0EABD4", "var": "bg-[#0EABD4]", "usage": "Courses, Learning, Info screens" },
+      { "name": "App Orange", "hex": "#F18E3E", "var": "bg-[#F18E3E]", "usage": "Measure actions, Warm highlights" },
+      { "name": "App Green", "hex": "#14BB9A", "var": "bg-[#14BB9A]", "usage": "Guided techniques" },
+      { "name": "Light Purple", "hex": "#B9A1CA", "var": "bg-[#B9A1CA]", "usage": "Disabled Buttons, Inactive state icons" },
+      { "name": "Surface Purple", "hex": "#F3EDF5", "var": "bg-[#F3EDF5]", "usage": "Input Backgrounds, Secondary section backgrounds" }
+    ],
+    "neutralColors": [
+      { "name": "Dark Text", "hex": "#333333", "var": "bg-[#333333]", "usage": "Headings, Body text on light backgrounds" },
+      { "name": "Muted Text", "hex": "#7A7A7A", "var": "bg-[#7A7A7A]", "usage": "Labels, Subtitles, Placeholders" },
+      { "name": "Success Green", "hex": "#2EA071", "var": "bg-[#2EA071]", "usage": "Password requirement fulfilled tick" },
+      { "name": "White", "hex": "#FFFFFF", "var": "bg-white border", "usage": "Cards, Backgrounds, Primary button text" }
+    ],
+    "gradients": [
+      {
+        "name": "Brand Background",
+        "tailwindClass": "bg-gradient-to-b from-[#C62B75] to-[#5a2a65]",
+        "label": "from-[#C62B75] to-[#5a2a65]"
+      },
+      {
+        "name": "Guided Techniques (Blue)",
+        "tailwindClass": "bg-gradient-to-b from-[#0EABD4] to-[#042898]",
+        "label": "from-[#0EABD4] to-[#042898]"
+      },
+      {
+        "name": "Measure (Orange)",
+        "tailwindClass": "bg-gradient-to-br from-[#F18E3E] to-[#E93B3E]",
+        "label": "from-[#F18E3E] to-[#E93B3E]"
+      },
+      {
+        "name": "Play (Cyan)",
+        "tailwindClass": "bg-gradient-to-br from-[#11A8B2] to-[#20499C]",
+        "label": "from-[#11A8B2] to-[#20499C]"
+      },
+      {
+        "name": "Multi-Day (Red)",
+        "tailwindClass": "bg-gradient-to-br from-[#EC5850] via-[#E23455] to-[#D51E5C]",
+        "label": "from-[#EC5850] to-[#D51E5C]"
+      }
+    ]
+  },
+
+  "brand": {
+    "brandPurple": { "hex": "#763784", "usage": "Primary buttons, active states, primary borders, sidebar" },
+    "brandMagenta": { "hex": "#C62B75", "usage": "Selected states, link text, active icons" },
+    "deepPurple": { "hex": "#5a2a65", "usage": "Primary button hover, gradient end" },
+    "appBlue": { "hex": "#0EABD4", "usage": "Courses, learning, info screens" },
+    "appOrange": { "hex": "#F18E3E", "usage": "Measure actions, warm highlights" },
+    "appGreen": { "hex": "#14BB9A", "usage": "Guided techniques" },
+    "lightPurple": { "hex": "#B9A1CA", "usage": "Disabled buttons, inactive icons" },
+    "surfacePurple": { "hex": "#F3EDF5", "usage": "Input backgrounds, secondary section backgrounds" }
+  },
+  "neutral": {
+    "darkText": { "hex": "#333333", "usage": "Headings, body on light" },
+    "mutedText": { "hex": "#7A7A7A", "usage": "Labels, subtitles, placeholders" },
+    "successGreen": { "hex": "#2EA071", "usage": "Success / password met" },
+    "white": { "hex": "#FFFFFF", "usage": "Cards, backgrounds, primary button text" }
+  },
+  "gradients": {
+    "brandBackground": {
+      "stops": ["#C62B75", "#5a2a65"],
+      "usage": "Onboarding panels, brand vertical"
+    },
+    "guidedTechniques": {
+      "stops": ["#0EABD4", "#042898"],
+      "usage": "Learn / guided flows"
+    },
+    "measure": {
+      "stops": ["#F18E3E", "#E93B3E"],
+      "usage": "Measure action cards"
+    },
+    "play": {
+      "stops": ["#11A8B2", "#20499C"],
+      "usage": "Play action cards"
+    },
+    "multiDay": {
+      "stops": ["#EC5850", "#E23455", "#D51E5C"],
+      "usage": "Multi-day programs"
+    }
+  }
+}

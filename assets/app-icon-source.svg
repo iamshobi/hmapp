@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="hmShell" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#311B92"/>
+      <stop offset="25%" stop-color="#4527A0"/>
+      <stop offset="50%" stop-color="#6A1B9A"/>
+      <stop offset="75%" stop-color="#8E24AA"/>
+      <stop offset="100%" stop-color="#AB47BC"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#hmShell)"/>
+  <text
+    x="512"
+    y="548"
+    text-anchor="middle"
+    font-family="system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+    font-size="112"
+    font-weight="700"
+    letter-spacing="6"
+    fill="#FFFFFF"
+  >HeartMath</text>
+</svg>

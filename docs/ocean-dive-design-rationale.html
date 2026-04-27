@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Ocean Dive — Game Design Rationale · HeartMath</title>
+  <style>
+    /* ══ Reset ════════════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    /* ══ CSS Variables — light (default) ══════════════════════════════ */
+    :root {
+      --bg:            #F7F9FC;
+      --surface:       #FFFFFF;
+      --surface2:      #F0F4FA;
+      --border:        #E2E8F0;
+      --border-hover:  #4DD8F0;
+      --heading:       #1A202C;
+      --text:          #4A5568;
+      --text-muted:    #718096;
+      --text-dim:      #A0AEC0;
+      --badge-bg:      #EBF8FF;
+      --badge-text:    #2B6CB0;
+      --code-bg:       #EDF2FF;
+      --code-color:    #3730A3;
+      --chip-bg:       #F1F5F9;
+      --chip-text:     #475569;
+      --divider:       #E2E8F0;
+      --shadow-sm:     0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md:     0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+      --shadow-hover:  0 8px 24px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.06);
+      --tech-bg:       rgba(77,216,240,0.08);
+      --tech-text:     #5870C8;
+      --impl-from:     rgba(77,216,240,0.08);
+      --impl-to:       rgba(184,96,200,0.08);
+      --impl-border:   rgba(77,216,240,0.25);
+      --toggle-bg:     rgba(26,32,44,0.07);
+      --toggle-border: rgba(26,32,44,0.14);
+      --toggle-label:  #718096;
+    }
+
+    /* ══ CSS Variables — dark ═════════════════════════════════════════ */
+    body.dark {
+      --bg:            #050A14;
+      --surface:       rgba(255,255,255,0.04);
+      --surface2:      rgba(255,255,255,0.02);
+      --border:        rgba(255,255,255,0.09);
+      --border-hover:  #4DD8F0;
+      --heading:       #EDF2FF;
+      --text:          rgba(220,230,255,0.72);
+      --text-muted:    rgba(200,220,255,0.52);
+      --text-dim:      rgba(200,220,255,0.36);
+      --badge-bg:      rgba(77,216,240,0.12);
+      --badge-text:    #4DD8F0;
+      --code-bg:       rgba(255,255,255,0.07);
+      --code-color:    #93C5FD;
+      --chip-bg:       rgba(255,255,255,0.06);
+      --chip-text:     rgba(210,225,255,0.72);
+      --divider:       rgba(100,150,220,0.12);
+      --shadow-sm:     0 1px 4px rgba(0,0,0,0.4);
+      --shadow-md:     0 4px 14px rgba(0,0,0,0.45);
+      --shadow-hover:  0 8px 28px rgba(0,0,0,0.55);
+      --tech-bg:       rgba(77,216,240,0.10);
+      --tech-text:     #7AB8F0;
+      --impl-from:     rgba(77,216,240,0.07);
+      --impl-to:       rgba(184,96,200,0.07);
+      --impl-border:   rgba(77,216,240,0.18);
+      --toggle-bg:     rgba(255,255,255,0.07);
+      --toggle-border: rgba(255,255,255,0.14);
+      --toggle-label:  rgba(200,220,255,0.55);
+    }
+
+    /* ══ Base ═════════════════════════════════════════════════════════ */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      transition: background 0.35s ease, color 0.35s ease;
+    }
+    h1 { font-size: clamp(28px,5vw,48px); font-weight: 700; letter-spacing:-0.03em; line-height:1.1; color: var(--heading); }
+    h2 { font-size: clamp(20px,3vw,30px); font-weight: 600; letter-spacing:-0.02em; color: var(--heading); }
+    h3 { font-size: 16px; font-weight: 600; color: var(--heading); }
+    p  { color: var(--text); line-height: 1.75; }
+    strong { color: var(--heading); }
+
+    /* ══ Layout ═══════════════════════════════════════════════════════ */
+    .page   { max-width: 1100px; margin: 0 auto; padding: 0 28px 100px; }
+    .section { margin-bottom: 72px; }
+    .grid2  { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid3  { display: grid; grid-template-columns: repeat(3,1fr); gap: 20px; }
+    @media (max-width: 860px)  { .grid2 { grid-template-columns: 1fr; } }
+    @media (max-width: 1000px) { .grid3 { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px)  { .grid3 { grid-template-columns: 1fr; } }
+
+    /* ══ Theme toggle ═════════════════════════════════════════════════ */
+    #theme-toggle {
+      position: fixed; top: 18px; right: 24px; z-index: 999;
+      display: flex; align-items: center; gap: 10px;
+      background: var(--toggle-bg);
+      border: 1px solid var(--toggle-border);
+      border-radius: 100px; padding: 7px 14px 7px 10px;
+      cursor: pointer;
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      box-shadow: var(--shadow-sm);
+      transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
+    }
+    #theme-toggle:hover { box-shadow: var(--shadow-hover); }
+    .tgl-track {
+      width: 36px; height: 20px;
+      background: rgba(77,216,240,0.22);
+      border: 1px solid rgba(77,216,240,0.38);
+      border-radius: 100px; position: relative;
+      transition: background 0.30s, border-color 0.30s; flex-shrink: 0;
+    }
+    body.dark .tgl-track { background: rgba(228,0,124,0.20); border-color: rgba(228,0,124,0.38); }
+    .tgl-thumb {
+      position: absolute; top: 3px; left: 3px;
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #4DD8F0;
+      transition: transform 0.30s cubic-bezier(.34,1.56,.64,1), background 0.30s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+    }
+    body.dark .tgl-thumb { transform: translateX(16px); background: #E4007C; }
+    .tgl-icon { font-size: 13px; line-height: 1; transition: opacity 0.25s; }
+    .tgl-icon-sun  { opacity: 1.00; }
+    .tgl-icon-moon { opacity: 0.35; }
+    body.dark .tgl-icon-sun  { opacity: 0.35; }
+    body.dark .tgl-icon-moon { opacity: 1.00; }
+    .tgl-label {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--toggle-label); user-select: none; transition: color 0.25s;
+    }
+
+    /* ══ Header ═══════════════════════════════════════════════════════ */
+    .hero { padding: 80px 0 56px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: linear-gradient(90deg, #4DD8F0, #5870C8);
+      border-radius: 100px; padding: 6px 18px; margin-bottom: 24px;
+    }
+    .hero-badge span { font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0.10em; text-transform: uppercase; }
+    .hero h1 { margin-bottom: 20px; }
+    .hero-sub { font-size: 18px; max-width: 820px; color: var(--text); margin-bottom: 0; }
+
+    /* ══ Section header ═══════════════════════════════════════════════ */
+    .section-header { margin-bottom: 28px; }
+    .section-header h2 { margin-bottom: 10px; }
+    .section-header p { font-size: 16px; max-width: 740px; }
+
+    /* ══ Divider ══════════════════════════════════════════════════════ */
+    .divider { height: 1px; background: var(--divider); margin: 0 0 72px; transition: background 0.35s; }
+
+    /* ══ FlowCard ═════════════════════════════════════════════════════ */
+    .flow-card {
+      display: flex; align-items: flex-start; gap: 16px;
+      padding: 20px 22px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow-sm);
+      transition: background 0.35s, border-color 0.25s, box-shadow 0.25s;
+    }
+    .flow-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow-hover); }
+    .flow-num {
+      width: 40px; height: 40px; border-radius: 50%;
+      color: #fff; font-size: 17px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .flow-card h3 { font-size: 15px; margin-bottom: 6px; }
+    .flow-card p  { font-size: 13px; margin: 0; }
+
+    /* ══ Screenshot section ═══════════════════════════════════════════ */
+    .screenshot-card { display: flex; flex-direction: column; gap: 12px; }
+    .screenshot-thumb {
+      position: relative; border-radius: 16px; overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+    .screenshot-thumb img {
+      width: 100%; height: auto; display: block;
+    }
+    .screenshot-card:hover .screenshot-thumb {
+      border-color: var(--border-hover);
+      box-shadow: var(--shadow-hover);
+    }
+    .screenshot-card h3 { font-size: 14px; margin-bottom: 4px; }
+    .screenshot-card p  { font-size: 12px; margin: 0; }
+    /* Ensure portrait screenshots scale naturally inside their border frame */
+    .screenshot-thumb img { border-radius: 15px; }
+
+    /* ══ ZoneCard ═════════════════════════════════════════════════════ */
+    .zone-card {
+      display: flex; align-items: center; gap: 18px;
+      padding: 20px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow-sm);
+      transition: background 0.35s, border-color 0.25s, box-shadow 0.25s;
+      margin-bottom: 12px;
+    }
+    .zone-card:last-child { margin-bottom: 0; }
+    .zone-card:hover { box-shadow: var(--shadow-hover); }
+    .zone-icon {
+      width: 70px; height: 70px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .zone-info h3 { margin-bottom: 2px; }
+    .zone-info .zone-sub { font-size: 13px; margin: 0 0 2px; color: var(--text-muted); }
+    .zone-info .zone-depth { font-size: 12px; color: var(--text-dim); margin: 0; }
+    .zone-dur { text-align: right; flex-shrink: 0; }
+    .zone-dur-val { font-size: 13px; font-weight: 600; color: var(--text); }
+    .zone-dur-lbl { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+
+    /* ══ LayerCard ════════════════════════════════════════════════════ */
+    .layer-card {
+      padding: 22px 24px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow-sm);
+      transition: background 0.35s, border-color 0.25s;
+    }
+    .layer-card:hover { border-color: var(--border-hover); }
+    .layer-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .layer-num {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #4DD8F0, #5870C8);
+      color: #fff; font-size: 14px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .layer-card h3 { font-size: 15px; }
+    .layer-card p { font-size: 13px; margin-bottom: 12px; }
+    .layer-tech {
+      display: inline-block;
+      font-size: 11px; font-weight: 600;
+      color: var(--tech-text); background: var(--tech-bg);
+      padding: 4px 12px; border-radius: 100px;
+    }
+
+    /* ══ ComponentCard ════════════════════════════════════════════════ */
+    .comp-card {
+      padding: 22px 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow-sm);
+      transition: background 0.35s, border-color 0.25s, box-shadow 0.25s;
+    }
+    .comp-card:hover { box-shadow: var(--shadow-hover); }
+    .comp-card h3 { font-size: 15px; margin-bottom: 10px; }
+    .comp-card > p { font-size: 13px; margin-bottom: 14px; }
+    .comp-details { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+    .comp-details li { font-size: 12px; color: var(--text-muted); display: flex; align-items: flex-start; gap: 8px; }
+    .comp-bullet { color: #4DD8F0; font-size: 13px; line-height: 1.5; flex-shrink: 0; }
+
+    /* ══ PrincipleSection ═════════════════════════════════════════════ */
+    .principle {
+      padding: 28px 30px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-sm);
+      transition: background 0.35s, border-color 0.25s;
+    }
+    .principle:last-child { margin-bottom: 0; }
+    .principle h3 { font-size: 17px; margin-bottom: 10px; }
+    .principle > p { font-size: 14px; margin-bottom: 16px; }
+    .principle-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .principle-list li { font-size: 13px; color: var(--text); display: flex; gap: 10px; }
+    .principle-arrow { color: #4DD8F0; font-weight: 700; flex-shrink: 0; }
+
+    /* ══ Technical Implementation box ════════════════════════════════ */
+    .impl-box {
+      background: linear-gradient(135deg, var(--impl-from), var(--impl-to));
+      border: 1px solid var(--impl-border);
+      border-radius: 18px;
+      padding: 36px 38px;
+      transition: background 0.35s, border-color 0.35s;
+    }
+    .impl-box h2 { margin-bottom: 22px; }
+    .impl-box p  { font-size: 14px; margin-bottom: 14px; line-height: 1.80; }
+    .impl-box p:last-child { margin-bottom: 0; }
+
+    /* ══ CreatureZoneCard ═════════════════════════════════════════════ */
+    .creature-card {
+      display: flex; align-items: center; gap: 16px;
+      padding: 18px 22px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-sm);
+      transition: background 0.35s, border-color 0.25s;
+    }
+    .creature-card:last-child { margin-bottom: 0; }
+    .creature-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+    .creature-card h3 { font-size: 14px; margin-bottom: 8px; }
+    .creature-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .creature-chip {
+      font-size: 12px; padding: 4px 12px; border-radius: 100px;
+      background: var(--chip-bg); color: var(--chip-text);
+      transition: background 0.35s, color 0.35s;
+    }
+
+    /* ══ Code ═════════════════════════════════════════════════════════ */
+    code {
+      font-family: 'SF Mono', Consolas, monospace; font-size: 11px;
+      background: var(--code-bg); border-radius: 4px; padding: 1px 5px;
+      color: var(--code-color); transition: background 0.35s, color 0.35s;
+    }
+
+    /* ══ Experience section ══════════════════════════════════════════ */
+    .experience-section {
+      margin-bottom: 72px;
+    }
+    .experience-header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .experience-header h2 {
+      margin-bottom: 10px;
+    }
+    .experience-header p {
+      font-size: 16px;
+      max-width: 580px;
+      margin: 0 auto;
+      color: var(--text-muted);
+    }
+    .experience-stage {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 48px 24px;
+      border-radius: 28px;
+      background: linear-gradient(160deg, #020D1E 0%, #04193A 45%, #091030 100%);
+      overflow: hidden;
+    }
+    /* Ocean shimmer overlay */
+    .experience-stage::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 30% at 50% 0%,   rgba(77,216,240,0.10) 0%, transparent 70%),
+        radial-gradient(ellipse 40% 20% at 20% 60%,  rgba(88,112,200,0.08) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 20% at 80% 70%,  rgba(176,96,232,0.07) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    /* Floating particle dots */
+    .experience-stage::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle 1.5px at 15% 25%,  rgba(77,216,240,0.55) 0%, transparent 100%),
+        radial-gradient(circle 1px   at 82% 18%,  rgba(77,216,240,0.40) 0%, transparent 100%),
+        radial-gradient(circle 1px   at 68% 72%,  rgba(176,96,232,0.45) 0%, transparent 100%),
+        radial-gradient(circle 1.5px at 28% 78%,  rgba(88,112,200,0.50) 0%, transparent 100%),
+        radial-gradient(circle 1px   at 90% 55%,  rgba(77,216,240,0.35) 0%, transparent 100%),
+        radial-gradient(circle 1px   at 10% 55%,  rgba(77,216,240,0.35) 0%, transparent 100%);
+      pointer-events: none;
+    }
+    .phone-frame {
+      position: relative;
+      z-index: 1;
+      width: 280px;
+      border-radius: 38px;
+      padding: 10px;
+      background: #0A0A12;
+      box-shadow:
+        0 0 0 1.5px rgba(255,255,255,0.08),
+        0 0 0 3px #111120,
+        0 0 0 4px rgba(255,255,255,0.05),
+        0 32px 80px rgba(0,0,0,0.70),
+        0 0 60px rgba(77,216,240,0.12);
+    }
+    .phone-notch {
+      width: 80px; height: 22px;
+      background: #0A0A12;
+      border-radius: 0 0 16px 16px;
+      margin: 0 auto 4px;
+      position: relative;
+      z-index: 2;
+    }
+    .phone-notch::after {
+      content: '';
+      position: absolute;
+      top: 6px; left: 50%; transform: translateX(-50%);
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #1A1A2A;
+      box-shadow: 0 0 0 1.5px rgba(77,216,240,0.20);
+    }
+    .phone-screen {
+      border-radius: 28px;
+      overflow: hidden;
+      background: #000;
+      line-height: 0;
+    }
+    .phone-screen video {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 28px;
+    }
+    .phone-home-bar {
+      width: 80px; height: 4px;
+      background: rgba(255,255,255,0.20);
+      border-radius: 100px;
+      margin: 8px auto 0;
+    }
+    .experience-caption {
+      position: relative; z-index: 1;
+      margin-top: 28px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      width: 280px; /* matches phone-frame width */
+    }
+    .experience-caption .exp-title {
+      font-size: 15px; font-weight: 700;
+      color: rgba(255,255,255,0.88);
+      letter-spacing: 0.04em;
+    }
+    .experience-caption .exp-sub {
+      font-size: 12px; font-weight: 400;
+      color: rgba(180,210,255,0.52);
+    }
+    .exp-tags {
+      display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+      margin-top: 4px;
+    }
+    .exp-tag {
+      font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+      padding: 4px 12px; border-radius: 100px;
+      background: rgba(77,216,240,0.12);
+      color: rgba(77,216,240,0.80);
+      border: 1px solid rgba(77,216,240,0.20);
+    }
+
+    /* ══ Research — ocean treasures (workbook) ═════════════════════════ */
+    .research-section .section-header p { max-width: 780px; color: var(--text-muted); font-size: 14px; }
+    .research-quote {
+      margin: 16px 0 12px;
+      padding: 16px 20px;
+      border-left: 4px solid #4DD8F0;
+      background: var(--surface2);
+      border-radius: 0 12px 12px 0;
+      font-size: 15px;
+      color: var(--text);
+      font-style: italic;
+    }
+    .research-source { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+    .research-h3 {
+      font-size: 17px;
+      margin: 28px 0 10px;
+      color: var(--heading);
+    }
+    .research-cat { font-size: 13px; margin: 14px 0 6px; color: var(--heading); }
+    .research-list {
+      margin: 0 0 14px 0;
+      padding-left: 1.25em;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--text);
+    }
+    .research-list li { margin-bottom: 6px; }
+
+    /* ══ Footer ═══════════════════════════════════════════════════════ */
+    .footer {
+      padding: 36px 0; border-top: 1px solid var(--divider);
+      transition: border-color 0.35s;
+    }
+    .footer p { font-size: 13px; font-style: italic; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+<!-- ── Theme toggle ────────────────────────────────────────────────── -->
+<button id="theme-toggle" aria-label="Toggle light/dark mode" onclick="toggleTheme()">
+  <div class="tgl-track"><div class="tgl-thumb"></div></div>
+  <div style="display:flex;align-items:center;gap:4px;">
+    <span class="tgl-icon tgl-icon-sun">☀️</span>
+    <span class="tgl-icon tgl-icon-moon">🌙</span>
+  </div>
+  <span class="tgl-label" id="tgl-label">Light</span>
+</button>
+
+<div class="page">
+
+  <!-- ══ HEADER ══════════════════════════════════════════════════════ -->
+  <header class="hero section">
+    <div class="hero-badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2C12 2 12.8 6.5 14.5 8.5C16.2 10.5 21 11.2 21 12C21 12.8 16.2 13.5 14.5 15.5C12.8 17.5 12 22 12 22C12 22 11.2 17.5 9.5 15.5C7.8 13.5 3 12.8 3 12C3 11.2 7.8 10.5 9.5 8.5C11.2 6.5 12 2 12 2Z"/></svg>
+      <span>Ocean Dive Game</span>
+    </div>
+    <h1>The Ocean Dive — Game Design Rationale</h1>
+    <p class="hero-sub" style="margin-top:16px;">
+      An immersive heart coherence game where users dive through the five scientific layers of the ocean
+      by sustaining high heart rate coherence. As coherence holds steady, the session descends deeper —
+      from the sunlit surface through twilight, midnight, the abyss, and down to the hadal trenches.
+      These screens document the complete game flow from introduction to completion.
+      <strong>Navigation (2026):</strong> Play → <strong>Ocean</strong> opens <strong>The Ocean Dive</strong> level
+      detail (<strong>Drift / Swim / Dive</strong>) for the default Epipelagic zone directly — there is no
+      intermediate “Ocean games” list. The <strong>zone timeline</strong> (<strong>Ocean Tide</strong>) is
+      reached after a completed ocean session when the user taps <strong>Done</strong> on Session Complete.
+    </p>
+  </header>
+
+  <div class="divider"></div>
+
+  <section class="section research-section">
+    <div class="section-header">
+      <h2>Ocean treasures by zone (research)</h2>
+      <p>Research-backed examples of rare animals, shells, and pearls by pelagic layer — aligned with the design workbook <code>Sea Animals Shells Pearls.xlsx</code> (synced in <code>ocean-dive-game-design-rationale.md</code>).</p>
+    </div>
+    <blockquote class="research-quote">The ocean&#x27;s layers harbour distinct treasures, from the sunlit surface to the crushing depths of the trenches. Below is a comprehensive list of 15 rare animals, 15 unique shells, and 15 precious pearls categorised by the five primary ocean zones.</blockquote>
+    <p class="research-source"><em>Source: Sea Animals Shells Pearls.xlsx</em> (HeartMath Game research).</p>
+    <h3 class="research-h3">Sunlight (Epipelagic)</h3>
+    <p class="research-cat"><strong>Rarest sea animals</strong></p>
+    <ul class="research-list">
+      <li>1. Vaquita Porpoise — The world&#x27;s rarest marine mammal, found only in the northern Gulf of California.</li>
+      <li>2. Short-beaked Common Dolphin — Highly social and energetic, though rare in certain isolated regions.</li>
+      <li>3. Banggai Cardinalfish — A striking but endangered fish with an extremely limited geographic range in Indonesia.</li>
+    </ul>
+    <p class="research-cat"><strong>Interesting sea shells</strong></p>
+    <ul class="research-list">
+      <li>1. Glory of the Sea Cone: Once the rarest shell on Earth, prized for its intricate geometric patterns.</li>
+      <li>2. Queen Conch — Famous for its large size and stunning pink interior, though populations are strictly protected.</li>
+      <li>3. Venus Comb Murex — Distinguished by its incredibly long, delicate spines that protect it from predators.</li>
+    </ul>
+    <p class="research-cat"><strong>Precious pearls</strong></p>
+    <ul class="research-list">
+      <li>1. Akoya Pearl: The classic saltwater pearl, celebrated for its perfect round shape and mirror-like lustre.</li>
+      <li>2. South Sea Pearl: The largest and most luxurious of all pearls, found in white and deep golden hues.</li>
+      <li>3. Freshwater Pearl — Known for its incredible variety of shapes and soft, pastel colours like lavender and peach.</li>
+    </ul>
+    <h3 class="research-h3">Twilight (Mesopelagic)</h3>
+    <p class="research-cat"><strong>Rarest sea animals</strong></p>
+    <ul class="research-list">
+      <li>1. Barreleye Fish — Features a transparent, fluid-filled dome on its head to protect its upward-facing eyes.</li>
+      <li>2. Sperm Whale — A deep-diving giant that descends into this zone to hunt for large squid.</li>
+      <li>3. Hatchetfish — A tiny, silver fish with a thin, hatchet-shaped body and bioluminescent undersides.</li>
+    </ul>
+    <p class="research-cat"><strong>Interesting sea shells</strong></p>
+    <ul class="research-list">
+      <li>1. Sphaerocypraea incomparabilis: One of the rarest cowrie-like shells, with fewer than 10 specimens ever recorded.</li>
+      <li>2. Golden Cowrie — Historically a symbol of high rank in the Pacific, found only on deep reef slopes.</li>
+      <li>3. Imperial Volute: A large, heavy shell with a majestic &quot;crown&quot; of spines around its apex.</li>
+    </ul>
+    <p class="research-cat"><strong>Precious pearls</strong></p>
+    <ul class="research-list">
+      <li>1. Tahitian Black Pearl: Naturally dark pearls with exotic overtones like peacock green, blue, and silver.</li>
+      <li>2. Basra Pearl: Highly rare and historic natural pearls from the Persian Gulf, prized for their unique glow.</li>
+      <li>3. Keshi Pearl: A non-nucleated &quot;accidental&quot; pearl that is made entirely of solid nacre, offering intense lustre.</li>
+    </ul>
+    <h3 class="research-h3">Midnight (Bathypelagic)</h3>
+    <p class="research-cat"><strong>Rarest sea animals</strong></p>
+    <ul class="research-list">
+      <li>1. Gulper Eel — Recognizable by its massive, expandable mouth that allows it to swallow prey much larger than itself.</li>
+      <li>2. Anglerfish — Uses a bioluminescent lure to attract prey in the absolute darkness of the deep sea.</li>
+      <li>3. Vampire Squid — A &quot;living fossil&quot; that uses bioluminescent &quot;eyes&quot; at the tips of its tentacles to confuse predators.</li>
+    </ul>
+    <p class="research-cat"><strong>Interesting sea shells</strong></p>
+    <ul class="research-list">
+      <li>1. Fulton&#x27;s Cowrie — A highly polished, rare shell found in remote, deep offshore waters.</li>
+      <li>2. Junonia Shell: A deep-water species with a cream-coloured shell covered in distinctive brown rectangular spots.</li>
+      <li>3. Chambered Nautilus — The last surviving cephalopod with an external shell, featuring a beautiful spiral design.</li>
+    </ul>
+    <p class="research-cat"><strong>Precious pearls</strong></p>
+    <ul class="research-list">
+      <li>1. Conch Pearl: A rare, non-nacreous pink pearl with a unique &quot;flame&quot; pattern, found in Queen Conch shells.</li>
+      <li>2. Melo Melo Pearl: A non-nacreous, vibrant orange pearl produced by the giant Indian Volute sea snail.</li>
+      <li>3. Abalone Pearl: Extremely rare, naturally occurring pearls with brilliant, iridescent blue and green colours.</li>
+    </ul>
+    <h3 class="research-h3">Abyssal (Abyssopelagic)</h3>
+    <p class="research-cat"><strong>Rarest sea animals</strong></p>
+    <ul class="research-list">
+      <li>1. Tripod Fish — Uses elongated fins to &quot;stand&quot; on the muddy seafloor while waiting for tiny prey.</li>
+      <li>2. Giant Isopod — A massive, deep-sea crustacean that scavenges for food falling from the surface.</li>
+      <li>3. Dumbo Octopus — Named for its ear-like fins, it &quot;hovers&quot; gracefully just above the deep ocean floor.</li>
+    </ul>
+    <p class="research-cat"><strong>Interesting sea shells</strong></p>
+    <ul class="research-list">
+      <li>1. Carrier Shell (Xenophora) — A unique snail that cements other shells and stones to its own for structural strength and camouflage.</li>
+      <li>2. Glass Sponge — While not a traditional mollusc shell, its intricate silica skeleton is a biological masterpiece.</li>
+      <li>3. Deep Sea Scallop — Specialized bivalves adapted to survive the near-freezing temperatures of the abyss.</li>
+    </ul>
+    <p class="research-cat"><strong>Precious pearls</strong></p>
+    <ul class="research-list">
+      <li>1. Quahog Pearl: A rare, non-nacreous purple or white pearl found in the hard-shell clams of the North Atlantic.</li>
+      <li>2. Scallop Pearl: Typically matte or satiny, these rare pearls are found in various scallop species.</li>
+      <li>3. Giant Clam Pearl: Massive, non-nacreous pearls that can grow to record-breaking sizes but lack traditional lustre.</li>
+    </ul>
+    <h3 class="research-h3">Hadal (Hadalpelagic)</h3>
+    <p class="research-cat"><strong>Rarest sea animals</strong></p>
+    <ul class="research-list">
+      <li>1. Hadal Snailfish — The deepest-living fish, found in the Mariana Trench at depths of over 8,000 metres.</li>
+      <li>2. Cusk Eel — Slender, eel-like fish that are among the few vertebrates capable of surviving trench pressures.</li>
+      <li>3. Giant Amphipod — Transparent scavengers that grow much larger than their shallow-water relatives due to deep-sea gigantism.</li>
+    </ul>
+    <p class="research-cat"><strong>Interesting sea shells</strong></p>
+    <ul class="research-list">
+      <li>1. Hadal Bivalve — Specialized clams that live near hydrothermal vents and trenches, often harboring symbiotic bacteria.</li>
+      <li>2. Abyssal Limpet — Small, hardy gastropods that cling to rocky surfaces in the deepest parts of the ocean.</li>
+      <li>3. Vesicomyid Clam — Large, white clams found in the deep trenches that rely on chemical energy instead of sunlight.</li>
+    </ul>
+    <p class="research-cat"><strong>Precious pearls</strong></p>
+    <ul class="research-list">
+      <li>1. Sea of Cortez Pearl: Extremely rare cultured pearls from Mexico, known for their unique multicoloured overtones.</li>
+      <li>2. Baroque Pearl: Irregularly shaped pearls that are prized for their unique, one-of-a-kind organic forms.</li>
+      <li>3. N/A (Fossilized Pearl): Modern pearl-producing oysters cannot survive hadal pressures; only ancient, mineralized specimens are found.</li>
+    </ul>
+  </section>
+
+  <!-- ══ EXPERIENCE VIDEO ════════════════════════════════════════════ -->
+  <section class="experience-section">
+
+    <div class="experience-header">
+      <h2>Ocean Dive — Experience</h2>
+      <p>Full column dive recording — level flow, active coherence-driven descent through pelagic zones, and session complete.</p>
+    </div>
+
+    <div class="experience-stage">
+
+      <!-- Phone mockup frame -->
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <video
+              src="OceanFullColumnDive.mp4"
+              autoplay
+              muted
+              loop
+              playsinline
+              controls
+            ></video>
+          </div>
+          <div class="phone-home-bar"></div>
+        </div>
+
+        <div class="experience-caption">
+          <span class="exp-title">Ocean Dive · Full column dive (screen recording)</span>
+          <span class="exp-sub">HeartMath Wellness App · React Native · Expo</span>
+          <div class="exp-tags">
+            <span class="exp-tag">Coherence-Driven Depth</span>
+            <span class="exp-tag">HRV Wave Sync</span>
+            <span class="exp-tag">5 Pelagic Zones</span>
+            <span class="exp-tag">Bioluminescent Glow</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══ GAME FLOW OVERVIEW ══════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Game Flow Overview</h2>
+    </div>
+    <div class="grid2">
+
+      <div class="flow-card">
+        <div class="flow-num" style="background:#4DD8F0;">1</div>
+        <div>
+          <h3>Entry &amp; level detail</h3>
+          <p><strong>Play → Ocean</strong> opens <strong>OceanLevelDetail</strong> (title <em>The Ocean Dive</em>) for the <strong>Epipelagic</strong> zone: orb hero, coherence coaching, <strong>Drift / Swim / Dive</strong>, <strong>Dive In</strong>. The <strong>Ocean Tide</strong> zone list is not the first stop — it appears after Session Complete → <strong>Done</strong> (see step 5).</p>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num" style="background:#6A9FD8;">2</div>
+        <div>
+          <h3>Pre-session → session</h3>
+          <p>Staged pre-session interstitial (copy + per-step decor) → <strong>3 · 2 · 1</strong> countdown → white handoff → active session. Interstitial background: <strong>sunlit surface-water</strong> cyan–teal gradient (not dark navy).</p>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num" style="background:#5870C8;">3</div>
+        <div>
+          <h3>Active Gameplay</h3>
+          <p>Maintain coherence to descend; scrolling pelagic backdrop, creatures, shells, HUD, optional finger bubble trail</p>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num" style="background:#7060C8;">4</div>
+        <div>
+          <h3>Zone Discovery</h3>
+          <p>In-session <strong>?</strong> modal — zone facts; standalone <strong>OceanZoneInfo</strong> — dismiss with <strong>Got it!</strong></p>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num" style="background:#B860C8;">5</div>
+        <div>
+          <h3>Session Complete + Reward</h3>
+          <p>Session Complete screen opens directly (no zone popup). Stats, zone pill (tap → <strong>OceanZoneInfo</strong>), new shells/pearls, <strong>My Shell Collection</strong> entry. <strong>Done</strong> → <strong>Ocean Tide</strong> (full zone list + top-bar <strong>My Shell Collection</strong> gradient orb with white SVG <strong>open shell + pearl</strong> icon, <code>MyShellCollectionIcon</code>). <strong>Sea shell detail</strong> uses the same ocean Session Complete gradient; from the collection, <strong>Got it!</strong> returns to My Shell Collection (stack push, not closing the gallery).</p>
+        </div>
+      </div>
+
+      <div class="flow-card">
+        <div class="flow-num" style="background:#D01C6A;">6</div>
+        <div>
+          <h3>Post-Session Feedback</h3>
+          <p><strong>How do you feel now?</strong> — five mood faces; My Notes; primary exit is <strong>Done</strong> (returns to Ocean Tide for ocean theme)</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══ KEY SCREENS ═════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Key Screens</h2>
+      <p>Captured from the HeartMath Wellness App (Expo Go, March 2026). Gallery order matches attached assets <code>images_1</code> … <code>images_11</code> — files in <code>docs/screenshots/</code> as <code>01-…</code> through <code>11-…</code>.</p>
+    </div>
+    <div class="grid3">
+
+      <!-- 1 -->
+      <div class="screenshot-card">
+        <div class="screenshot-thumb">
+          <img src="screenshots/01-home.png" alt="Home — HeartMath dashboard" />
+        </div>
+        <div>
+          <h3>1 · Home</h3>
+          <p>Greeting, ECG line, “Start Here” hero, Daily Practice (Learn · Measure · Play), bottom tab bar</p>
+        </div>
+      </div>
+
+      <!-- 2 -->
+      <div class="screenshot-card">
+        <div class="screenshot-thumb">
+          <img src="screenshots/02-theme.png" alt="Choose a theme — five world cards" />
+        </div>
+        <div>
+          <h3>2 · Theme selection</h3>
+          <p>Play tab: Universe, Sky, Ocean, Forest, Mountain — <strong>Ocean</strong> jumps straight to level detail (Epipelagic · Drift/Swim/Dive), not an intermediate games list</p>
+        </div>
+      </div>
+
+      <!-- 3 -->
+      <div class="screenshot-card">
+        <div class="screenshot-thumb">
+          <img src="screenshots/03-ocean-level-list.png" alt="The Ocean Dive — six zone cards" />
+        </div>
+        <div>
+          <h3>3 · The Ocean Dive (zone list) — after Session Complete</h3>
+          <p><strong>Ocean Tide</strong> (top-bar <strong>My Shell Collection</strong> orb with <code>MyShellCollectionIcon</code> — white line-art bivalve + pearl, <code>react-native-svg</code> · orb hero, timeline, six zones) opens <strong>My Shell Collection</strong> on tap. Shown when returning via <strong>Done</strong> after a dive — or when browsing from that hub. First-time entry from <strong>Play → Ocean</strong> uses screenshot <strong>04</strong> (level detail) instead.</p>
+        </div>
+      </div>
+
+      <!-- 4 Full column content -->
+      <div class="screenshot-card">
+        <div class="screenshot-thumb">
+          <img src="screenshots/04-full-column-dive-content.png" alt="Full column dive — coherence card, Drift Swim Dive, Dive In" />
+        </div>
+        <div>
+          <h3>4 · Full column dive (content)</h3>
+          <p>Level detail: title, depth span copy, ocean orb, coherence band row, Drift / Swim / Dive selector, purple “Dive In” CTA</p>
+        </div>
+      </div>
+
+      <!-- 5 Breath calibration -->
+      <div class="screenshot-card">
+        <div class="screenshot-thumb">
+          <img src="screenshots/05-breath-deeper-dive-deeper.png" alt="Pre-session analyzing interstitial — dark gradient, staged copy, optional countdown rings" />
+        </div>
+        <div>
+          <h3>5 · Pre-session interstitial</h3>
+          <p>Full-screen <strong>sunlit surface-water</strong> gradient (cyan → teal → deeper blue-green); staged script lines fade in/out. Background decor per line: floating heart bubbles (heartbeat), <strong>NeonCreaturePng</strong> session creatures on “Discover sea animals” (RGBA fish + seahorse, same asset system as the swim layer), sequential shell-bubble bursts on the shells line (one bubble at a time, edge bands). Then countdown: digits <strong>3 · 2 · 1</strong> share a fixed ring stage with the circles (optically centred); both rings use slow, sin-eased “ripple” scale + opacity loops (~3.2s / ~4.1s); <strong>Game begins</strong> sits at the bottom above the safe area. White handoff → session.</p>
+        </div>
+      </div>
+
+      <!-- 6 -->
+      <div class="screenshot-card">
+        <div class="screenshot-thumb">
+          <img src="screenshots/06-session-epipelagic.png" alt="Session — Epipelagic 0 m" />
+        </div>
+        <div>
+          <h3>6 · Session · Epipelagic</h3>
+          <p>Full column session start: sunrays, central breathing orb, bubbles, seafloor, “EPIPELAGIC · 0 m”, coherence HUD</p>
+        </div>
+      </div>
+
+      <!-- 7 Help modal -->
+      <div class="screenshot-card">
+        <div class="screenshot-thumb">
+          <img src="screenshots/07-zone-help-full-column.png" alt="Full column dive help — five zones bullet list, Got it!" />
+        </div>
+        <div>
+          <h3>7 · Zone help · Full column dive</h3>
+          <p>Modal from “?” (example): educational copy for pelagic zones; dismiss control labelled <strong>Got it!</strong> — same pattern on Ocean Zone Info and session zone popup</p>
+        </div>
+      </div>
+
+      <!-- 8 -->
+      <div class="screenshot-card">
+        <div class="screenshot-thumb">
+          <img src="screenshots/08-session-mesopelagic.png" alt="Session — Mesopelagic with creatures and HRV" />
+        </div>
+        <div>
+          <h3>8 · Session · Mesopelagic</h3>
+          <p>Mid-water: swimming creature halos, depth rail, coherence card, bottom heart-trace + heart pills (~359 m example)</p>
+        </div>
+      </div>
+
+      <!-- 9 -->
+      <div class="screenshot-card">
+        <div class="screenshot-thumb">
+          <img src="screenshots/09-session-hadal.png" alt="Session — Hadalpelagic deep" />
+        </div>
+        <div>
+          <h3>9 · Session · Hadalpelagic</h3>
+          <p>Deep zone: dark water, shell / starfish icons, HRV row, “HADALPELAGIC” + depth (~7,919 m example)</p>
+        </div>
+      </div>
+
+      <!-- 10 -->
+      <div class="screenshot-card">
+        <div class="screenshot-thumb">
+          <img src="screenshots/10-discovery-overlay.png" alt="Discovered — All pelagic zones" />
+        </div>
+        <div>
+          <h3>10 · In-session discovery</h3>
+          <p>Achievement card: “Discovered · All pelagic zones”, depth span, model depth line — bridge to session end</p>
+        </div>
+      </div>
+
+      <!-- 11 -->
+      <div class="screenshot-card">
+        <div class="screenshot-thumb">
+          <img src="screenshots/11-session-complete.png" alt="Session complete — stats, mood, journal" />
+        </div>
+        <div>
+          <h3>11 · Session complete</h3>
+          <p>Stats, zone pill (→ Ocean Zone Info), sea-shell / pearl chips, <strong>My Shell Collection</strong> entry, mood row, My Notes, <strong>Done</strong> → Ocean Tide. No blocking zone popup on load.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══ PELAGIC ZONES ════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Pelagic Zones &amp; Color System</h2>
+      <p>Each ocean layer has a dedicated accent color that runs consistently across every surface —
+        the level card thumbnail, the breathing dot, zone badge, cinematic overlay text, and creature bioluminescent glow.</p>
+    </div>
+
+    <div class="zone-card">
+      <div class="zone-icon" style="background:linear-gradient(135deg,#2AA8D2,#4A90D8);">
+        <svg width="36" height="36" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="3" fill="white"/><circle cx="20" cy="20" r="8" stroke="white" stroke-width="1.5" opacity="0.5"/><circle cx="20" cy="20" r="14" stroke="white" stroke-width="1.5" opacity="0.3"/></svg>
+      </div>
+      <div class="zone-info" style="flex:1;">
+        <h3>Full Column Dive</h3>
+        <p class="zone-sub">Complete Ocean Column</p>
+        <p class="zone-depth">Surface to 10,994 m</p>
+      </div>
+      <div class="zone-dur">
+        <div class="zone-dur-val">Dive in 2:00</div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#4A90D8;box-shadow:0 0 8px #4A90D8;margin:6px auto 0;"></div>
+      </div>
+    </div>
+
+    <div class="zone-card">
+      <div class="zone-icon" style="background:linear-gradient(135deg,#5ABCE0,#4DD8F0);">
+        <svg width="36" height="36" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="3" fill="white"/><circle cx="20" cy="20" r="8" stroke="white" stroke-width="1.5" opacity="0.5"/><circle cx="20" cy="20" r="14" stroke="white" stroke-width="1.5" opacity="0.3"/></svg>
+      </div>
+      <div class="zone-info" style="flex:1;">
+        <h3>Epipelagic</h3>
+        <p class="zone-sub">Sunlight Zone</p>
+        <p class="zone-depth">0 – 200 m</p>
+      </div>
+      <div class="zone-dur">
+        <div class="zone-dur-val">Dive in 1:30</div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#4DD8F0;box-shadow:0 0 8px #4DD8F0;margin:6px auto 0;"></div>
+      </div>
+    </div>
+
+    <div class="zone-card">
+      <div class="zone-icon" style="background:linear-gradient(135deg,#4F91C8,#6A9FD8);">
+        <svg width="36" height="36" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="3" fill="white"/><circle cx="20" cy="20" r="8" stroke="white" stroke-width="1.5" opacity="0.5"/><circle cx="20" cy="20" r="14" stroke="white" stroke-width="1.5" opacity="0.3"/></svg>
+      </div>
+      <div class="zone-info" style="flex:1;">
+        <h3>Mesopelagic</h3>
+        <p class="zone-sub">Twilight Zone</p>
+        <p class="zone-depth">200 – 1,000 m</p>
+      </div>
+      <div class="zone-dur">
+        <div class="zone-dur-val">Dive in 1:30</div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#6A9FD8;box-shadow:0 0 8px #6A9FD8;margin:6px auto 0;"></div>
+      </div>
+    </div>
+
+    <div class="zone-card">
+      <div class="zone-icon" style="background:linear-gradient(135deg,#4A3EA7,#5870C8);">
+        <svg width="36" height="36" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="3" fill="white"/><circle cx="20" cy="20" r="8" stroke="white" stroke-width="1.5" opacity="0.5"/><circle cx="20" cy="20" r="14" stroke="white" stroke-width="1.5" opacity="0.3"/></svg>
+      </div>
+      <div class="zone-info" style="flex:1;">
+        <h3>Bathypelagic</h3>
+        <p class="zone-sub">Midnight Zone</p>
+        <p class="zone-depth">1,000 – 4,000 m</p>
+      </div>
+      <div class="zone-dur">
+        <div class="zone-dur-val">Dive in 1:30</div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#5870C8;box-shadow:0 0 8px #5870C8;margin:6px auto 0;"></div>
+      </div>
+    </div>
+
+    <div class="zone-card">
+      <div class="zone-icon" style="background:linear-gradient(135deg,#6A3A9E,#9060C8);">
+        <svg width="36" height="36" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="3" fill="white"/><circle cx="20" cy="20" r="8" stroke="white" stroke-width="1.5" opacity="0.5"/><circle cx="20" cy="20" r="14" stroke="white" stroke-width="1.5" opacity="0.3"/></svg>
+      </div>
+      <div class="zone-info" style="flex:1;">
+        <h3>Abyssopelagic</h3>
+        <p class="zone-sub">The Abyss</p>
+        <p class="zone-depth">4,000 – 6,000 m</p>
+      </div>
+      <div class="zone-dur">
+        <div class="zone-dur-val">Dive in 1:30</div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#9060C8;box-shadow:0 0 8px #9060C8;margin:6px auto 0;"></div>
+      </div>
+    </div>
+
+    <div class="zone-card">
+      <div class="zone-icon" style="background:linear-gradient(135deg,#7A2A80,#B860C8);">
+        <svg width="36" height="36" viewBox="0 0 40 40" fill="none"><circle cx="20" cy="20" r="3" fill="white"/><circle cx="20" cy="20" r="8" stroke="white" stroke-width="1.5" opacity="0.5"/><circle cx="20" cy="20" r="14" stroke="white" stroke-width="1.5" opacity="0.3"/></svg>
+      </div>
+      <div class="zone-info" style="flex:1;">
+        <h3>Hadalpelagic</h3>
+        <p class="zone-sub">The Trenches</p>
+        <p class="zone-depth">6,000 – 10,994 m</p>
+      </div>
+      <div class="zone-dur">
+        <div class="zone-dur-val">Dive in 1:30</div>
+        <div style="width:12px;height:12px;border-radius:50%;background:#B860C8;box-shadow:0 0 8px #B860C8;margin:6px auto 0;"></div>
+      </div>
+    </div>
+
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══ VISUAL LAYERS ════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Gameplay Visual Layers</h2>
+      <p>The active gameplay screen is composed of six stacked rendering layers that work together to create a convincing underwater environment. Every visual element responds dynamically to the simulated ocean depth.</p>
+    </div>
+    <div class="grid2">
+
+      <div class="layer-card">
+        <div class="layer-head"><div class="layer-num">1</div><h3>Scrolling Background</h3></div>
+        <p>The full ocean column SVG (<code>surface.svg</code>) scrolls vertically as depth increases, showing the continuous descent from 0 to 10,994 meters</p>
+        <span class="layer-tech">SVG asset · Easing function · Vertical pan</span>
+      </div>
+
+      <div class="layer-card">
+        <div class="layer-head"><div class="layer-num">2</div><h3>Ambient Overlay</h3></div>
+        <p>Pelagic tint gradient that darkens progressively with depth, transitioning from bright cyan through blues to total darkness</p>
+        <span class="layer-tech">Gradient animation · Depth-based opacity</span>
+      </div>
+
+      <div class="layer-card">
+        <div class="layer-head"><div class="layer-num">3</div><h3>Zone Lighting</h3></div>
+        <p>Sunrays with caustic shimmer in Epipelagic, dim blue wash in Mesopelagic, total darkness in deep zones</p>
+        <span class="layer-tech">Animated rays · Caustic patterns · Zone-specific</span>
+      </div>
+
+      <div class="layer-card">
+        <div class="layer-head"><div class="layer-num">4</div><h3>Seafloor Elements</h3></div>
+        <p>Coral, kelp, anemones, and rocks fade in near the zone floor, providing environmental context and visual variety</p>
+        <span class="layer-tech">Asset placement · Fade-in triggers</span>
+      </div>
+
+      <div class="layer-card">
+        <div class="layer-head"><div class="layer-num">5</div><h3>Rising Bubbles</h3></div>
+        <p>Physics-based bubble system with transparent body, specular highlight, and refraction arc. Density inversely proportional to depth</p>
+        <span class="layer-tech">Three-layer rendering · Physics simulation</span>
+      </div>
+
+      <div class="layer-card">
+        <div class="layer-head"><div class="layer-num">6</div><h3>Swimming Creatures</h3></div>
+        <p>8 RGBA-transparent PNG creature icons in three parallax swim lanes. Each icon is white-tinted (<code>tintColor="#FFFFFF"</code>) with zone-coloured concentric glow rings behind it, horizontal swim animation, and sine-wave undulation</p>
+        <span class="layer-tech">Parallax scrolling · Transparent PNG · Zone-specific glow rings</span>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══ CREATURE SYSTEM ══════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Creature Distribution System</h2>
+      <p>8 RGBA-transparent PNG creature icons are distributed across zones based on real-world marine habitats. Each creature appears as a white silhouette over a zone-coloured neon glow halo. Animation includes horizontal swim with direction flipping (via <code>scaleX</code>), sine-wave vertical undulation, a 1,400 ms eased fade in/out, and a triple-ring pulsing glow at 3.2 s independent of swim opacity.</p>
+    </div>
+
+    <div class="creature-card">
+      <div class="creature-dot" style="background:#4DD8F0;box-shadow:0 0 8px #4DD8F0;"></div>
+      <div style="flex:1;">
+        <h3>Epipelagic (Sunlight Zone · 0 – 200 m)</h3>
+        <div class="creature-chips">
+          <span class="creature-chip">Dolphin</span>
+          <span class="creature-chip">Fish</span>
+          <span class="creature-chip">Seahorse</span>
+          <span class="creature-chip">Scallop</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="creature-card">
+      <div class="creature-dot" style="background:#6A9FD8;box-shadow:0 0 8px #6A9FD8;"></div>
+      <div style="flex:1;">
+        <h3>Mesopelagic (Twilight Zone · 200 – 1,000 m)</h3>
+        <div class="creature-chips">
+          <span class="creature-chip">Pufferfish</span>
+          <span class="creature-chip">Seahorse</span>
+          <span class="creature-chip">Starfish</span>
+          <span class="creature-chip">Conch</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="creature-card">
+      <div class="creature-dot" style="background:#5870C8;box-shadow:0 0 8px #5870C8;"></div>
+      <div style="flex:1;">
+        <h3>Bathypelagic (Midnight Zone · 1,000 – 4,000 m)</h3>
+        <div class="creature-chips">
+          <span class="creature-chip">Octopus</span>
+          <span class="creature-chip">Starfish</span>
+          <span class="creature-chip">Conch</span>
+          <span class="creature-chip">Scallop</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="creature-card">
+      <div class="creature-dot" style="background:#9060C8;box-shadow:0 0 8px #9060C8;"></div>
+      <div style="flex:1;">
+        <h3>Abyssopelagic (The Abyss · 4,000 – 6,000 m)</h3>
+        <div class="creature-chips">
+          <span class="creature-chip">Octopus</span>
+          <span class="creature-chip">Starfish</span>
+          <span class="creature-chip">Pufferfish</span>
+          <span class="creature-chip">Conch</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="creature-card">
+      <div class="creature-dot" style="background:#B860C8;box-shadow:0 0 8px #B860C8;"></div>
+      <div style="flex:1;">
+        <h3>Hadalpelagic (The Trenches · 6,000 – 10,994 m)</h3>
+        <div class="creature-chips">
+          <span class="creature-chip">Octopus</span>
+          <span class="creature-chip">Starfish</span>
+          <span class="creature-chip">Conch</span>
+          <span class="creature-chip">Scallop</span>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══ KEY COMPONENTS ═══════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Key Interactive Components</h2>
+    </div>
+    <div class="grid2">
+
+      <div class="comp-card">
+        <h3>OceanHeroOrb</h3>
+        <p>Custom SVG ocean globe with atmospheric glow, pelagic zone bands, meridian grid arcs, polar shimmer cap, and orbiting sparkles</p>
+        <ul class="comp-details">
+          <li><span class="comp-bullet">•</span><span>SVG-only, no external assets</span></li>
+          <li><span class="comp-bullet">•</span><span>ViewBox 148 × 148</span></li>
+          <li><span class="comp-bullet">•</span><span>Animated floating sparkles</span></li>
+        </ul>
+      </div>
+
+      <div class="comp-card">
+        <h3>BreathingDot</h3>
+        <p>Animated breathing visual with three concentric rings that expand and contract in sync with breathing phases</p>
+        <ul class="comp-details">
+          <li><span class="comp-bullet">•</span><span>3.2s inhale + 3.2s exhale cycle</span></li>
+          <li><span class="comp-bullet">•</span><span>Zone-based color tracking</span></li>
+          <li><span class="comp-bullet">•</span><span><code>Easing.inOut(Easing.sin)</code> animation</span></li>
+        </ul>
+      </div>
+
+      <div class="comp-card">
+        <h3>OceanSwimmingCreatures</h3>
+        <p>Three parallax swim lanes at different scales and speeds. Each creature is a white-tinted transparent PNG with three concentric zone-coloured View circles behind it forming a neon halo that breathes independently from the swim opacity</p>
+        <ul class="comp-details">
+          <li><span class="comp-bullet">•</span><span>Background lane: 20 px icon, 55% peak opacity, ×0.65 speed</span></li>
+          <li><span class="comp-bullet">•</span><span>Midground lane: 27 px icon, 78% peak opacity, ×0.90 speed</span></li>
+          <li><span class="comp-bullet">•</span><span>Foreground lane: 34 px icon, 95% peak opacity, ×1.15 speed</span></li>
+          <li><span class="comp-bullet">•</span><span>Glow rings: inner (×1.05) · mid (×1.35) · outer ambient (×1.80)</span></li>
+          <li><span class="comp-bullet">•</span><span><code>glowPulse</code> 0.28 → 1.0 drives ring opacity (4–14 % / 10–30 % / 18–48 %)</span></li>
+          <li><span class="comp-bullet">•</span><span>Fade in/out: 1,400 ms with <code>Easing.inOut(Easing.quad)</code></span></li>
+          <li><span class="comp-bullet">•</span><span><code>tintColor="#FFFFFF"</code> on RGBA-transparent PNGs — creature silhouettes appear white against zone glow</span></li>
+        </ul>
+      </div>
+
+      <div class="comp-card">
+        <h3>HrvWaveStripHeart</h3>
+        <p>A compact heart-trace parametric wave rendered in SVG that lives in the bottom HRV widget during the active Ocean session. All three visual properties respond live to the smoothed HRV value, creating an intuitive read of the user's coherence state at a glance</p>
+        <ul class="comp-details">
+          <li><span class="comp-bullet">•</span><span><strong>Amplitude:</strong> 18 % of height at HRV 0 → 50 % at HRV 1 (flat = incoherent, tall = coherent)</span></li>
+          <li><span class="comp-bullet">•</span><span><strong>Cycle count:</strong> 2.2 cycles at HRV 0 (rapid, choppy) → 1.2 cycles at HRV 1 (broad, smooth)</span></li>
+          <li><span class="comp-bullet">•</span><span><strong>Scroll speed:</strong> base 0.075 + 0.160 × HRV phase increment per tick</span></li>
+          <li><span class="comp-bullet">•</span><span>HRV smoothed with exponential filter: <code>α = 1 − e^(−2.8 × dt)</code></span></li>
+          <li><span class="comp-bullet">•</span><span>Dot position slides left→right with HRV; <code>rAF</code>-driven at 60 fps</span></li>
+          <li><span class="comp-bullet">•</span><span>Formula: <code>f(t) = 13·cos(t) − 5·cos(2t) − 2·cos(3t) − cos(4t)</code></span></li>
+        </ul>
+      </div>
+
+      <div class="comp-card">
+        <h3>HeartCoherencePills</h3>
+        <p>Three heart-shaped SVG icons aligned horizontally in the HRV widget, representing Low, Medium, and High coherence tiers. The HRV percentage is displayed inside each heart, and the active tier reflects the current coherence reading</p>
+        <ul class="comp-details">
+          <li><span class="comp-bullet">•</span><span>Low: orange fill (<code>#FFCB9D</code>), activates when score &lt; 0.5</span></li>
+          <li><span class="comp-bullet">•</span><span>Medium: blue fill (<code>#9DD9FF</code>), activates when 0.5 ≤ score &lt; 1.0</span></li>
+          <li><span class="comp-bullet">•</span><span>High: green fill (<code>#6EDDA0</code>), activates when score ≥ 1.0</span></li>
+          <li><span class="comp-bullet">•</span><span>Percentage text centred inside each heart via <code>SvgText</code></span></li>
+          <li><span class="comp-bullet">•</span><span>Compact mode: 44 px icon, 6.2 SVG-unit font, displayed in 100 px max-height widget</span></li>
+        </ul>
+      </div>
+
+      <div class="comp-card">
+        <h3>ZoneBadgeIcon</h3>
+        <p>Six hand-drawn SVG badge designs representing each pelagic zone, used as post-session reward icons</p>
+        <ul class="comp-details">
+          <li><span class="comp-bullet">•</span><span>Zone-specific geometric symbols</span></li>
+          <li><span class="comp-bullet">•</span><span>Accent color coordination</span></li>
+          <li><span class="comp-bullet">•</span><span>Sun disc, crescent moon, prism, diamond, chevron stack</span></li>
+        </ul>
+      </div>
+
+      <div class="comp-card">
+        <h3>OceanZoneLightingLayer</h3>
+        <p>Dynamic lighting system simulating zone-appropriate light conditions from sunrays to total darkness</p>
+        <ul class="comp-details">
+          <li><span class="comp-bullet">•</span><span>9 animated sunray fans (Epipelagic)</span></li>
+          <li><span class="comp-bullet">•</span><span>Cool blue wash (Mesopelagic)</span></li>
+          <li><span class="comp-bullet">•</span><span>Total darkness with bioluminescence (deep zones)</span></li>
+        </ul>
+      </div>
+
+      <div class="comp-card">
+        <h3>Session mood faces (<code>SessionRewardsScreen</code>)</h3>
+        <p>Five flat vector faces (react-native-svg): <strong>Very sad · Sad · The Same · Happy · Very happy</strong> — gradient ring when selected</p>
+        <ul class="comp-details">
+          <li><span class="comp-bullet">•</span><span>Per-tier blues / cyan / teal / lime stroke &amp; fill</span></li>
+          <li><span class="comp-bullet">•</span><span>Horizontal row, responsive diameter</span></li>
+          <li><span class="comp-bullet">•</span><span>Replaces legacy three PNG emoticons</span></li>
+        </ul>
+      </div>
+
+      <div class="comp-card">
+        <h3>ShellCollectionPanel</h3>
+        <p><strong>My Shell Collection</strong> — full-screen stack route; beach background + teal overlay; <strong>Shells / Pearls</strong> tabs; 3×5 glass heart grid with mild glitter animation on enter; tap collected shell/pearl → push <code>SeaShellDetail</code> (<strong>Got it!</strong> pops back to the gallery)</p>
+        <ul class="comp-details">
+          <li><span class="comp-bullet">•</span><span>Not an RN <code>Modal</code> — <code>ShellCollection</code> screen in Play stack</span></li>
+          <li><span class="comp-bullet">•</span><span>Empty slots show shallow heart placeholders; “Dive in” → <code>OceanLevelDetail</code> (Epipelagic)</span></li>
+        </ul>
+      </div>
+
+      <div class="comp-card">
+        <h3>MyShellCollectionIcon</h3>
+        <p>White vector control on <strong>Ocean Tide</strong> (and reusable). <strong>Open shell with pearl</strong> — upper/lower valves, radial ridges, filled pearl — drawn with <code>Path</code>, <code>Line</code>, <code>Circle</code> in a 64×64 viewBox (<code>react-native-svg</code>). <code>color</code> prop (default <code>#FFFFFF</code>) drives strokes and pearl fill for gradients and glass surfaces.</p>
+        <ul class="comp-details">
+          <li><span class="comp-bullet">•</span><span>Ships at 22 px inside the cyan–blue gradient orb; <code>navigate('ShellCollection')</code></span></li>
+          <li><span class="comp-bullet">•</span><span>Replaces legacy HeartMath shell glyph pipeline (<code>myShellCollectionGlyph.js</code> / <code>my-shell-collection-icon.svg</code>) for the in-app CTA</span></li>
+          <li><span class="comp-bullet">•</span><span>Optional <code>assets/my-shell-collection-shell-icon.png</code> may exist as reference art only — not bundled via <code>require</code></span></li>
+        </ul>
+      </div>
+
+      <div class="comp-card">
+        <h3>CelebrationOverlay</h3>
+        <p>Full-screen achievement layer that sits above the rewards gradient — four corner accents plus 14 floating sparkle particles that continuously animate on the Session Complete screen</p>
+        <ul class="comp-details">
+          <li><span class="comp-bullet">•</span><span>4 SVG corner accents: arc, tick marks, sparkle cross, satellite dots</span></li>
+          <li><span class="comp-bullet">•</span><span>14 <code>SparkleParticle</code> instances at staggered delays (0–920 ms)</span></li>
+          <li><span class="comp-bullet">•</span><span>Each particle: scale 0→1.2→1→0.4, float upward 34–58 px, fade out</span></li>
+          <li><span class="comp-bullet">•</span><span>Cycles auto-repeat with 0.6–2 s random gap between runs</span></li>
+          <li><span class="comp-bullet">•</span><span>Badge icon springs in on mount: <code>Animated.spring</code> tension 48 / friction 5</span></li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══ DESIGN PRINCIPLES ════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Design Principles &amp; Rationale</h2>
+    </div>
+
+    <div class="principle">
+      <h3>Color Language &amp; Depth Mapping</h3>
+      <p>Each pelagic zone has a dedicated accent color that creates a consistent visual language throughout the game. The color transitions mirror the actual color spectrum of ocean depth — from bright cyan at the surface through blues and indigos to deep purple-magenta at the trenches.</p>
+      <ul class="principle-list">
+        <li><span class="principle-arrow">→</span><span>Epipelagic: <strong>#4DD8F0</strong> (cyan) — bright, sunlit, energetic</span></li>
+        <li><span class="principle-arrow">→</span><span>Mesopelagic: <strong>#6A9FD8</strong> (mid-blue) — transitional twilight</span></li>
+        <li><span class="principle-arrow">→</span><span>Bathypelagic: <strong>#5870C8</strong> (indigo) — deep midnight blue</span></li>
+        <li><span class="principle-arrow">→</span><span>Abyssopelagic: <strong>#9060C8</strong> (deep purple) — abyssal mystery</span></li>
+        <li><span class="principle-arrow">→</span><span>Hadalpelagic: <strong>#B860C8</strong> (violet-magenta) — extreme depth</span></li>
+      </ul>
+    </div>
+
+    <div class="principle">
+      <h3>Scrolling Background Architecture</h3>
+      <p>The entire ocean column is encoded in a single <code>surface.svg</code> file spanning from 0 to 10,994 meters. This approach provides a continuous sense of descent through real ocean geography rather than discrete zone-switched backgrounds, creating a more immersive and scientifically authentic experience.</p>
+      <ul class="principle-list">
+        <li><span class="principle-arrow">→</span><span>Single SVG asset for entire dive</span></li>
+        <li><span class="principle-arrow">→</span><span>Easing function converts depth to scroll position</span></li>
+        <li><span class="principle-arrow">→</span><span>Maintains visual continuity across zones</span></li>
+        <li><span class="principle-arrow">→</span><span>Reduces asset count and load time</span></li>
+      </ul>
+    </div>
+
+    <div class="principle">
+      <h3>Parallax Creature Depth</h3>
+      <p>Three simultaneous creature swim lanes at different scales, speeds, and glow intensities create a genuine sense of underwater 3D space. Each layer also carries a scaled glow multiplier — foreground creatures radiate the strongest bioluminescent halos, making them feel physically closer.</p>
+      <ul class="principle-list">
+        <li><span class="principle-arrow">→</span><span>Background: 30px, 52% opacity, ×0.65 speed, glowMul 0.65</span></li>
+        <li><span class="principle-arrow">→</span><span>Midground: 40px, 75% opacity, ×0.90 speed, glowMul 0.88</span></li>
+        <li><span class="principle-arrow">→</span><span>Foreground: 50px, 95% opacity, ×1.15 speed, glowMul 1.20</span></li>
+        <li><span class="principle-arrow">→</span><span>Size + speed + glow intensity = layered depth perception</span></li>
+      </ul>
+    </div>
+
+    <div class="principle">
+      <h3>Bioluminescent Glow System</h3>
+      <p>Each creature icon (an RGBA-transparent PNG, white-tinted) floats above three concentric zone-coloured <code>View</code> circles that form its neon halo. All three rings are wrapped in <code>Animated.View</code> components whose <code>opacity</code> is driven by a looping <code>glowPulse</code> value, breathing between 0.28 and 1.0 at 3.2 s independently of the swim opacity — mimicking the rhythmic bio-flash of deep-sea organisms. In zones below 1,000 m where all ambient light is removed, this pulsing glow becomes the only visible light source on screen.</p>
+      <ul class="principle-list">
+        <li><span class="principle-arrow">→</span><span>Inner tight ring (×1.05 icon): opacity pulses 18–48 %, brightest layer</span></li>
+        <li><span class="principle-arrow">→</span><span>Mid bloom ring (×1.35 icon): opacity pulses 10–30 %, mid halo</span></li>
+        <li><span class="principle-arrow">→</span><span>Outer ambient ring (×1.80 icon): opacity pulses 4–14 %, wide diffuse aura</span></li>
+        <li><span class="principle-arrow">→</span><span>Ring colour matches zone tint — glow is visually zone-aware even on white icons</span></li>
+        <li><span class="principle-arrow">→</span><span>No <code>shadowColor</code> or <code>shadowRadius</code> props used — crash-safe on Android New Architecture</span></li>
+        <li><span class="principle-arrow">→</span><span>Total darkness &gt;1,000 m — pulsing glow halos become the only visible light</span></li>
+      </ul>
+    </div>
+
+    <div class="principle">
+      <h3>Celebration Moments &amp; Achievement Delight</h3>
+      <p>The Session Complete screen layers an animated celebration overlay — 14 floating sparkle particles and four corner accent ornaments — directly above the session rewards gradient (universe: magenta; ocean: blue–teal). The sparkle badge icon springs in elastically on mount. These micro-animations signal achievement without interrupting the reflective calm of the post-session moment.</p>
+      <ul class="principle-list">
+        <li><span class="principle-arrow">→</span><span>Corner accents: SVG arc + tick marks + sparkle cross in all 4 corners</span></li>
+        <li><span class="principle-arrow">→</span><span>14 sparkle particles staggered 0–920 ms; repeat every 0.6–2 s</span></li>
+        <li><span class="principle-arrow">→</span><span>Badge springs in: <code>Animated.spring</code> tension 48, friction 5</span></li>
+        <li><span class="principle-arrow">→</span><span><code>pointerEvents="none"</code> — celebration never blocks interaction</span></li>
+      </ul>
+    </div>
+
+    <div class="principle">
+      <h3>Seamless Rewards Screen</h3>
+      <p>Session stats and post-session mood check-in are combined on a single ScrollView with one gradient background. This avoids a screen transition at the emotionally resonant moment of completion, keeping the user in a calm, uninterrupted flow state while still capturing feedback.</p>
+      <ul class="principle-list">
+        <li><span class="principle-arrow">→</span><span>No jarring screen transitions</span></li>
+        <li><span class="principle-arrow">→</span><span>Single ScrollView gradient — universe: magenta/purple; ocean: Session Complete blue–teal (<code>gradients.gameSessionOcean</code>)</span></li>
+        <li><span class="principle-arrow">→</span><span>Stats above, zone badge reward, quote, mood check-in below</span></li>
+        <li><span class="principle-arrow">→</span><span>Maintains emotional flow state through completion</span></li>
+      </ul>
+    </div>
+
+    <div class="principle">
+      <h3>Glassmorphism &amp; Legibility</h3>
+      <p>Stat tiles and card surfaces use semi-transparent white backgrounds (14% opacity) with slightly more opaque borders (22% opacity). Text sits on these glassmorphic panes rather than directly on the gradient, ensuring legibility across the full range of zone colors without requiring per-zone text color overrides.</p>
+      <ul class="principle-list">
+        <li><span class="principle-arrow">→</span><span><code>rgba(255,255,255,0.14)</code> backgrounds</span></li>
+        <li><span class="principle-arrow">→</span><span><code>rgba(255,255,255,0.22)</code> borders</span></li>
+        <li><span class="principle-arrow">→</span><span>Backdrop blur for depth</span></li>
+        <li><span class="principle-arrow">→</span><span>Universal legibility without color overrides</span></li>
+      </ul>
+    </div>
+
+    <div class="principle">
+      <h3>HRV-Synchronized Wave Display</h3>
+      <p>The heart-trace wave in the bottom HRV widget is not merely decorative — all three of its visual properties respond continuously to the smoothed HRV score. This creates an immediate, intuitive read of the user's physiological state without requiring them to interpret numbers: a tall, broad, slow wave signals coherence; a flat, tight, rapid wave signals a need to breathe more deeply.</p>
+      <ul class="principle-list">
+        <li><span class="principle-arrow">→</span><span><strong>Amplitude</strong> scales 18 %→50 % of widget height — wave height grows with coherence</span></li>
+        <li><span class="principle-arrow">→</span><span><strong>Cycle count</strong> falls 2.2→1.2 — choppy peaks at low HRV, broad rhythm at high HRV</span></li>
+        <li><span class="principle-arrow">→</span><span><strong>Scroll speed</strong> increases with HRV — the wave moves faster as the heart becomes more coherent</span></li>
+        <li><span class="principle-arrow">→</span><span>All three dimensions update through a single exponential-smoothed HRV reference, so the wave morphs fluidly rather than jumping</span></li>
+        <li><span class="principle-arrow">→</span><span>Dot position also slides left→right with HRV, adding a fourth reinforcing visual cue</span></li>
+      </ul>
+    </div>
+
+    <div class="principle">
+      <h3>Coherence-Driven Depth Progression</h3>
+      <p>The speed of descent and the ultimate depth reached during a session are directly and visibly proportional to the user's coherence score. A narrow flat mapping is replaced by a wide proportional range — low coherence barely moves the ocean, while high coherence carries the diver all the way to maximum depth with time to spare. This creates genuine stakes: the ocean itself becomes a biofeedback display.</p>
+      <ul class="principle-list">
+        <li><span class="principle-arrow">→</span><span>Score normalized: <code>t = (score − 0.15) / 1.3</code>, then <code>factor = 0.05 + t × 1.35</code></span></li>
+        <li><span class="principle-arrow">→</span><span>Low coherence (score ≈ 0.15) → factor 0.05 — ocean barely stirs</span></li>
+        <li><span class="principle-arrow">→</span><span>Medium coherence (score ≈ 0.80) → factor ≈ 0.73 — steady descent</span></li>
+        <li><span class="principle-arrow">→</span><span>High coherence (score ≈ 1.45) → factor 1.40 — reaches max depth in ~86 s of a 2-min session</span></li>
+        <li><span class="principle-arrow">→</span><span>Every downstream visual (background scroll, depth counter, bubbles, creature zones, tint) reacts through the same <code>diveDriveProgress</code> signal</span></li>
+      </ul>
+    </div>
+
+    <div class="principle">
+      <h3>Scientific Authenticity</h3>
+      <p>All zone names, depth boundaries, temperature data, pressure values, and creature examples match peer-reviewed oceanographic sources (NOAA zone definitions). The depth counter shows actual modeled depth in meters, grounding the fantasy of "diving" in real scientific data and creating educational value.</p>
+      <ul class="principle-list">
+        <li><span class="principle-arrow">→</span><span>NOAA-verified zone boundaries</span></li>
+        <li><span class="principle-arrow">→</span><span>Real depth measurements in meters</span></li>
+        <li><span class="principle-arrow">→</span><span>Scientifically accurate creature placement</span></li>
+        <li><span class="principle-arrow">→</span><span>Educational content in Help modals</span></li>
+        <li><span class="principle-arrow">→</span><span>Supplementary research taxonomy in <em>Sea Animals Shells Pearls.xlsx</em> (animals · shells · pearls by zone), mirrored in this document</span></li>
+      </ul>
+    </div>
+
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ══ TECHNICAL IMPLEMENTATION ════════════════════════════════════ -->
+  <section class="section">
+    <div class="impl-box">
+      <h2>Technical Implementation Notes</h2>
+      <p><strong>React Native Animation:</strong> All creature movements, bubble physics, breathing dot, sparkle particles, and badge spring-in use React Native's <code>Animated</code> API with easing functions (<code>Easing.inOut</code>, <code>Easing.sin</code>, <code>Easing.quad</code>, <code>Animated.spring</code>) for smooth, organic motion throughout.</p>
+      <p><strong>Creature Icon System:</strong> Creature icons are RGBA-transparent PNG files (colorType 6, verified via PNG IHDR inspection). <code>tintColor="#FFFFFF"</code> colours only the non-transparent silhouette pixels, leaving the background fully clear. Three concentric <code>View</code> circles behind the image carry the zone tint colour and are animated via <code>glowPulse.interpolate()</code> — avoiding any <code>shadowColor</code> / <code>shadowRadius</code> usage that crashes on Android New Architecture. The <code>scaleX</code> direction flip lives in a plain <code>View</code> wrapper, never mixed with the native-driver animated <code>translateX</code> / <code>translateY</code>.</p>
+      <p><strong>Pre-session overlay (<code>OceanAnalyzingInterstitial</code>):</strong> Background is a <strong>sunlit epipelagic-style</strong> linear gradient (lighter cyan–teal toward the top), not a dark navy fill. After the script, the countdown renders rings only in this phase (not over the script lines). Rings and digits sit in the same <code>260×260</code> box so the number stays aligned with the circles; <code>lineHeight</code> matches <code>fontSize</code> and Android <code>includeFontPadding: false</code> reduce baseline drift. Two independent <code>Animated</code> loops drive outer vs inner ring scale and opacity for a slow ripple; ring strokes use slightly stronger white borders on the brighter background. <code>useSafeAreaInsets()</code> pads the <strong>Game begins</strong> caption. <strong>Decor layer</strong> (<code>OceanAnalyzingInterstitialDecor</code>): reuses exported <code>NeonCreaturePng</code> for the sea-animals step; shell emojis spawn in a queue (next shell after the previous burst completes + gap), not on a fast interval.</p>
+      <p><strong>Navigation:</strong> <code>playThemes.js</code> has <strong>no</strong> <code>ocean</code> entry under <code>GAMES_BY_THEME_ID</code> — Ocean is not a “games list” theme. <code>PlayThemesScreen</code> navigates to <code>OceanLevelDetail</code> with <code>levelId: 'epipelagic'</code>, <code>durationSec: 90</code>. <code>OceanTideScreen</code> is pushed from <code>SessionRewardsScreen</code> when the user taps <strong>Done</strong> after an ocean session. The Ocean Tide top bar uses <code>MyShellCollectionIcon</code> (inline SVG, not PNG <code>tintColor</code>) for the collection entry. <code>SeaShellDetailScreen</code> shares the ocean Session Complete gradient (<code>gradients.gameSessionOcean</code>).</p>
+      <p><strong>HRV-Synchronized Wave:</strong> <code>HrvWaveStripHeart</code> runs a <code>requestAnimationFrame</code> loop that advances the wave phase and exponentially smooths the HRV target each frame. Both <code>heartTracePath()</code> and <code>heartTraceYAtX()</code> receive the live smoothed HRV value and derive amplitude (<code>height × (0.18 + 0.32 × hrv)</code>) and cycle count (<code>2.2 − hrv × 1.0</code>) on every frame, making the wave shape a real-time biofeedback display.</p>
+      <p><strong>Coherence-Driven Dive:</strong> The 50 ms session ticker normalizes <code>scoreRef.current</code> to a 0–1 range and maps it to a <code>coherenceFactor</code> of 0.05–1.40. This drives <code>coherenceDiveProgressRef</code>, which in turn controls the background scroll position, depth meter, bubble density, creature zone selection, pelagic tint, lighting strength, and cinematic overlay — all through a single <code>diveDriveProgress</code> value.</p>
+      <p><strong>Performance Optimization:</strong> All six visual layers use <code>useNativeDriver: true</code>. Creature spawning reads <code>depthMRef.current</code> inside stable <code>useCallback</code>s, preventing animation restarts on every depth tick and maintaining 60 fps on mid-range devices.</p>
+      <p><strong>SVG Architecture:</strong> Decorative elements (badges, hero orb, corner accents, sparkle particles, breathing dot, HRV wave, heart pills, <strong>My Shell Collection</strong> CTA on Ocean Tide) are inline SVG components. Creature icons are RGBA-transparent PNGs, reducing complexity while keeping the asset footprint small — no @2x/@3x variants needed for the creature set.</p>
+      <p><strong>Celebration Layer:</strong> The <code>CelebrationOverlay</code> uses <code>StyleSheet.absoluteFill</code> with <code>pointerEvents="none"</code> so it renders above all content without blocking any touch events. Each <code>SparkleParticle</code> manages its own animation loop via a recursive closure, keeping the particle system self-contained and easy to tune.</p>
+      <p><strong>Accessibility:</strong> Despite the rich visual language, all interactive elements (level selection, mood faces, buttons) maintain adequate contrast ratios and carry screen reader labels for vision-impaired users.</p>
+    </div>
+  </section>
+
+  <!-- ══ FOOTER ═══════════════════════════════════════════════════════ -->
+  <footer class="footer">
+    <p>Last updated: 31 March 2026 — Ocean Dive v1.4, HeartMath Wellness App<br/>
+    Updates: <strong>Play → Ocean</strong> → <code>OceanLevelDetail</code> (no Theme Games screen); <strong>Ocean Tide</strong> after Session Complete <strong>Done</strong> only — top bar <strong>My Shell Collection</strong> orb uses <code>MyShellCollectionIcon</code> (white SVG <strong>open shell + pearl</strong>, not legacy glyph / raster CTA) · <strong>no</strong> zone popup on Session Complete (zone pill → <code>OceanZoneInfo</code>) · <strong>My Shell Collection</strong> full-screen route, beach BG, heart glitter animation · Pre-session interstitial <strong>surface-water gradient</strong> · <strong>Ocean treasures by zone</strong> research block · Pre-session: <strong>3·2·1</strong> in ring stage, <strong>Game begins</strong> · <strong>NeonCreaturePng</strong> · sequential shell bubbles · Experience video <code>OceanFullColumnDive.mp4</code> · Key Screens <code>01</code>–<code>11</code> · RGBA creatures · HRV wave · Coherence dive · Android-safe glow.<br/>
+    Design rationale from source + research spreadsheet <em>Sea Animals Shells Pearls.xlsx</em>.</p>
+  </footer>
+
+</div>
+
+<script>
+  const STORAGE_KEY = 'ocean-rationale-theme';
+
+  function applyTheme(mode) {
+    const isDark = mode === 'dark';
+    document.body.classList.toggle('dark', isDark);
+    document.getElementById('tgl-label').textContent = isDark ? 'Dark' : 'Light';
+    try { localStorage.setItem(STORAGE_KEY, mode); } catch(e) {}
+  }
+
+  function toggleTheme() {
+    applyTheme(document.body.classList.contains('dark') ? 'light' : 'dark');
+  }
+
+  (function () {
+    let saved;
+    try { saved = localStorage.getItem(STORAGE_KEY); } catch(e) {}
+    if (saved) {
+      applyTheme(saved);
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      applyTheme('dark');
+    }
+    // default: light (no class on body)
+  })();
+</script>
+</body>
+</html>

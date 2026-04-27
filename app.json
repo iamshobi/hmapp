@@ -7,23 +7,83 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash-hearmath-icon.png",
+      "backgroundColor": "#311B92",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "dark": {
+        "backgroundColor": "#311B92"
+      }
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "splash": {
+        "image": "./assets/splash-hearmath-icon.png",
+        "backgroundColor": "#311B92",
+        "resizeMode": "contain",
+        "dark": {
+          "backgroundColor": "#311B92"
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      }
+        "backgroundColor": "#311B92",
+        "foregroundImage": "./assets/icon.png"
+      },
+      "splash": {
+        "image": "./assets/splash-hearmath-icon.png",
+        "backgroundColor": "#311B92",
+        "resizeMode": "contain",
+        "dark": {
+          "backgroundColor": "#311B92"
+        }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ],
+      "package": "com.anonymous.wellnessapp"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/icon.png"
+    },
+    "plugins": [
+      "expo-audio",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-hearmath-icon.png",
+          "backgroundColor": "#311B92",
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#311B92"
+          },
+          "android": {
+            "image": "./assets/splash-hearmath-icon.png",
+            "backgroundColor": "#311B92",
+            "resizeMode": "contain",
+            "dark": {
+              "backgroundColor": "#311B92"
+            }
+          },
+          "ios": {
+            "image": "./assets/splash-hearmath-icon.png",
+            "backgroundColor": "#311B92",
+            "resizeMode": "contain",
+            "dark": {
+              "backgroundColor": "#311B92"
+            }
+          }
+        }
+      ],
+      "expo-asset",
+      "expo-font"
+    ]
   }
 }

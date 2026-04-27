@@ -1,0 +1,1716 @@
+/**
+ * My Progress — HeartMath-style: warm header, Practice Stats, streaks, community banner, MoodMeter.
+ */
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+  Modal,
+  TextInput,
+  Alert,
+  Share,
+  Animated,
+  PanResponder,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { Plus, Heart, Sparkles, Settings, MessageCircle, Pencil, Trash2, Check } from 'lucide-react-native';
+import ProgressSnapshotBar from '../components/ProgressSnapshotBar';
+import ProgressMilestoneCard from '../components/ProgressMilestoneCard';
+import ProgressSurveyDeltaCard from '../components/ProgressSurveyDeltaCard';
+import ProgressViewTabs from '../components/ProgressViewTabs';
+import ProgressCheckinsCalendar from '../components/ProgressCheckinsCalendar';
+import { TrendLayerComparisonCard } from '../components/sessionInsights/SessionInsightsUI';
+import { useBreathGarden } from '../context/BreathGardenContext';
+import { colors, spacing, borderRadius, typography } from '../theme';
+
+const PROGRESS_FONT_REGULAR = 'Sailec-Light';
+const PROGRESS_FONT_MEDIUM = 'Sailec-Medium';
+const PROGRESS_FONT_BOLD = 'Sailec-Bold';
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+function getScienceTypeFromSessions(totalSessions) {
+  if (totalSessions >= 100) return 'pro';
+  if (totalSessions >= 17) return 'advanced';
+  if (totalSessions >= 5) return 'building';
+  if (totalSessions >= 1) return 'firstTime';
+  return 'zero';
+}
+
+function normalizePreviewType(type) {
+  if (type === 'growing') return 'building';
+  return type;
+}
+
+function calcShiftPct(metric, before, after) {
+  if (!Number.isFinite(before) || !Number.isFinite(after) || before <= 0) return 0;
+  const delta = metric === 'stress' ? before - after : after - before;
+  return Math.max(0, Math.round((delta / before) * 100));
+}
+
+function getPreviewAveragesByType(type) {
+  const t = normalizePreviewType(type);
+  if (t === 'pro') {
+    return {
+      stressBefore: 8,
+      stressAfter: 4,
+      energyBefore: 3,
+      energyAfter: 7,
+      moodBefore: 3,
+      moodAfter: 8,
+    };
+  }
+  if (t === 'advanced') {
+    return {
+      stressBefore: 7,
+      stressAfter: 4,
+      energyBefore: 3,
+      energyAfter: 7,
+      moodBefore: 4,
+      moodAfter: 7,
+    };
+  }
+  if (t === 'building') {
+    return {
+      stressBefore: 7,
+      stressAfter: 5,
+      energyBefore: 4,
+      energyAfter: 6,
+      moodBefore: 4,
+      moodAfter: 6,
+    };
+  }
+  if (t === 'zero') {
+    return {
+      stressBefore: 5,
+      stressAfter: 5,
+      energyBefore: 5,
+      energyAfter: 5,
+      moodBefore: 5,
+      moodAfter: 5,
+    };
+  }
+  return {
+    stressBefore: 6,
+    stressAfter: 5,
+    energyBefore: 4,
+    energyAfter: 5,
+    moodBefore: 4,
+    moodAfter: 5,
+  };
+}
+
+function clamp(val, min, max) {
+  return Math.max(min, Math.min(max, val));
+}
+
+function getProgressPhaseIndex(sessionCount) {
+  if (sessionCount >= 17) return 3;
+  if (sessionCount >= 5) return 2;
+  if (sessionCount >= 1) return 1;
+  return 0;
+}
+
+const EDITORIAL_QUOTES = {
+  early: [
+    'The longest journey begins with a single breath.',
+    'A journey of a thousand miles begins with a single step.',
+    'No matter how long your journey appears to be, there is never more than this: one step, one breath, one moment... Now.',
+  ],
+  building: [
+    'Great things are not done by impulse, but by a series of small things brought together.',
+    'Success is the sum of small efforts, repeated day in and day out.',
+    'The man who removes a mountain begins by carrying away small stones.',
+  ],
+  deep: [
+    'You have become the calm within the storm.',
+    'You have become the lighthouse that does not seek out boats but stays steady to guide them.',
+    'The deeper the roots, the less the branches shake.',
+  ],
+  inactive: [
+    'Slow progress is still progress.',
+    'Be not afraid of growing slowly, be afraid only of standing still.',
+    'It does not matter how slowly you go as long as you do not stop.',
+  ],
+};
+
+function NoteSwipeRow({ children, onEdit, onDelete, onOpenChange }) {
+  const ACTION_WIDTH = 116;
+  const translateX = React.useRef(new Animated.Value(0)).current;
+  const currentX = React.useRef(0);
+
+  const animateTo = (toValue) => {
+    currentX.current = toValue;
+    onOpenChange?.(toValue !== 0);
+    Animated.spring(translateX, {
+      toValue,
+      useNativeDriver: true,
+      bounciness: 0,
+      speed: 18,
+    }).start();
+  };
+
+  const panResponder = React.useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
+        onPanResponderMove: (_, gesture) => {
+          const next = clamp(currentX.current + gesture.dx, -ACTION_WIDTH, 0);
+          translateX.setValue(next);
+        },
+        onPanResponderRelease: (_, gesture) => {
+          const movedFarLeft = gesture.dx < -40;
+          const movedFarRight = gesture.dx > 24;
+          if (movedFarLeft) animateTo(-ACTION_WIDTH);
+          else if (movedFarRight) animateTo(0);
+          else animateTo(currentX.current < -ACTION_WIDTH / 2 ? -ACTION_WIDTH : 0);
+        },
+      }),
+    [translateX]
+  );
+
+  return (
+    <View style={styles.swipeRowWrap}>
+      <View style={styles.swipeActions}>
+        <TouchableOpacity style={[styles.swipeActionBtn, styles.swipeEditBtn]} onPress={onEdit} activeOpacity={0.86}>
+          <Pencil size={16} color="#E18B31" />
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.swipeActionBtn, styles.swipeDeleteBtn]} onPress={onDelete} activeOpacity={0.86}>
+          <Trash2 size={16} color="#C92262" />
+        </TouchableOpacity>
+      </View>
+      <Animated.View
+        style={[styles.swipeContent, { transform: [{ translateX }] }]}
+        {...panResponder.panHandlers}
+      >
+        {children}
+      </Animated.View>
+    </View>
+  );
+}
+
+export default function ProgressMainScreen() {
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
+  const {
+    streak,
+    totalSessions,
+    totalMinutes,
+    coherencePoints,
+    moodEntries,
+    surveyResults,
+    sessionNotes,
+    updateSessionNote,
+    deleteSessionNote,
+  } = useBreathGarden();
+  const [sciencePreviewType, setSciencePreviewType] = useState(null);
+  const [activeProgressTab, setActiveProgressTab] = useState('trend');
+  const [notesRange, setNotesRange] = useState('today');
+  const [editingNote, setEditingNote] = useState(null);
+  const [editDraft, setEditDraft] = useState('');
+  const [progressOptInChoice, setProgressOptInChoice] = useState('yes');
+  const [inactiveSurveyOptInChoice, setInactiveSurveyOptInChoice] = useState('no');
+  const [hasOpenNoteSwipeActions, setHasOpenNoteSwipeActions] = useState(false);
+  const isInactiveSurveyPreview = sciencePreviewType === 'inactiveSurvey';
+  const progressTabOrder = React.useMemo(() => ['trend', 'checkins', 'insights'], []);
+
+  const cycleScienceType = () => {
+    const order = ['zero', 'firstTime', 'building', 'inactiveSurvey', 'advanced', 'pro'];
+    setSciencePreviewType((prev) => {
+      const normalized = normalizePreviewType(prev);
+      if (normalized == null) return 'zero';
+      const idx = order.indexOf(normalized);
+      return order[(idx + 1) % order.length];
+    });
+  };
+
+  useEffect(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+  }, [activeProgressTab]);
+  useEffect(() => {
+    setActiveProgressTab('trend');
+  }, [sciencePreviewType, trendSessionCount]);
+
+  const tabsSwipeResponder = React.useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gesture) =>
+          Math.abs(gesture.dx) > 16 && Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.2,
+        onPanResponderRelease: (_, gesture) => {
+          if (Math.abs(gesture.dx) < 36) return;
+          const currentIdx = progressTabOrder.indexOf(activeProgressTab);
+          if (currentIdx < 0) return;
+          if (gesture.dx < 0 && currentIdx < progressTabOrder.length - 1) {
+            setActiveProgressTab(progressTabOrder[currentIdx + 1]);
+            return;
+          }
+          if (gesture.dx > 0 && currentIdx > 0) {
+            setActiveProgressTab(progressTabOrder[currentIdx - 1]);
+          }
+        },
+      }),
+    [activeProgressTab, progressTabOrder]
+  );
+  const notesToCheckinsSwipeResponder = React.useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gesture) =>
+          activeProgressTab === 'insights' &&
+          !hasOpenNoteSwipeActions &&
+          gesture.dx > 16 &&
+          Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.2,
+        onPanResponderRelease: (_, gesture) => {
+          if (activeProgressTab === 'insights' && !hasOpenNoteSwipeActions && gesture.dx > 36) {
+            setActiveProgressTab('checkins');
+          }
+        },
+      }),
+    [activeProgressTab, hasOpenNoteSwipeActions]
+  );
+  useEffect(() => {
+    if (activeProgressTab !== 'insights') setHasOpenNoteSwipeActions(false);
+  }, [activeProgressTab]);
+
+  const trendAverages = React.useMemo(() => {
+    if (sciencePreviewType) {
+      if (sciencePreviewType === 'inactiveSurvey') {
+        return getPreviewAveragesByType('building');
+      }
+      return getPreviewAveragesByType(sciencePreviewType);
+    }
+    const list = Array.isArray(surveyResults) ? surveyResults : [];
+    const avg = (key) => {
+      const nums = list.map((item) => item?.[key]).filter((v) => Number.isFinite(v));
+      if (!nums.length) return null;
+      return nums.reduce((sum, v) => sum + v, 0) / nums.length;
+    };
+    const fromResults = {
+      stressBefore: avg('stressBefore'),
+      stressAfter: avg('stressAfter'),
+      energyBefore: avg('energyBefore'),
+      energyAfter: avg('energyAfter'),
+      moodBefore: avg('moodBefore'),
+      moodAfter: avg('moodAfter'),
+    };
+    const hasAny =
+      Number.isFinite(fromResults.stressBefore) ||
+      Number.isFinite(fromResults.stressAfter) ||
+      Number.isFinite(fromResults.energyBefore) ||
+      Number.isFinite(fromResults.energyAfter) ||
+      Number.isFinite(fromResults.moodBefore) ||
+      Number.isFinite(fromResults.moodAfter);
+    if (hasAny) return fromResults;
+
+    return getPreviewAveragesByType(getScienceTypeFromSessions(totalSessions));
+  }, [sciencePreviewType, surveyResults, totalSessions]);
+
+  const trendSessionCount = React.useMemo(() => {
+    if (!sciencePreviewType) return totalSessions;
+    const t = normalizePreviewType(sciencePreviewType);
+    if (t === 'inactiveSurvey') return 12;
+    if (t === 'pro') return 100;
+    if (t === 'advanced') return 17;
+    if (t === 'building') return 5;
+    if (t === 'firstTime') return 1;
+    return 0;
+  }, [sciencePreviewType, totalSessions]);
+  const shouldShowStartFirstSessionCta = trendSessionCount === 0;
+  const shouldShowKeepGoingCta = trendSessionCount >= 1 && trendSessionCount <= 5;
+  const shouldShowKeepRhythmCta = trendSessionCount >= 6 && trendSessionCount <= 15;
+  const hasEnoughSessionsForProgressTabs = trendSessionCount >= 6;
+  const hasAtLeastThirtySessions = trendSessionCount >= 30;
+  const activePhaseIdx = getProgressPhaseIndex(trendSessionCount);
+  const surveyResultsCount = Array.isArray(surveyResults) ? surveyResults.length : 0;
+  const hasIncompleteOrInactiveSurveyData =
+    isInactiveSurveyPreview || (!sciencePreviewType && totalSessions > 0 && surveyResultsCount === 0);
+  const editorialQuotePool =
+    hasIncompleteOrInactiveSurveyData
+      ? EDITORIAL_QUOTES.inactive
+      : trendSessionCount >= 16
+        ? EDITORIAL_QUOTES.deep
+        : trendSessionCount >= 6
+          ? EDITORIAL_QUOTES.building
+          : EDITORIAL_QUOTES.early;
+  const editorialQuote = editorialQuotePool[Math.max(0, trendSessionCount) % editorialQuotePool.length];
+  const editorialQuoteStageLabel = hasIncompleteOrInactiveSurveyData
+    ? 'shown for incomplete check-ins'
+    : trendSessionCount >= 16
+      ? 'shown for deep practice milestones'
+      : trendSessionCount >= 6
+        ? 'shown for building milestones'
+        : 'shown for first-step milestones';
+
+  const effectiveScienceType = sciencePreviewType || getScienceTypeFromSessions(totalSessions);
+  const hasNoProgressData = totalSessions <= 0;
+  const shouldShowEmptyState = hasNoProgressData && !sciencePreviewType;
+  const inactiveSurveyMessage =
+    'Looks like you have completed sessions but have not answers pre and post session surveys. Opt in for the survey to view updated calendar checkins and insights.';
+  const renderInactiveSurveyToggle = () => (
+    <TouchableOpacity
+      style={styles.tabsLockedToggleSwitchRow}
+      onPress={() => {
+        const nextChoice = inactiveSurveyOptInChoice === 'yes' ? 'no' : 'yes';
+        setInactiveSurveyOptInChoice(nextChoice);
+      }}
+      activeOpacity={0.88}
+    >
+      <View
+        style={[
+          styles.tabsLockedToggleSwitchKnob,
+          inactiveSurveyOptInChoice === 'yes' && styles.tabsLockedToggleSwitchKnobActive,
+        ]}
+      >
+        <View
+          style={[
+            styles.tabsLockedToggleSwitchDot,
+            inactiveSurveyOptInChoice === 'yes' && styles.tabsLockedToggleSwitchDotActive,
+          ]}
+        />
+      </View>
+      <Text
+        style={[
+          styles.tabsLockedToggleSwitchText,
+          inactiveSurveyOptInChoice === 'yes' && styles.tabsLockedToggleSwitchTextActive,
+        ]}
+      >
+        {inactiveSurveyOptInChoice === 'yes' ? 'Yes, opt in' : 'No, thank you'}
+      </Text>
+    </TouchableOpacity>
+  );
+  const insightsSummaryLine = React.useMemo(() => {
+    const stressPct = calcShiftPct('stress', trendAverages.stressBefore, trendAverages.stressAfter);
+    const energyPct = calcShiftPct('energy', trendAverages.energyBefore, trendAverages.energyAfter);
+    const moodPct = calcShiftPct('mood', trendAverages.moodBefore, trendAverages.moodAfter);
+    return `Stress down by ${stressPct}%, Energy up by ${energyPct}% and Mood up by ${moodPct}%`;
+  }, [trendAverages, effectiveScienceType]);
+
+  const notesList = React.useMemo(
+    () => (Array.isArray(sessionNotes) ? sessionNotes : []),
+    [sessionNotes]
+  );
+  const notesForDisplay = React.useMemo(() => {
+    if (notesList.length > 0) return notesList;
+    if (shouldShowEmptyState) return [];
+    const now = Date.now();
+    if (effectiveScienceType === 'zero') return [];
+    if (effectiveScienceType === 'firstTime') {
+      return [
+        {
+          id: 'sample-note-1',
+          body: 'I felt calmer after the session and my breathing felt steadier.',
+          createdAt: new Date(now - 1000 * 60 * 90).toISOString(),
+          updatedAt: new Date(now - 1000 * 60 * 90).toISOString(),
+          isSample: true,
+        },
+      ];
+    }
+    if (effectiveScienceType === 'building' || effectiveScienceType === 'advanced') {
+      const advancedExtra =
+        effectiveScienceType === 'advanced'
+          ? [
+              {
+                id: 'sample-note-3',
+                body: 'Noticed less reactivity today. Recovery after stress felt faster than last week.',
+                createdAt: new Date(now - 1000 * 60 * 60 * 24 * 4).toISOString(),
+                updatedAt: new Date(now - 1000 * 60 * 60 * 24 * 4).toISOString(),
+                isSample: true,
+              },
+              {
+                id: 'sample-note-4',
+                body: 'More focused after session. I want to keep this as part of my morning routine.',
+                createdAt: new Date(now - 1000 * 60 * 60 * 24 * 9).toISOString(),
+                updatedAt: new Date(now - 1000 * 60 * 60 * 24 * 9).toISOString(),
+                isSample: true,
+              },
+            ]
+          : [];
+      return [
+        {
+          id: 'sample-note-1',
+          body: 'Felt less chest tightness after 5 minutes. Breath felt smoother by the end.',
+          createdAt: new Date(now - 1000 * 60 * 90).toISOString(),
+          updatedAt: new Date(now - 1000 * 60 * 90).toISOString(),
+          isSample: true,
+        },
+        {
+          id: 'sample-note-2',
+          body: 'Started distracted, finished calmer. Energy lifted from low to steady.',
+          createdAt: new Date(now - 1000 * 60 * 60 * 24).toISOString(),
+          updatedAt: new Date(now - 1000 * 60 * 60 * 24).toISOString(),
+          isSample: true,
+        },
+        ...advancedExtra,
+      ];
+    }
+    return [
+      {
+        id: 'sample-note-1',
+        body: 'Felt less chest tightness after 5 minutes. Breath felt smoother by the end.',
+        createdAt: new Date(now - 1000 * 60 * 90).toISOString(),
+        updatedAt: new Date(now - 1000 * 60 * 90).toISOString(),
+        isSample: true,
+      },
+      {
+        id: 'sample-note-2',
+        body: 'Started distracted, finished calmer. Energy lifted from low to steady.',
+        createdAt: new Date(now - 1000 * 60 * 60 * 24).toISOString(),
+        updatedAt: new Date(now - 1000 * 60 * 60 * 24).toISOString(),
+        isSample: true,
+      },
+      {
+        id: 'sample-note-3',
+        body: 'Mood improved after session. Should repeat this before afternoon meetings.',
+        createdAt: new Date(now - 1000 * 60 * 60 * 24 * 20).toISOString(),
+        updatedAt: new Date(now - 1000 * 60 * 60 * 24 * 20).toISOString(),
+        isSample: true,
+      },
+      {
+        id: 'sample-note-4',
+        body: 'Handled a difficult conversation with less emotional overload than before.',
+        createdAt: new Date(now - 1000 * 60 * 60 * 24 * 30).toISOString(),
+        updatedAt: new Date(now - 1000 * 60 * 60 * 24 * 30).toISOString(),
+        isSample: true,
+      },
+      {
+        id: 'sample-note-5',
+        body: 'Consistent breathing practice is helping me reset faster during high-pressure days.',
+        createdAt: new Date(now - 1000 * 60 * 60 * 24 * 42).toISOString(),
+        updatedAt: new Date(now - 1000 * 60 * 60 * 24 * 42).toISOString(),
+        isSample: true,
+      },
+    ];
+  }, [effectiveScienceType, notesList, shouldShowEmptyState]);
+  const filteredNotes = React.useMemo(() => {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfWeek = new Date(startOfToday);
+    startOfWeek.setDate(startOfToday.getDate() - 6);
+    const startOfMonth = new Date(startOfToday);
+    startOfMonth.setDate(startOfToday.getDate() - 29);
+
+    return notesForDisplay.filter((note) => {
+      const stamp = new Date(note.updatedAt || note.createdAt);
+      if (Number.isNaN(stamp.getTime())) return false;
+      if (notesRange === 'today') return stamp >= startOfToday;
+      if (notesRange === 'week') return stamp >= startOfWeek;
+      if (notesRange === 'month') return stamp >= startOfMonth;
+      return stamp >= startOfMonth;
+    });
+  }, [notesForDisplay, notesRange]);
+
+  useEffect(() => {
+    if (!hasAtLeastThirtySessions && notesRange === 'month') {
+      setNotesRange('week');
+    }
+  }, [hasAtLeastThirtySessions, notesRange]);
+
+  const saveEdit = () => {
+    if (!editingNote?.id) return;
+    const ok = updateSessionNote(editingNote.id, editDraft);
+    if (!ok) return;
+    setEditingNote(null);
+    setEditDraft('');
+  };
+
+  const onShareProgress = async () => {
+    const sessions = Number(trendSessionCount) || 0;
+    const activeStreak = Number(streak) || 0;
+    const points = Math.max(0, Math.round(Number(coherencePoints) || 0));
+    const shareMessage =
+      `My HeartMath progress update:\n\n` +
+      `Sessions completed: ${sessions}\n` +
+      `Current streak: ${activeStreak} day${activeStreak === 1 ? '' : 's'}\n` +
+      `Coherence points: ${points}\n\n` +
+      `I am building a steadier rhythm, one session at a time.`;
+    try {
+      await Share.share({
+        title: 'My Progress',
+        message: shareMessage,
+      });
+    } catch (error) {
+      Alert.alert('Unable to share', 'Please try again in a moment.');
+    }
+  };
+
+  return (
+    <View style={styles.root}>
+      <LinearGradient
+        colors={['#F6A400', '#F18A1F', '#EB6A33']}
+        start={{ x: 0.15, y: 0 }}
+        end={{ x: 0.85, y: 1 }}
+        style={[styles.headerBg, { paddingTop: insets.top + 8 }]}
+      >
+        <View style={styles.headerRow}>
+          <TouchableOpacity style={styles.headerIconBtn} accessibilityLabel="Add favorite">
+            <Plus size={22} color={colors.white} />
+            <Heart size={20} color={colors.white} style={{ marginLeft: 2 }} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>My Progress</Text>
+          <View style={styles.headerRight}>
+            <TouchableOpacity style={styles.headerIconBtn} accessibilityLabel="Highlights">
+              <Sparkles size={20} color={colors.white} />
+              <Heart size={20} color={colors.white} style={{ marginLeft: 2 }} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.headerIconBtn}
+              onPress={undefined}
+              accessibilityLabel="Chat"
+            >
+              <MessageCircle size={22} color={colors.white} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.headerIconBtn} accessibilityLabel="Settings">
+              <Settings size={22} color={colors.white} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </LinearGradient>
+
+      <ScrollView
+        contentContainerStyle={[
+          styles.scroll,
+          { paddingBottom: 30 },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        <TouchableOpacity
+          style={styles.phaseTimelineCard}
+          onPress={cycleScienceType}
+          activeOpacity={0.84}
+          accessibilityRole="button"
+          accessibilityLabel="Cycle progress insight type"
+        >
+          <View style={styles.phaseTimelineHeaderRow}>
+            <Text style={styles.phaseTimelineTitle}>My Journey</Text>
+          </View>
+          <View style={styles.phaseLineWrap}>
+            <View style={styles.phaseBaseLine} />
+            <View style={styles.phaseTimelineTrackRow}>
+              {['First Step', 'Seed', 'Habit', 'Deep Practice'].map((label, idx) => {
+              const isCompleted = idx < activePhaseIdx;
+              const isActive = idx === activePhaseIdx;
+              const isFuture = idx > activePhaseIdx;
+              return (
+                <View key={label} style={styles.phaseItemWrap}>
+                  <View
+                    style={[
+                      styles.phaseNode,
+                      isCompleted && styles.phaseNodeCompleted,
+                      isActive && styles.phaseNodeActive,
+                      isFuture && styles.phaseNodeFuture,
+                    ]}
+                  >
+                    {isCompleted ? (
+                      <Check size={12} color="#FFFFFF" strokeWidth={2.8} />
+                    ) : isActive ? (
+                      <Heart size={11} color="#FFFFFF" fill="#FFFFFF" strokeWidth={2.5} />
+                    ) : (
+                      <Text style={styles.phasePendingDash}>-</Text>
+                    )}
+                  </View>
+                  <Text
+                    style={[
+                      styles.phaseNodeLabel,
+                      isCompleted && styles.phaseNodeLabelCompleted,
+                      isActive && styles.phaseNodeLabelActive,
+                      isFuture && styles.phaseNodeLabelFuture,
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                </View>
+              );
+            })}
+            </View>
+          </View>
+          <Text style={styles.phaseTimelineSub}>
+            {trendSessionCount === 0
+              ? 'Start your journey by completing a session!'
+              : activePhaseIdx >= 3
+              ? "This is great! You're in the top 1% practitioner! Keep your rhythm!"
+              : activePhaseIdx >= 2
+                ? "Awesome! You're 30 sessions away from Deep Practice level. Keep practicing!"
+                : activePhaseIdx >= 1
+                  ? "Wow! Only 15 sessions away from Habit level."
+                  : "Great step. You're only 5 sessions away from Seed level."}
+          </Text>
+        </TouchableOpacity>
+        <ProgressSnapshotBar
+          totalSessions={totalSessions}
+          streak={streak}
+          totalMinutes={totalMinutes}
+          coherencePoints={coherencePoints}
+          previewType={sciencePreviewType}
+        />
+        <View style={styles.milestoneActionCard}>
+          <ProgressMilestoneCard
+            totalSessions={totalSessions}
+            previewType={sciencePreviewType}
+            milestoneState={hasIncompleteOrInactiveSurveyData ? 'inactiveSurvey' : null}
+            onPress={cycleScienceType}
+            embedded
+          />
+          {!hasIncompleteOrInactiveSurveyData && shouldShowStartFirstSessionCta ? (
+            <TouchableOpacity
+              style={styles.firstSessionBtn}
+              onPress={() => navigation.navigate('Measure')}
+              activeOpacity={0.88}
+            >
+              <Text style={styles.firstSessionBtnTxt}>Start first session</Text>
+            </TouchableOpacity>
+          ) : null}
+          {!hasIncompleteOrInactiveSurveyData && shouldShowKeepGoingCta ? (
+            <TouchableOpacity
+              style={styles.firstSessionBtn}
+              onPress={() => navigation.navigate('Measure')}
+              activeOpacity={0.88}
+            >
+              <Text style={styles.firstSessionBtnTxt}>Keep going</Text>
+            </TouchableOpacity>
+          ) : null}
+          {!hasIncompleteOrInactiveSurveyData && shouldShowKeepRhythmCta ? (
+            <TouchableOpacity
+              style={styles.firstSessionBtn}
+              onPress={() => navigation.navigate('Measure')}
+              activeOpacity={0.88}
+            >
+              <Text style={styles.firstSessionBtnTxt}>Keep your rhythm</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+        {trendSessionCount > 1 && !hasIncompleteOrInactiveSurveyData ? (
+          <ProgressSurveyDeltaCard averages={trendAverages} />
+        ) : null}
+        {hasEnoughSessionsForProgressTabs ? (
+          <View style={styles.tabsSharedCard}>
+            <ProgressViewTabs activeTab={activeProgressTab} onChange={setActiveProgressTab} embedded />
+            <View
+              style={styles.tabsSharedContent}
+              {...(activeProgressTab === 'insights'
+                ? notesToCheckinsSwipeResponder.panHandlers
+                : tabsSwipeResponder.panHandlers)}
+            >
+              {activeProgressTab === 'checkins' ? (
+                effectiveScienceType === 'zero' ? (
+                  <View style={styles.emptyStateCardEmbedded}>
+                    <Text style={styles.tabIntroTitle}>My Check-ins</Text>
+                    <Text style={styles.tabIntroSub}>Check what has changed over time, in your journey with us.</Text>
+                    <Text style={styles.emptyStateTitle}>No check-ins yet</Text>
+                    <Text style={styles.emptyStateBody}>
+                      Complete your first session, respond to the pre/post survey, and your check-in calendar will start populating here.
+                    </Text>
+                  </View>
+                ) : (
+                  <>
+                    <Text style={styles.tabIntroTitle}>My Check-ins</Text>
+                    <Text style={styles.tabIntroSub}>Check what has changed over time, in your journey with us.</Text>
+                    {hasIncompleteOrInactiveSurveyData ? (
+                      <>
+                        <ProgressCheckinsCalendar
+                          moodEntries={moodEntries}
+                          previewType="inactiveSurvey"
+                          sessionCount={trendSessionCount}
+                          loggedVariant="gray"
+                          embedded
+                        />
+                        <View style={styles.inactiveSurveyCard}>
+                          <Text style={styles.inactiveSurveyBody}>
+                            {inactiveSurveyMessage}
+                          </Text>
+                          {renderInactiveSurveyToggle()}
+                        </View>
+                      </>
+                    ) : (
+                      <>
+                        <ProgressCheckinsCalendar
+                          moodEntries={moodEntries}
+                          previewType={sciencePreviewType}
+                          sessionCount={trendSessionCount}
+                          embedded
+                        />
+                      </>
+                    )}
+                  </>
+                )
+              ) : null}
+              {activeProgressTab === 'trend' ? (
+                hasIncompleteOrInactiveSurveyData ? (
+                  <>
+                    <Text style={styles.tabIntroTitle}>My Trends</Text>
+                    <Text style={styles.tabIntroSub}>Check what has changed over time, in your journey with us.</Text>
+                    <View style={styles.inactiveSurveyCard}>
+                      <Text style={styles.inactiveSurveyBody}>{inactiveSurveyMessage}</Text>
+                      {renderInactiveSurveyToggle()}
+                    </View>
+                  </>
+                ) : shouldShowEmptyState || trendSessionCount <= 0 ? (
+                  <View style={styles.emptyStateCardEmbedded}>
+                    <Text style={styles.tabIntroTitle}>My Trends</Text>
+                    <Text style={styles.tabIntroSub}>Check what has changed over time, in your journey with us.</Text>
+                    <Text style={styles.emptyStateTitle}>No trends yet</Text>
+                    <Text style={styles.emptyStateBody}>
+                      Finish at least one breathing session and submit your survey response to unlock stress, energy, mood, and coherence trends.
+                    </Text>
+                  </View>
+                ) : (
+                  <>
+                    <Text style={styles.tabIntroTitle}>My Trends</Text>
+                    <Text style={styles.tabIntroSub}>Check what has changed over time, in your journey with us.</Text>
+                    <TrendLayerComparisonCard
+                      sessionCount={trendSessionCount}
+                      averages={trendAverages}
+                      defaultExpanded
+                      showAccordion={false}
+                      showPostGraphContent={false}
+                      themeVariant="progress"
+                      embedded
+                    />
+                  </>
+                )
+              ) : null}
+              {activeProgressTab === 'insights' ? (
+            hasIncompleteOrInactiveSurveyData ? (
+              <View style={styles.emptyStateCardEmbedded}>
+                <Text style={styles.tabIntroTitle}>My Notes</Text>
+                <Text style={styles.tabIntroSub}>Check what has changed over time, in your journey with us.</Text>
+                <View style={styles.inactiveSurveyCard}>
+                  <Text style={styles.inactiveSurveyBody}>{inactiveSurveyMessage}</Text>
+                  {renderInactiveSurveyToggle()}
+                </View>
+              </View>
+            ) : effectiveScienceType === 'zero' ? (
+              <View style={styles.emptyStateCardEmbedded}>
+                <Text style={styles.emptyStateTitle}>No notes yet</Text>
+                <Text style={styles.emptyStateBody}>
+                  Complete your first session, respond to the pre/post survey, and your notes history will start populating here.
+                </Text>
+              </View>
+            ) : (
+              <View style={[styles.notesContainerCard, styles.notesContainerCardEmbedded]}>
+                <View style={styles.notesHistoryCard}>
+                  <Text style={styles.tabIntroTitle}>My Notes</Text>
+                  <Text style={styles.notesHistorySub}>Check what has changed over time, in your journey with us.</Text>
+                  <View style={styles.notesRangeTabs}>
+                    {(hasAtLeastThirtySessions
+                      ? [
+                          { key: 'today', label: 'Today' },
+                          { key: 'week', label: 'Week' },
+                          { key: 'month', label: 'Month' },
+                        ]
+                      : [
+                          { key: 'today', label: 'Today' },
+                          { key: 'week', label: 'Week' },
+                        ]).map((tab) => {
+                      const active = notesRange === tab.key;
+                      return (
+                        <TouchableOpacity
+                          key={tab.key}
+                          style={[styles.notesRangeTabBtn, active && styles.notesRangeTabBtnActive]}
+                          onPress={() => setNotesRange(tab.key)}
+                          activeOpacity={0.86}
+                        >
+                          <Text style={[styles.notesRangeTabTxt, active && styles.notesRangeTabTxtActive]}>
+                            {tab.label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+                <View style={styles.notesListWrap}>
+                  {filteredNotes.map((note, idx) => (
+                    <View key={note.id} style={idx > 0 ? styles.noteRowDivider : null}>
+                      <NoteSwipeRow
+                        onOpenChange={(isOpen) => setHasOpenNoteSwipeActions(isOpen)}
+                        onEdit={() => {
+                          if (note.isSample) {
+                            Alert.alert('Sample note', 'Sample notes are preview-only. Add a real note to edit.');
+                            return;
+                          }
+                          setEditingNote(note);
+                          setEditDraft(note.body || '');
+                        }}
+                        onDelete={() =>
+                          note.isSample
+                            ? Alert.alert('Sample note', 'Sample notes are preview-only and cannot be deleted.')
+                            : Alert.alert('Delete note', 'Are you sure you want to delete this note?', [
+                                { text: 'Cancel', style: 'cancel' },
+                                { text: 'Delete', style: 'destructive', onPress: () => deleteSessionNote(note.id) },
+                              ])
+                        }
+                      >
+                        <View style={styles.noteCard}>
+                          <Text style={styles.noteDate}>
+                            {new Date(note.updatedAt || note.createdAt).toLocaleString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })}
+                          </Text>
+                          <Text style={styles.noteBody} numberOfLines={3}>
+                            {note.body}
+                          </Text>
+                        </View>
+                      </NoteSwipeRow>
+                    </View>
+                  ))}
+                  {filteredNotes.length === 0 ? (
+                    <View style={styles.emptyNotesCard}>
+                      <Text style={styles.emptyNotesTitle}>{shouldShowEmptyState ? 'No notes yet' : 'No notes in this range'}</Text>
+                      <Text style={styles.emptyNotesBody}>
+                        {shouldShowEmptyState
+                          ? 'Complete a session and record your post-session survey to begin building your notes history.'
+                          : 'Try another range to review earlier entries.'}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              </View>
+            )
+              ) : null}
+            </View>
+          </View>
+        ) : (
+          <View style={styles.tabsLockedCard}>
+            <Text style={styles.tabsLockedTitle}>Your pattern is still forming</Text>
+            <Text style={styles.tabsLockedBody}>
+              complete few more sessions and do record your answers to the pre and post session surveys to check the Trends, Check-ins and Notes here.
+            </Text>
+            <TouchableOpacity
+              style={styles.tabsLockedToggleSwitchRow}
+              onPress={() => {
+                const nextChoice = progressOptInChoice === 'yes' ? 'no' : 'yes';
+                setProgressOptInChoice(nextChoice);
+              }}
+              activeOpacity={0.88}
+            >
+              <View
+                style={[
+                  styles.tabsLockedToggleSwitchKnob,
+                  progressOptInChoice === 'yes' && styles.tabsLockedToggleSwitchKnobActive,
+                ]}
+              >
+                <View
+                  style={[
+                    styles.tabsLockedToggleSwitchDot,
+                    progressOptInChoice === 'yes' && styles.tabsLockedToggleSwitchDotActive,
+                  ]}
+                />
+              </View>
+              <Text
+                style={[
+                  styles.tabsLockedToggleSwitchText,
+                  progressOptInChoice === 'yes' && styles.tabsLockedToggleSwitchTextActive,
+                ]}
+              >
+                {progressOptInChoice === 'yes'
+                  ? 'Yes, I would like to opt in.'
+                  : 'No, thank you.'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <LinearGradient
+          colors={['#FFF3B0', '#FFB300', '#D81B60']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.community}
+        >
+          <Text style={styles.communityTitle}>Community Coherence Points</Text>
+          <Text style={styles.communityToday}>Today</Text>
+          <Text style={styles.communityBig}>2,623,382</Text>
+          <View style={styles.commRule} />
+          <Text style={styles.communitySub}>Highest Day Ever</Text>
+          <Text style={styles.communityBig}>3,400,657</Text>
+        </LinearGradient>
+
+        <View style={styles.editorialQuoteCard}>
+          <Text style={styles.editorialQuoteText}>"{editorialQuote}"</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.shareProgressBtn}
+          activeOpacity={0.9}
+          onPress={onShareProgress}
+          accessibilityRole="button"
+          accessibilityLabel="Share My Progress"
+        >
+          <LinearGradient
+            colors={['#FFD770', '#F6A931', '#EC7A2D']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.shareProgressBtnGrad}
+          >
+            <Text style={styles.shareProgressBtnTxt}>Share My Progress</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.sessionHistoryBtn}
+          activeOpacity={0.88}
+          onPress={() => {
+            try {
+              navigation.navigate('SessionHistory');
+            } catch (error) {
+              Alert.alert('Coming soon', 'Session history will be available here soon.');
+            }
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="My Session History"
+        >
+          <Text style={styles.sessionHistoryBtnTxt}>My Session History</Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      <Modal visible={Boolean(editingNote)} transparent animationType="fade" onRequestClose={() => setEditingNote(null)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Edit Note</Text>
+            <TextInput
+              value={editDraft}
+              onChangeText={setEditDraft}
+              multiline
+              style={styles.modalInput}
+              placeholder="Update your reflection..."
+              placeholderTextColor="rgba(52,37,61,0.46)"
+            />
+            <View style={styles.modalActionRow}>
+              <TouchableOpacity style={styles.modalBtnGhost} onPress={() => setEditingNote(null)} activeOpacity={0.86}>
+                <Text style={styles.modalBtnGhostTxt}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalBtn} onPress={saveEdit} activeOpacity={0.86}>
+                <Text style={styles.modalBtnTxt}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: '#F3F3F5' },
+  headerBg: {
+    paddingBottom: 22,
+    borderBottomLeftRadius: borderRadius.sheet,
+    borderBottomRightRadius: borderRadius.sheet,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
+  },
+  headerTitle: {
+    ...typography.heroTitle,
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: colors.white,
+    fontSize: 28,
+    lineHeight: 32,
+    fontWeight: '700',
+    flex: 1,
+    textAlign: 'center',
+  },
+  headerRight: { flexDirection: 'row', alignItems: 'center' },
+  headerIconBtn: { flexDirection: 'row', alignItems: 'center', padding: 6 },
+  scroll: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.lg,
+  },
+  community: {
+    borderRadius: borderRadius.lg,
+    padding: spacing.xl,
+    marginTop: 2,
+    marginBottom: spacing.lg,
+    alignItems: 'center',
+  },
+  communityTitle: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '800',
+    color: colors.white,
+    marginBottom: spacing.sm,
+  },
+  communityToday: { fontFamily: PROGRESS_FONT_REGULAR, fontSize: 13, lineHeight: 20, color: 'rgba(255,255,255,0.92)' },
+  communityBig: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 28,
+    fontWeight: '800',
+    color: colors.white,
+    marginVertical: 4,
+  },
+  commRule: {
+    height: 1,
+    width: '80%',
+    backgroundColor: 'rgba(255,255,255,0.28)',
+    marginVertical: spacing.md,
+  },
+  communitySub: { fontFamily: PROGRESS_FONT_REGULAR, fontSize: 13, lineHeight: 20, color: 'rgba(255,255,255,0.96)' },
+  shareProgressBtn: {
+    marginTop: spacing.md,
+    marginBottom: 0,
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
+  shareProgressBtnGrad: {
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(225,139,49,0.52)',
+  },
+  shareProgressBtnTxt: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: '#FFFFFF',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  sessionHistoryBtn: {
+    marginTop: spacing.md,
+    marginBottom: 0,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(225,139,49,0.42)',
+  },
+  sessionHistoryBtnTxt: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: '#C26D1A',
+    fontSize: 16,
+    lineHeight: 20,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  insightsSummaryCard: {
+    marginBottom: spacing.md,
+    borderRadius: borderRadius.lg,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(225,139,49,0.24)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  insightsSummaryTitle: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 13,
+    lineHeight: 20,
+    fontWeight: '700',
+    color: '#C26D1A',
+    marginBottom: 4,
+  },
+  insightsSummaryText: {
+    fontFamily: PROGRESS_FONT_MEDIUM,
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '600',
+    color: '#2D1B3A',
+  },
+  emptyStateCard: {
+    marginBottom: spacing.md,
+    borderRadius: borderRadius.lg,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.07)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.lg,
+    minHeight: 180,
+    justifyContent: 'center',
+  },
+  emptyStateCardEmbedded: {
+    borderWidth: 0,
+    borderRadius: 0,
+    marginBottom: 0,
+    minHeight: 180,
+    paddingHorizontal: 0,
+    paddingTop: 10,
+    paddingBottom: 0,
+  },
+  emptyStateTitle: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 19,
+    lineHeight: 24,
+    fontWeight: '800',
+    color: '#2D1B3A',
+    marginBottom: 6,
+  },
+  emptyStateBody: {
+    fontFamily: PROGRESS_FONT_REGULAR,
+    fontSize: 15,
+    lineHeight: 24,
+    color: 'rgba(52,37,61,0.76)',
+  },
+  notesHistoryCard: {
+    marginBottom: 8,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    paddingBottom: spacing.sm,
+  },
+  notesContainerCard: {
+    marginBottom: spacing.md,
+    borderRadius: borderRadius.lg,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.07)',
+    overflow: 'hidden',
+  },
+  notesContainerCardEmbedded: {
+    marginBottom: 0,
+    borderWidth: 0,
+    borderRadius: 0,
+    paddingTop: 0,
+  },
+  notesListWrap: {
+    paddingHorizontal: 0,
+    paddingBottom: 0,
+    paddingTop: 0,
+  },
+  noteRowDivider: {
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+    marginTop: 0,
+    paddingTop: 8,
+  },
+  notesHistoryTitle: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 17,
+    lineHeight: 21,
+    fontWeight: '800',
+    color: '#2D1B3A',
+    marginBottom: 2,
+  },
+  notesHistorySub: {
+    fontFamily: PROGRESS_FONT_REGULAR,
+    fontSize: 12,
+    lineHeight: 19,
+    color: 'rgba(52,37,61,0.7)',
+  },
+  tabIntroTitle: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '800',
+    color: '#2D1B3A',
+    marginBottom: 2,
+  },
+  tabIntroSub: {
+    fontFamily: PROGRESS_FONT_REGULAR,
+    fontSize: 12,
+    lineHeight: 19,
+    color: 'rgba(52,37,61,0.7)',
+    marginBottom: spacing.sm,
+  },
+  notesRangeTabs: {
+    marginTop: spacing.sm,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  notesRangeTabBtn: {
+    flex: 1,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(225,139,49,0.28)',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+  },
+  notesRangeTabBtnActive: {
+    backgroundColor: '#FFE8CC',
+    borderColor: 'rgba(225,139,49,0.5)',
+  },
+  notesRangeTabTxt: {
+    fontFamily: PROGRESS_FONT_MEDIUM,
+    color: 'rgba(52,37,61,0.82)',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  notesRangeTabTxtActive: {
+    color: '#C26D1A',
+  },
+  emptyNotesCard: {
+    marginBottom: 0,
+    borderRadius: 12,
+    backgroundColor: '#F8F8FA',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.04)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  emptyNotesTitle: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+    color: '#2D1B3A',
+    marginBottom: 2,
+  },
+  emptyNotesBody: {
+    fontFamily: PROGRESS_FONT_REGULAR,
+    fontSize: 12,
+    lineHeight: 19,
+    color: 'rgba(52,37,61,0.68)',
+  },
+  noteCard: {
+    borderRadius: 0,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 0,
+    borderColor: 'transparent',
+    paddingHorizontal: 0,
+    paddingVertical: spacing.md,
+  },
+  noteDate: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#C26D1A',
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+  noteBody: {
+    fontFamily: PROGRESS_FONT_REGULAR,
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#2D1B3A',
+  },
+  swipeRowWrap: {
+    marginBottom: 0,
+    borderRadius: 0,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  swipeActions: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 116,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    justifyContent: 'flex-end',
+    zIndex: 0,
+    elevation: 0,
+  },
+  swipeContent: {
+    backgroundColor: 'transparent',
+    zIndex: 2,
+    elevation: 2,
+    width: '100%',
+  },
+  swipeActionBtn: {
+    width: 58,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  swipeEditBtn: {
+    backgroundColor: '#F6EAF5',
+  },
+  swipeDeleteBtn: {
+    backgroundColor: '#FFEFF6',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.lg,
+  },
+  modalCard: {
+    width: '100%',
+    borderRadius: borderRadius.lg,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(225,139,49,0.24)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  modalTitle: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '800',
+    color: '#2D1B3A',
+    marginBottom: spacing.sm,
+  },
+  modalInput: {
+    fontFamily: PROGRESS_FONT_REGULAR,
+    minHeight: 110,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(225,139,49,0.28)',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: '#2D1B3A',
+    fontSize: 15,
+    lineHeight: 22,
+    textAlignVertical: 'top',
+    backgroundColor: '#FCF7FC',
+  },
+  modalActionRow: {
+    marginTop: spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  modalBtn: {
+    borderRadius: 999,
+    backgroundColor: '#E18B31',
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+  },
+  modalBtnTxt: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  modalBtnGhost: {
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(225,139,49,0.34)',
+    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  modalBtnGhostTxt: {
+    fontFamily: PROGRESS_FONT_REGULAR,
+    color: '#C26D1A',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  firstSessionBtn: {
+    marginBottom: 0,
+    marginTop: 4,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(225,139,49,0.42)',
+  },
+  phaseTimelineCard: {
+    marginBottom: spacing.lg,
+    borderRadius: borderRadius.lg,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.07)',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+  },
+  phaseTimelineHeaderRow: {
+    marginBottom: 8,
+  },
+  phaseTimelineTitle: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 12,
+    lineHeight: 16,
+    letterSpacing: 0.6,
+    color: 'rgba(52,37,61,0.64)',
+    textTransform: 'uppercase',
+  },
+  phaseLineWrap: {
+    position: 'relative',
+    marginBottom: 8,
+  },
+  phaseBaseLine: {
+    position: 'absolute',
+    left: 2,
+    right: 2,
+    top: 14,
+    height: 1,
+    backgroundColor: 'rgba(52,37,61,0.18)',
+  },
+  phaseTimelineTrackRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  phaseItemWrap: {
+    width: '24%',
+    alignItems: 'center',
+  },
+  phaseNode: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 0,
+    borderColor: 'transparent',
+    backgroundColor: '#F1ECF6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  phaseNodeCompleted: {
+    backgroundColor: '#E18B31',
+  },
+  phaseNodeActive: {
+    borderColor: '#FFFFFF',
+    borderWidth: 2,
+    backgroundColor: '#C26D1A',
+    shadowColor: '#E18B31',
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 4,
+  },
+  phaseNodeFuture: {
+    backgroundColor: '#F8F8FA',
+  },
+  phasePendingDash: {
+    color: 'rgba(52,37,61,0.38)',
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 13,
+    marginTop: -1,
+  },
+  phaseNodeLabel: {
+    marginTop: 8,
+    fontFamily: PROGRESS_FONT_REGULAR,
+    fontSize: 11,
+    lineHeight: 13,
+    textAlign: 'center',
+    minHeight: 24,
+  },
+  phaseNodeLabelCompleted: {
+    color: 'rgba(52,37,61,0.78)',
+  },
+  phaseNodeLabelActive: {
+    color: '#C26D1A',
+    fontFamily: PROGRESS_FONT_BOLD,
+  },
+  phaseNodeLabelFuture: {
+    color: 'rgba(52,37,61,0.46)',
+  },
+  phaseTimelineSub: {
+    marginTop: 2,
+    textAlign: 'center',
+    fontFamily: PROGRESS_FONT_MEDIUM,
+    color: 'rgba(52,37,61,0.78)',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  milestoneActionCard: {
+    marginBottom: spacing.lg,
+    borderRadius: borderRadius.lg,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.07)',
+    padding: spacing.md,
+  },
+  tabsSharedCard: {
+    marginBottom: spacing.lg,
+    borderRadius: borderRadius.lg,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.07)',
+    overflow: 'hidden',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
+  },
+  tabsSharedContent: {
+    paddingTop: spacing.md,
+  },
+  tabsLockedCard: {
+    marginBottom: spacing.lg,
+    borderRadius: borderRadius.lg,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.07)',
+    padding: spacing.md,
+  },
+  tabsLockedTitle: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '800',
+    color: '#2D1B3A',
+    marginBottom: 4,
+  },
+  tabsLockedBody: {
+    fontFamily: PROGRESS_FONT_REGULAR,
+    fontSize: 12,
+    lineHeight: 19,
+    color: 'rgba(52,37,61,0.7)',
+  },
+  tabsLockedToggleSwitchRow: {
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    alignSelf: 'flex-start',
+    paddingVertical: 2,
+  },
+  tabsLockedToggleSwitchKnob: {
+    width: 30,
+    height: 18,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(225,139,49,0.45)',
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
+  tabsLockedToggleSwitchKnobActive: {
+    backgroundColor: '#FFE8CC',
+    borderColor: '#E18B31',
+    alignItems: 'flex-end',
+  },
+  tabsLockedToggleSwitchDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#E18B31',
+    backgroundColor: '#FFE8CC',
+  },
+  tabsLockedToggleSwitchDotActive: {
+    backgroundColor: '#E18B31',
+  },
+  tabsLockedToggleSwitchText: {
+    fontFamily: PROGRESS_FONT_MEDIUM,
+    color: 'rgba(52,37,61,0.46)',
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '600',
+  },
+  tabsLockedToggleSwitchTextActive: {
+    color: '#C26D1A',
+  },
+  surveyOptInCard: {
+    marginBottom: spacing.lg,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(225,139,49,0.28)',
+    backgroundColor: '#FFF8EE',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  surveyOptInText: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: 'rgba(52,37,61,0.82)',
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: spacing.sm,
+  },
+  surveyOptInBtn: {
+    alignSelf: 'flex-start',
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(225,139,49,0.42)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
+  },
+  surveyOptInBtnTxt: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: '#C26D1A',
+    fontSize: 14,
+    lineHeight: 18,
+    fontWeight: '700',
+  },
+  inactiveSurveyCard: {
+    marginTop: spacing.sm,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  inactiveSurveyBody: {
+    fontFamily: PROGRESS_FONT_REGULAR,
+    color: 'rgba(52,37,61,0.78)',
+    fontSize: 12,
+    lineHeight: 19,
+  },
+  inactiveSurveyToggleRow: {
+    marginTop: spacing.sm,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  inactiveSurveyToggleBtn: {
+    flex: 1,
+    minHeight: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(225,139,49,0.42)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
+  },
+  inactiveSurveyToggleBtnActive: {
+    backgroundColor: '#FFE8CC',
+    borderColor: '#E18B31',
+  },
+  inactiveSurveyToggleBtnMuted: {
+    backgroundColor: '#F2F2F5',
+    borderColor: 'rgba(52,37,61,0.2)',
+  },
+  inactiveSurveyToggleTxt: {
+    fontFamily: PROGRESS_FONT_MEDIUM,
+    color: 'rgba(52,37,61,0.8)',
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  inactiveSurveyToggleTxtActive: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: '#C26D1A',
+  },
+  inactiveSurveyToggleTxtMuted: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: 'rgba(52,37,61,0.74)',
+  },
+  firstSessionBtnTxt: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: '#C26D1A',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  editorialQuoteCard: {
+    marginBottom: 0,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.xl + 4,
+  },
+  editorialQuoteText: {
+    fontFamily: 'Sailec-RegularItalic',
+    color: '#4B3A2E',
+    fontSize: 10,
+    lineHeight: 18,
+    fontWeight: '400',
+    textAlign: 'center',
+    marginBottom: spacing.md,
+  },
+  editorialQuoteSource: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: '#A88A66',
+    fontSize: 15,
+    lineHeight: 22,
+  },
+});
