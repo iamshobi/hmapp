@@ -4,7 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { borderRadius, spacing, shadows } from '../theme';
 
-const PROGRESS_FONT_REGULAR = 'Sailec-Light';
+const PROGRESS_FONT_REGULAR = 'Sailec-Medium';
 const PROGRESS_FONT_MEDIUM = 'Sailec-Medium';
 const PROGRESS_FONT_BOLD = 'Sailec-Bold';
 
@@ -92,6 +92,7 @@ export default function ProgressCheckinsCalendar({
   }, [moodEntries]);
 
   const sessionsDisplay = previewType ? getSessionsForType(previewType) : Math.max(0, Math.round(sessionCount || 0));
+  const normalizedPreviewType = normalizePreviewType(previewType);
 
   const { cells, totalRows } = useMemo(() => {
     const dim = daysInMonth(year, monthIndex);
@@ -142,6 +143,15 @@ export default function ProgressCheckinsCalendar({
     // If we only know sessions count (no dated entries), assume at least one practiced day.
     return 1;
   }, [loggedDays.size, monthIndex, previewType, sessionsDisplay, year]);
+  const partialSurveyCounts = useMemo(() => {
+    if (normalizedPreviewType !== 'partialSurveyOptOut') return null;
+    const sessionsWithSurveys = buildPreviewLoggedSet(year, monthIndex, previewType).size;
+    const sessionsWithoutSurveys = buildPreviewGraySet(year, monthIndex, previewType).size;
+    return {
+      sessionsWithSurveys,
+      sessionsWithoutSurveys,
+    };
+  }, [monthIndex, normalizedPreviewType, previewType, year]);
 
   const monthLabel = useMemo(
     () =>
@@ -208,9 +218,7 @@ export default function ProgressCheckinsCalendar({
                     end={{ x: 0.92, y: 0.92 }}
                     style={styles.loggedRing}
                   >
-                    <View style={styles.loggedInner}>
-                      <Text style={styles.loggedDayText}>{cell.day}</Text>
-                    </View>
+                    <Text style={styles.loggedDayText}>{cell.day}</Text>
                   </LinearGradient>
                 )
               ) : (
@@ -232,20 +240,36 @@ export default function ProgressCheckinsCalendar({
               end={{ x: 0.92, y: 0.92 }}
               style={styles.legendSwatch}
             />
-            <Text style={styles.legendText}>Surveyed days</Text>
+            <Text style={styles.legendText}>Sessions with surveys</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendSwatch, styles.legendSwatchGray]} />
-            <Text style={styles.legendText}>Sessions without survey</Text>
+            <Text style={styles.legendText}>Sessions without surveys</Text>
           </View>
         </View>
       ) : null}
 
       <View style={styles.footerStats}>
-        <Text style={styles.footerStatText}>
-          Number of sessions: {sessionsDisplay}
-        </Text>
-        <Text style={styles.footerStatText}>Days practiced: {daysPracticedDisplay}</Text>
+        {normalizedPreviewType === 'partialSurveyOptOut' ? (
+          <>
+            <Text style={styles.footerStatText}>
+              Sessions without surveys: {partialSurveyCounts?.sessionsWithoutSurveys ?? 0}
+            </Text>
+            <Text style={styles.footerStatText}>
+              Sessions with surveys: {partialSurveyCounts?.sessionsWithSurveys ?? 0}
+            </Text>
+            <Text style={styles.footerStatText}>Active days: {daysPracticedDisplay}</Text>
+          </>
+        ) : (
+          <>
+            <Text style={styles.footerStatText}>
+              {normalizedPreviewType === 'inactiveSurvey' ? 'Sessions without surveys' : 'Number of sessions'}: {sessionsDisplay}
+            </Text>
+            <Text style={styles.footerStatText}>
+              {normalizedPreviewType === 'inactiveSurvey' ? 'Active days' : 'Days practiced'}: {daysPracticedDisplay}
+            </Text>
+          </>
+        )}
       </View>
     </View>
   );
@@ -351,18 +375,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  loggedInner: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   loggedDayText: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 13,
-    color: '#8F4B0A',
+    color: '#FFFFFF',
     fontWeight: '800',
   },
   loggedGrayBubble: {

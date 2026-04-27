@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { borderRadius, spacing } from '../theme';
 
-const PROGRESS_FONT_REGULAR = 'Sailec-Light';
+const PROGRESS_FONT_REGULAR = 'Sailec-Medium';
 const PROGRESS_FONT_BOLD = 'Sailec-Bold';
 
 function getProgressType(totalSessions) {
@@ -24,43 +24,43 @@ function minSessionsForType(type) {
 function getProgressCopy(type, totalSessions) {
   if (type === 'inactiveSurvey') {
     return {
-      title: '12 sessions completed. Survey insights are waiting.',
-      body: 'You have session activity, but pre- and post-session survey answers are missing. Opt in to unlock Trends, Practice Days, and Notes insights.',
+      title: 'You have session activity, but pre- and post-session survey answers are missing.',
+      body: 'Opt-in for the surveys and answer them to unlock your progress insights.',
     };
   }
   if (type === 'partialSurveyOptOut') {
     return {
-      title: `${Math.max(totalSessions, 8)} sessions completed. Re-enable surveys to restore full insights.`,
-      body: 'You have prior survey data and continued sessions. Opt in again to unlock updated Trends, Practice Days, and Notes insights.',
+      title: 'You have prior survey data and continued sessions.',
+      body: 'But right now it looks like you have opted out of the surveys. Opt-in for the surveys once again and answer them regularly to unlock your progress insights.',
     };
   }
   if (type === 'zero') {
     return {
-      title: 'Your journey starts with one session.',
+      title: 'Your journey starts here.',
       body: 'Take your first Coherence Session and complete the survey to start seeing progress insights here.',
     };
   }
   if (type === 'pro') {
     return {
-      title: `${Math.max(totalSessions, minSessionsForType(type))} sessions. You built a lasting rhythm.`,
-      body: 'Your practice is now a dependable reset. This level of consistency reshapes how your system recovers under pressure.',
+      title: 'You built a lasting rhythm.',
+      body: "Your practice is now a dependable reset. This level of consistency reshapes how well you've improved in terms of reducing stress, and improvng your energy & mood.",
     };
   }
   if (type === 'advanced') {
     return {
-      title: `${Math.max(totalSessions, minSessionsForType(type))} sessions strong.`,
-      body: 'Your Practice Days are forming a clear pattern: calmer stress response, steadier energy, and better emotional recovery.',
+      title: 'Your Practice Days are forming a clear pattern.',
+      body: 'Calmer stress response, steadier energy, and better emotional recovery.',
     };
   }
   if (type === 'building') {
     return {
-      title: `${Math.max(totalSessions, minSessionsForType(type))} sessions in. Momentum is building.`,
-      body: 'You are beginning to establish a repeatable nervous-system reset pattern.',
+      title: 'The momentum is building. You are beginning to establish a pattern!',
+      body: 'Continue to attend more Coherence Sessions and complete the surveys to start seeing your progress here.',
     };
   }
   return {
     title: 'You did it! First session complete.',
-    body: 'One session is a real beginning. Keep showing up and your nervous system learns this calmer state faster.',
+    body: 'One session is a real beginning. Continue to attend more Coherence Sessions and complete the surveys to start seeing your progress here.',
   };
 }
 

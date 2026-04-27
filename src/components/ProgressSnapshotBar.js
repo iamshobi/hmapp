@@ -5,7 +5,7 @@ import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 're
 import { Zap, Flame, Heart, Timer } from 'lucide-react-native';
 import { spacing } from '../theme';
 
-const PROGRESS_FONT_REGULAR = 'Sailec-Light';
+const PROGRESS_FONT_REGULAR = 'Sailec-Medium';
 const PROGRESS_FONT_MEDIUM = 'Sailec-Medium';
 const PROGRESS_FONT_BOLD = 'Sailec-Bold';
 
@@ -54,8 +54,8 @@ function getCoherenceFromSessions(totalSessions) {
 }
 
 function CoherenceDonut({ value = 0 }) {
-  const size = 92;
-  const stroke = 8;
+  const size = 100;
+  const stroke = 9;
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const normalized = Math.max(0, Math.min(5, Number(value) || 0));
@@ -67,9 +67,9 @@ function CoherenceDonut({ value = 0 }) {
       <Svg width={size} height={size} style={styles.donutSvg}>
         <Defs>
           <SvgLinearGradient id="coherenceRingGradient" x1="0%" y1="100%" x2="100%" y2="0%">
-            <Stop offset="0%" stopColor="#FF5E9A" />
-            <Stop offset="52%" stopColor="#FF8A2C" />
-            <Stop offset="100%" stopColor="#8A46D9" />
+            <Stop offset="0%" stopColor="#E14986" />
+            <Stop offset="52%" stopColor="#D96F1D" />
+            <Stop offset="100%" stopColor="#7239C3" />
           </SvgLinearGradient>
         </Defs>
         <Circle
@@ -151,7 +151,7 @@ export default function ProgressSnapshotBar({
 
   return (
     <LinearGradient
-      colors={['#FFA70B', '#FF8B2C', '#E55AA9']}
+      colors={['#F6A400', '#F18A1F', '#EB6A33']}
       start={{ x: 0.05, y: 0.1 }}
       end={{ x: 0.95, y: 0.95 }}
       style={styles.wrap}
@@ -162,27 +162,35 @@ export default function ProgressSnapshotBar({
 
       <View style={styles.metricGrid}>
         <View style={styles.metricTile}>
-          <Zap size={12} color="#FFFFFF" />
+          <View style={styles.metricIconWrap}>
+            <Zap size={13} color="#FFFFFF" strokeWidth={2.2} />
+          </View>
           <Text style={styles.tileValue}>{coherencePointsDisplay}</Text>
-          <Text style={styles.tileLabel}>Points</Text>
+          <Text style={styles.tileLabel}>coherence points</Text>
         </View>
 
         <View style={styles.metricTile}>
-          <Heart size={12} color="#FFFFFF" />
+          <View style={styles.metricIconWrap}>
+            <Heart size={13} color="#FFFFFF" strokeWidth={2.2} />
+          </View>
           <Text style={styles.tileValue}>{sessionsCompletedDisplay}</Text>
           <Text style={styles.tileLabel}>sessions completed</Text>
         </View>
 
         <View style={styles.metricTile}>
-          <Timer size={12} color="#FFFFFF" />
+          <View style={styles.metricIconWrap}>
+            <Timer size={13} color="#FFFFFF" strokeWidth={2.2} />
+          </View>
           <Text style={styles.tileValue}>{avgSessionDisplay}</Text>
           <Text style={styles.tileLabel}>session length</Text>
         </View>
 
         <View style={styles.metricTile}>
-          <Flame size={12} color="#FFFFFF" />
-          <Text style={styles.tileValue}>{streakDisplay === '-' ? '-' : `${streakDisplay}d`}</Text>
-          <Text style={styles.tileLabel}>streak</Text>
+          <View style={styles.metricIconWrap}>
+            <Flame size={13} color="#FFFFFF" strokeWidth={2.2} />
+          </View>
+          <Text style={styles.tileValue}>{streakDisplay}</Text>
+          <Text style={styles.tileLabel}>{'day\nstreak'}</Text>
         </View>
       </View>
     </LinearGradient>
@@ -218,7 +226,9 @@ const styles = StyleSheet.create({
   donutCenter: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 0,
+    gap: 2,
+    paddingHorizontal: 4,
+    paddingTop: 2,
   },
   donutValue: {
     fontFamily: PROGRESS_FONT_BOLD,
@@ -230,9 +240,10 @@ const styles = StyleSheet.create({
   donutLabel: {
     fontFamily: PROGRESS_FONT_MEDIUM,
     color: '#FFF1D3',
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 10,
+    lineHeight: 13,
     fontWeight: '500',
+    textAlign: 'center',
   },
   metricGrid: {
     flex: 1,
@@ -252,6 +263,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.24)',
     justifyContent: 'center',
+    alignItems: 'flex-start',
+  },
+  metricIconWrap: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.16)',
   },
   tileValue: {
     fontFamily: PROGRESS_FONT_BOLD,
@@ -259,7 +279,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 19,
     fontWeight: '800',
-    marginTop: 4,
+    marginTop: 6,
   },
   tileLabel: {
     fontFamily: PROGRESS_FONT_MEDIUM,

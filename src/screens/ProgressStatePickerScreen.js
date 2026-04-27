@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { spacing, borderRadius } from '../theme';
 
-const PROGRESS_FONT_REGULAR = 'Sailec-Light';
+const PROGRESS_FONT_REGULAR = 'Sailec-Medium';
 const PROGRESS_FONT_BOLD = 'Sailec-Bold';
 
 const STATE_OPTIONS = [

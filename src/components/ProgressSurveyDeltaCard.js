@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, Image } from 'react-na
 import { X, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { borderRadius, spacing } from '../theme';
 
-const PROGRESS_FONT_REGULAR = 'Sailec-Light';
+const PROGRESS_FONT_REGULAR = 'Sailec-Medium';
 const PROGRESS_FONT_MEDIUM = 'Sailec-Medium';
 const PROGRESS_FONT_BOLD = 'Sailec-Bold';
 

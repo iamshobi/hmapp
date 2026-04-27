@@ -31,7 +31,7 @@ import { TrendLayerComparisonCard } from '../components/sessionInsights/SessionI
 import { useMysession } from '../context/mysessionContext';
 import { colors, spacing, borderRadius, typography } from '../theme';
 
-const PROGRESS_FONT_REGULAR = 'Sailec-Light';
+const PROGRESS_FONT_REGULAR = 'Sailec-Medium';
 const PROGRESS_FONT_MEDIUM = 'Sailec-Medium';
 const PROGRESS_FONT_BOLD = 'Sailec-Bold';
 
@@ -578,7 +578,27 @@ export default function ProgressMainScreen() {
   };
   const shouldPrioritizeInsightsCard =
     hasEnoughSessionsForProgressTabs && trendSessionCount > 0 && !shouldFullyLockInsights;
-  const milestoneHeaderText = `${Math.max(0, trendSessionCount)} Sessions.`;
+  const milestoneHeaderText = React.useMemo(() => {
+    if (hasPartialSurveyOptOutData) {
+      return "Great, You've completed 18 sessions. But Surveys are temporarily turned off!";
+    }
+    if (hasIncompleteOrInactiveSurveyData) {
+      return "Great, You've completed 12 sessions (without surveys)!";
+    }
+    if (trendSessionCount >= 100) {
+      return "Wow, You've completed 100 sessions!";
+    }
+    if (trendSessionCount >= 17) {
+      return 'You are 17 sessions strong!';
+    }
+    if (trendSessionCount >= 5) {
+      return "Great, you've completed 5 sessions!";
+    }
+    if (trendSessionCount >= 1) {
+      return "You've completed your 1st session!";
+    }
+    return 'Start your first session!';
+  }, [hasIncompleteOrInactiveSurveyData, hasPartialSurveyOptOutData, trendSessionCount]);
   const snapshotCompact = React.useMemo(() => {
     if (sciencePreviewType) {
       const preview = getSnapshotForPreviewType(sciencePreviewType);
@@ -665,9 +685,6 @@ export default function ProgressMainScreen() {
                 showLegend={hasPartialSurveyOptOutData}
                 embedded
               />
-              {hasPartialSurveyOptOutData ? (
-                <Text style={styles.historicalDataHint}>Historical survey insights are shown for your earlier sessions.</Text>
-              ) : null}
             </>
           )
         ) : null}
@@ -751,9 +768,6 @@ export default function ProgressMainScreen() {
                     );
                   })}
                 </View>
-                {hasPartialSurveyOptOutData ? (
-                  <Text style={styles.historicalDataHint}>Historical survey insights are shown for your earlier sessions.</Text>
-                ) : null}
               </View>
               <View style={styles.notesListWrap}>
                 {filteredNotes.map((note, idx) => (
@@ -1007,7 +1021,7 @@ export default function ProgressMainScreen() {
             </View>
           ) : (
             <LinearGradient
-              colors={['#FFA70B', '#FF8B2C', '#E55AA9']}
+              colors={['#F6A400', '#F18A1F', '#EB6A33']}
               start={{ x: 0.05, y: 0.1 }}
               end={{ x: 0.95, y: 0.95 }}
               style={styles.snapshotCompactRow}
@@ -1030,6 +1044,9 @@ export default function ProgressMainScreen() {
           )}
         </TouchableOpacity>
         {shouldPrioritizeInsightsCard ? tabsSection : null}
+        {trendSessionCount > 1 && !hasSurveyInsightsOptOutState ? (
+          <ProgressSurveyDeltaCard averages={trendAverages} />
+        ) : null}
         <View style={styles.milestoneActionCard}>
           <TouchableOpacity
             style={styles.collapsibleHeaderRow}
@@ -1089,9 +1106,6 @@ export default function ProgressMainScreen() {
             </>
           ) : null}
         </View>
-        {trendSessionCount > 1 && !hasSurveyInsightsOptOutState ? (
-          <ProgressSurveyDeltaCard averages={trendAverages} />
-        ) : null}
         {!shouldPrioritizeInsightsCard ? tabsSection : null}
 
         <TouchableOpacity
@@ -1100,7 +1114,7 @@ export default function ProgressMainScreen() {
           activeOpacity={0.92}
         >
           <LinearGradient
-            colors={['#FFF3B0', '#FFB300', '#D81B60']}
+            colors={['#F6A400', '#F18A1F', '#EB6A33']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.community}
