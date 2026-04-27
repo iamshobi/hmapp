@@ -71,7 +71,7 @@ export default function InsightsProScreen({
 
       <GlassCard
         title="What stands out most"
-        body={standoutInsight || 'Your check-ins show a strong pattern of support after regular sessions.'}
+        body={standoutInsight || 'Your Practice Days show a strong pattern of support after regular sessions.'}
         variant="strong"
       />
 

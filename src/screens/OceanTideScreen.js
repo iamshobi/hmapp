@@ -27,7 +27,7 @@ import {
   OCEAN_FULL_COLUMN_LEVEL_ID,
   getOceanLevelUnlockIndex,
 } from '../constants/oceanDepthLevels';
-import { useBreathGarden } from '../context/BreathGardenContext';
+import { useMysession } from '../context/mysessionContext';
 import { spacing, borderRadius, shadows, palette, oceanDepthIconGlow } from '../theme';
 
 /* ── Session durations ────────────────────────────────────────────── */
@@ -283,7 +283,7 @@ export default function OceanTideScreen() {
   const nav    = useNavigation();
   const route  = useRoute();
   const themeId = route.params?.themeId ?? 'ocean';
-  const { oceanMaxUnlockedLevelIndex } = useBreathGarden();
+  const { oceanMaxUnlockedLevelIndex } = useMysession();
 
   /** Go straight to zone detail; Dive In opens the analyzing interstitial then session (OceanLevelDetail). */
   const openSession = (level, durationSec = DEFAULT_SESSION_SEC) => {

@@ -56,7 +56,7 @@ wellness-app/
 ├── src/
 │   ├── theme.js                 # Design tokens
 │   ├── context/
-│   │   └── BreathGardenContext.js
+│   │   └── mysessionContext.js
 │   └── screens/
 │       ├── ProgressMainScreen.js   # My Progress hub
 │       └── …

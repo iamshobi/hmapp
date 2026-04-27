@@ -609,14 +609,12 @@ export function TrendLayerComparisonCard({
   const reportModes = isProgressTheme
     ? hasAtLeastThirtySessions
       ? [
-          { key: 'today', label: 'Today' },
           { key: 'week', label: 'Week' },
           { key: 'month', label: 'Month' },
           { key: 'year', label: 'Year' },
           { key: 'all', label: 'All' },
         ]
       : [
-          { key: 'today', label: 'Today' },
           { key: 'week', label: 'Week' },
         ]
     : hasWeekAndMonthData
@@ -1085,8 +1083,8 @@ export function TrendLayerComparisonCard({
             : reportRange === 'year'
               ? 'months'
             : reportRange === 'day' || reportRange === 'today'
-              ? 'check-ins today'
-              : 'total check-ins'}
+              ? 'Practice Days today'
+              : 'total Practice Days'}
         , stronger breathing consistency and coherence points track with improved {metricLabelsText.toLowerCase()}, showing a clear mind-body correlation.
       </Text>
       </>

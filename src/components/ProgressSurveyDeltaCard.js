@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Image } from 'react-native';
-import { X } from 'lucide-react-native';
+import { X, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { borderRadius, spacing } from '../theme';
 
 const PROGRESS_FONT_REGULAR = 'Sailec-Light';
@@ -37,58 +37,97 @@ function DeltaTile({ label, before, after, delta, direction }) {
 
 export default function ProgressSurveyDeltaCard({ averages }) {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const stressBefore = averages?.stressBefore;
   const stressAfter = averages?.stressAfter;
   const energyBefore = averages?.energyBefore;
   const energyAfter = averages?.energyAfter;
   const moodBefore = averages?.moodBefore;
   const moodAfter = averages?.moodAfter;
+  const stressDelta = deltaFor('stress', stressBefore, stressAfter);
+  const energyDelta = deltaFor('energy', energyBefore, energyAfter);
+  const moodDelta = deltaFor('mood', moodBefore, moodAfter);
 
   return (
     <>
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={() => setIsExpanded((prev) => !prev)} activeOpacity={0.92}>
       <View style={styles.titleRow}>
-        <Text style={styles.title}>What has improved</Text>
-        <TouchableOpacity
-          style={styles.helpBtn}
-          onPress={() => setIsHelpOpen(true)}
-          activeOpacity={0.84}
-          accessibilityRole="button"
-          accessibilityLabel="Learn how survey scores are interpreted"
-        >
-          <Image
-            source={require('../../assets/help-icon-my-progress.png')}
-            style={styles.helpIconImage}
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
+        <View style={styles.titleLeft}>
+          <Text style={styles.title}>What has improved?</Text>
+          <TouchableOpacity
+            style={styles.helpBtn}
+            onPress={() => setIsHelpOpen(true)}
+            activeOpacity={0.84}
+            accessibilityRole="button"
+            accessibilityLabel="Learn how survey scores are interpreted"
+          >
+            <Image
+              source={require('../../assets/help-icon-my-progress.png')}
+              style={styles.helpIconImage}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.titleActions}>
+          <TouchableOpacity
+            style={styles.expandBtn}
+            onPress={() => setIsExpanded((prev) => !prev)}
+            activeOpacity={0.84}
+            accessibilityRole="button"
+            accessibilityLabel={isExpanded ? 'Collapse What has improved' : 'Expand What has improved'}
+          >
+            {isExpanded ? (
+              <ChevronUp size={16} color="#E18B31" strokeWidth={2.4} />
+            ) : (
+              <ChevronDown size={16} color="#E18B31" strokeWidth={2.4} />
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
-      <Text style={styles.sub}>User self-reported scores on 1-10 scale</Text>
-
-      <View style={styles.tileRow}>
-        <DeltaTile
-          label="Stress"
-          before={stressBefore}
-          after={stressAfter}
-          delta={deltaFor('stress', stressBefore, stressAfter)}
-          direction="down"
-        />
-        <DeltaTile
-          label="Energy"
-          before={energyBefore}
-          after={energyAfter}
-          delta={deltaFor('energy', energyBefore, energyAfter)}
-          direction="up"
-        />
-        <DeltaTile
-          label="Mood"
-          before={moodBefore}
-          after={moodAfter}
-          delta={deltaFor('mood', moodBefore, moodAfter)}
-          direction="up"
-        />
-      </View>
-    </View>
+      {isExpanded ? (
+        <>
+          <Text style={styles.sub}>User self-reported scores on 1-10 scale</Text>
+          <View style={styles.tileRow}>
+            <DeltaTile
+              label="Stress"
+              before={stressBefore}
+              after={stressAfter}
+              delta={stressDelta}
+              direction="down"
+            />
+            <DeltaTile
+              label="Energy"
+              before={energyBefore}
+              after={energyAfter}
+              delta={energyDelta}
+              direction="up"
+            />
+            <DeltaTile
+              label="Mood"
+              before={moodBefore}
+              after={moodAfter}
+              delta={moodDelta}
+              direction="up"
+            />
+          </View>
+        </>
+      ) : (
+        <View style={styles.compactRow}>
+          <View style={styles.compactItem}>
+            <Text style={styles.compactLabel}>Stress</Text>
+            <Text style={styles.compactPct}>{`${stressDelta >= 0 ? '+' : ''}${stressDelta}%`}</Text>
+          </View>
+          <View style={styles.compactItem}>
+            <Text style={styles.compactLabel}>Energy</Text>
+            <Text style={styles.compactPct}>{`${energyDelta >= 0 ? '+' : ''}${energyDelta}%`}</Text>
+          </View>
+          <View style={styles.compactItem}>
+            <Text style={styles.compactLabel}>Mood</Text>
+            <Text style={styles.compactPct}>{`${moodDelta >= 0 ? '+' : ''}${moodDelta}%`}</Text>
+          </View>
+        </View>
+      )}
+    </TouchableOpacity>
 
     <Modal visible={isHelpOpen} transparent animationType="slide" onRequestClose={() => setIsHelpOpen(false)}>
       <View style={styles.modalBackdrop}>
@@ -129,7 +168,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.07)',
-    padding: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingTop: 14,
+    paddingBottom: spacing.md,
   },
   title: {
     fontFamily: PROGRESS_FONT_BOLD,
@@ -144,6 +185,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
+  titleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  titleActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 0,
+  },
   helpBtn: {
     width: 30,
     height: 30,
@@ -155,17 +206,54 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
   },
+  expandBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   sub: {
     fontFamily: PROGRESS_FONT_MEDIUM,
     marginTop: 4,
     marginBottom: spacing.md,
-    color: '#8A8EA1',
+    color: '#5C6277',
     fontSize: 12,
     lineHeight: 19,
   },
   tileRow: {
     flexDirection: 'row',
     gap: spacing.sm,
+  },
+  compactRow: {
+    marginTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+  },
+  compactItem: {
+    flex: 1,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.07)',
+    backgroundColor: '#F8F8FA',
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  compactLabel: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: '#1F2A44',
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '700',
+    marginBottom: 3,
+  },
+  compactPct: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: '#2C9A5F',
+    fontSize: 13,
+    lineHeight: 18,
+    fontWeight: '800',
   },
   tile: {
     flex: 1,
@@ -187,7 +275,7 @@ const styles = StyleSheet.create({
   },
   tileVals: {
     fontFamily: PROGRESS_FONT_MEDIUM,
-    color: '#7C8195',
+    color: '#575E75',
     fontSize: 13,
     lineHeight: 19,
     fontWeight: '600',

@@ -10,7 +10,7 @@ import {
 
 export const OCEAN_DEV_UNLOCK_ALL = __DEV__ && true;
 
-/** Applied on top of persisted BreathGarden data when `OCEAN_DEV_UNLOCK_ALL` is true. */
+/** Applied on top of persisted mysession data when `OCEAN_DEV_UNLOCK_ALL` is true. */
 export const OCEAN_DEV_UNLOCK_PATCH = {
   oceanMaxUnlockedLevelIndex: OCEAN_LEVEL_UNLOCK_COUNT - 1,
   oceanDriftModeComplete: true,

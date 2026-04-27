@@ -5,7 +5,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useBreathGarden } from '../context/BreathGardenContext';
+import { useMysession } from '../context/mysessionContext';
 import { CRITICAL_SHIFT_ALERT_COPY } from '../constants/criticalShift';
 import { sessionInsightsTokens } from '../constants/sessionInsights';
 
@@ -13,7 +13,7 @@ const T = sessionInsightsTokens;
 
 export default function CriticalShiftAlertOverlay() {
   const insets = useSafeAreaInsets();
-  const { criticalShiftAlertPending, acknowledgeCriticalShiftAlert } = useBreathGarden();
+  const { criticalShiftAlertPending, acknowledgeCriticalShiftAlert } = useMysession();
 
   if (!criticalShiftAlertPending) return null;
 

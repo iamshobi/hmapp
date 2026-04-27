@@ -31,7 +31,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { X } from 'lucide-react-native';
-import { useBreathGarden } from '../../context/BreathGardenContext';
+import { useMysession } from '../../context/mysessionContext';
 import {
   OCEAN_COLLECTIBLE_ZONE_ORDER,
   OCEAN_ZONE_SHELL_IDS,
@@ -317,7 +317,7 @@ export default function ShellCollectionPanel({ onClose, resumeToSessionRewards, 
   const insets = useSafeAreaInsets();
   const { width: winW, height: winH } = useWindowDimensions();
   const nav = useNavigation();
-  const { shellCollectionIds, pearlCollectionIds } = useBreathGarden();
+  const { shellCollectionIds, pearlCollectionIds } = useMysession();
   const [tab, setTab] = useState('shells');
   /** Bumps when the screen is focused again (e.g. back from detail) so glitter replay runs */
   const [entranceEpoch, setEntranceEpoch] = useState(0);

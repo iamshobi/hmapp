@@ -30,11 +30,24 @@ function buildPreviewLoggedSet(year, monthIndex, previewType) {
     firstTime: [8],
     building: [3, 8, 14, 21, 27],
     inactiveSurvey: [4, 11, 19, 26],
+    partialSurveyOptOut: [3, 9, 15],
     growing: [3, 8, 14, 21, 27],
     advanced: [2, 5, 8, 11, 14, 17, 20, 23, 26, 29],
     pro: [1, 3, 5, 7, 8, 11, 14, 17, 19, 21, 24, 27, 29],
   };
   const days = map[previewType] || map.building;
+  const set = new Set();
+  days.forEach((d) => {
+    set.add(dayKey(year, monthIndex, d));
+  });
+  return set;
+}
+
+function buildPreviewGraySet(year, monthIndex, previewType) {
+  const map = {
+    partialSurveyOptOut: [19, 22, 26, 29],
+  };
+  const days = map[previewType] || [];
   const set = new Set();
   days.forEach((d) => {
     set.add(dayKey(year, monthIndex, d));
@@ -52,6 +65,7 @@ function getSessionsForType(type) {
   if (t === 'pro') return 100;
   if (t === 'advanced') return 17;
   if (t === 'inactiveSurvey') return 12;
+  if (t === 'partialSurveyOptOut') return 18;
   if (t === 'building') return 5;
   if (t === 'firstTime') return 1;
   return 0;
@@ -63,6 +77,7 @@ export default function ProgressCheckinsCalendar({
   embedded = false,
   sessionCount = 0,
   loggedVariant = 'gradient',
+  showLegend = false,
 }) {
   const boot = new Date();
   const [year, setYear] = useState(boot.getFullYear());
@@ -76,27 +91,50 @@ export default function ProgressCheckinsCalendar({
     return set;
   }, [moodEntries]);
 
+  const sessionsDisplay = previewType ? getSessionsForType(previewType) : Math.max(0, Math.round(sessionCount || 0));
+
   const { cells, totalRows } = useMemo(() => {
     const dim = daysInMonth(year, monthIndex);
     const firstDow = new Date(year, monthIndex, 1).getDay();
     const c = [];
     for (let i = 0; i < firstDow; i++) c.push({ type: 'empty', key: `e-${i}` });
     const previewLoggedSet = buildPreviewLoggedSet(year, monthIndex, previewType);
+    const previewGraySet = buildPreviewGraySet(year, monthIndex, previewType);
     const usePreview = Boolean(previewType);
     const hasRealEntries = loggedDays.size > 0;
+    const mixedGraySet = new Set();
+    if (loggedVariant === 'mixed') {
+      if (usePreview) {
+        previewGraySet.forEach((k) => mixedGraySet.add(k));
+      } else {
+        const extraDays = Math.min(6, Math.max(0, sessionsDisplay - loggedDays.size));
+        for (let d = dim; d >= 1 && mixedGraySet.size < extraDays; d -= 1) {
+          const k = dayKey(year, monthIndex, d);
+          if (!loggedDays.has(k)) mixedGraySet.add(k);
+        }
+      }
+    }
     for (let d = 1; d <= dim; d++) {
       const key = dayKey(year, monthIndex, d);
       const isPreviewLogged = usePreview ? previewLoggedSet.has(key) : !hasRealEntries && previewLoggedSet.has(key);
-      c.push({ type: 'day', key, day: d, logged: usePreview ? isPreviewLogged : loggedDays.has(key) || isPreviewLogged });
+      const gradientLogged = usePreview ? isPreviewLogged : loggedDays.has(key) || isPreviewLogged;
+      const grayLogged = mixedGraySet.has(key);
+      c.push({
+        type: 'day',
+        key,
+        day: d,
+        logged: gradientLogged || grayLogged,
+        loggedType: grayLogged ? 'gray' : gradientLogged ? 'gradient' : null,
+      });
     }
     const rows = Math.ceil(c.length / 7);
     return { cells: c, totalRows: rows };
-  }, [loggedDays, monthIndex, previewType, year]);
-
-  const sessionsDisplay = previewType ? getSessionsForType(previewType) : Math.max(0, Math.round(sessionCount || 0));
+  }, [loggedDays, loggedVariant, monthIndex, previewType, sessionsDisplay, year]);
   const daysPracticedDisplay = useMemo(() => {
     if (previewType) {
-      const previewDays = buildPreviewLoggedSet(year, monthIndex, previewType).size;
+      const previewDays =
+        buildPreviewLoggedSet(year, monthIndex, previewType).size +
+        buildPreviewGraySet(year, monthIndex, previewType).size;
       return Math.min(previewDays, sessionsDisplay);
     }
     if (sessionsDisplay <= 0) return 0;
@@ -123,7 +161,7 @@ export default function ProgressCheckinsCalendar({
   return (
     <View style={[styles.wrap, embedded && styles.wrapEmbedded]}>
       <View style={styles.headerRow}>
-        {embedded ? <View /> : <Text style={styles.title}>Check-ins</Text>}
+        {embedded ? <View /> : <Text style={styles.title}>Practice Days</Text>}
         <View style={styles.monthNav}>
           <TouchableOpacity
             onPress={() => shiftMonth(-1)}
@@ -159,7 +197,7 @@ export default function ProgressCheckinsCalendar({
           return (
             <View key={cell.key} style={styles.cell}>
               {cell.logged ? (
-                loggedVariant === 'gray' ? (
+                loggedVariant === 'gray' || cell.loggedType === 'gray' ? (
                   <View style={styles.loggedGrayBubble}>
                     <Text style={styles.loggedGrayDayText}>{cell.day}</Text>
                   </View>
@@ -184,6 +222,24 @@ export default function ProgressCheckinsCalendar({
           );
         })}
       </View>
+
+      {showLegend ? (
+        <View style={styles.legendRow}>
+          <View style={styles.legendItem}>
+            <LinearGradient
+              colors={['#FFB300', '#F57C00', '#D81B60']}
+              start={{ x: 0.08, y: 0.1 }}
+              end={{ x: 0.92, y: 0.92 }}
+              style={styles.legendSwatch}
+            />
+            <Text style={styles.legendText}>Surveyed days</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendSwatch, styles.legendSwatchGray]} />
+            <Text style={styles.legendText}>Sessions without survey</Text>
+          </View>
+        </View>
+      ) : null}
 
       <View style={styles.footerStats}>
         <Text style={styles.footerStatText}>
@@ -250,7 +306,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 14,
     fontWeight: '700',
-    color: 'rgba(52,37,61,0.76)',
+    color: 'rgba(52,37,61,0.88)',
   },
   weekRow: {
     flexDirection: 'row',
@@ -262,7 +318,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 13,
     fontWeight: '700',
-    color: 'rgba(52,37,61,0.62)',
+    color: 'rgba(52,37,61,0.82)',
   },
   grid: {
     flexDirection: 'row',
@@ -285,7 +341,7 @@ const styles = StyleSheet.create({
   dayText: {
     fontFamily: PROGRESS_FONT_MEDIUM,
     fontSize: 13,
-    color: 'rgba(52,37,61,0.62)',
+    color: 'rgba(52,37,61,0.8)',
     fontWeight: '600',
   },
   loggedRing: {
@@ -306,7 +362,7 @@ const styles = StyleSheet.create({
   loggedDayText: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 13,
-    color: '#E18B31',
+    color: '#8F4B0A',
     fontWeight: '800',
   },
   loggedGrayBubble: {
@@ -330,11 +386,37 @@ const styles = StyleSheet.create({
     borderTopColor: 'rgba(0,0,0,0.06)',
     gap: 2,
   },
+  legendRow: {
+    marginTop: 8,
+    marginBottom: 2,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  legendSwatch: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  legendSwatchGray: {
+    backgroundColor: '#B8BCC8',
+  },
+  legendText: {
+    fontFamily: PROGRESS_FONT_MEDIUM,
+    fontSize: 11,
+    lineHeight: 14,
+    color: 'rgba(52,37,61,0.78)',
+  },
   footerStatText: {
     fontFamily: PROGRESS_FONT_MEDIUM,
     fontSize: 13,
     lineHeight: 18,
-    color: 'rgba(52,37,61,0.78)',
+    color: 'rgba(52,37,61,0.9)',
     fontWeight: '600',
   },
 });

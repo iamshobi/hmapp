@@ -25,13 +25,19 @@ function getProgressCopy(type, totalSessions) {
   if (type === 'inactiveSurvey') {
     return {
       title: '12 sessions completed. Survey insights are waiting.',
-      body: 'You have session activity, but pre and post survey answers are missing. Opt in to unlock Trends, Check-ins, and Notes insights.',
+      body: 'You have session activity, but pre- and post-session survey answers are missing. Opt in to unlock Trends, Practice Days, and Notes insights.',
+    };
+  }
+  if (type === 'partialSurveyOptOut') {
+    return {
+      title: `${Math.max(totalSessions, 8)} sessions completed. Re-enable surveys to restore full insights.`,
+      body: 'You have prior survey data and continued sessions. Opt in again to unlock updated Trends, Practice Days, and Notes insights.',
     };
   }
   if (type === 'zero') {
     return {
       title: 'Your journey starts with one session.',
-      body: 'Take your first breathing session and complete the check-in survey to start seeing progress insights here.',
+      body: 'Take your first Coherence Session and complete the survey to start seeing progress insights here.',
     };
   }
   if (type === 'pro') {
@@ -43,7 +49,7 @@ function getProgressCopy(type, totalSessions) {
   if (type === 'advanced') {
     return {
       title: `${Math.max(totalSessions, minSessionsForType(type))} sessions strong.`,
-      body: 'Your check-ins are forming a clear pattern: calmer stress response, steadier energy, and better emotional recovery.',
+      body: 'Your Practice Days are forming a clear pattern: calmer stress response, steadier energy, and better emotional recovery.',
     };
   }
   if (type === 'building') {
@@ -58,15 +64,30 @@ function getProgressCopy(type, totalSessions) {
   };
 }
 
+function splitSessionPrefix(title) {
+  if (typeof title !== 'string') return { prefix: '', remainder: '' };
+  const match = title.match(/^(\d+\s+sessions?(?:\s+completed)?\.)\s*(.*)$/i);
+  if (!match) return { prefix: '', remainder: title };
+  return {
+    prefix: match[1],
+    remainder: (match[2] || '').trim(),
+  };
+}
+
 export default function ProgressMilestoneCard({
   totalSessions = 0,
   previewType = null,
   milestoneState = null,
   onPress,
   embedded = false,
+  hideLeadingSessionCount = false,
 }) {
   const activeType = milestoneState || previewType || getProgressType(totalSessions);
   const copy = useMemo(() => getProgressCopy(activeType, totalSessions), [activeType, totalSessions]);
+  const splitTitle = useMemo(() => splitSessionPrefix(copy.title), [copy.title]);
+  const renderedTitle = hideLeadingSessionCount
+    ? splitTitle.remainder || copy.title
+    : copy.title;
 
   return (
     <TouchableOpacity
@@ -78,7 +99,7 @@ export default function ProgressMilestoneCard({
     >
       <View style={[styles.gradient, embedded && styles.gradientEmbedded]}>
         <View style={styles.textWrap}>
-          <Text style={styles.title}>{copy.title}</Text>
+          <Text style={styles.title}>{renderedTitle}</Text>
           <Text style={styles.body}>{copy.body}</Text>
         </View>
       </View>
@@ -124,7 +145,7 @@ const styles = StyleSheet.create({
   },
   body: {
     fontFamily: PROGRESS_FONT_REGULAR,
-    color: 'rgba(52,37,61,0.74)',
+    color: 'rgba(52,37,61,0.86)',
     fontSize: 12,
     lineHeight: 19,
     fontWeight: '500',
