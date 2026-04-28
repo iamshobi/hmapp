@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   lead: {
     fontSize: 14,
     color: colors.textSecondary,
-    lineHeight: 21,
+    lineHeight: 26,
     marginBottom: spacing.lg,
   },
   card: {

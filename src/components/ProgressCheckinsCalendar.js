@@ -231,58 +231,62 @@ export default function ProgressCheckinsCalendar({
         })}
       </View>
 
-      {showLegend ? (
-        <View style={styles.legendRow}>
-          <View style={styles.legendItem}>
-            <LinearGradient
-              colors={['#FFB300', '#F57C00', '#D81B60']}
-              start={{ x: 0.08, y: 0.1 }}
-              end={{ x: 0.92, y: 0.92 }}
-              style={styles.legendSwatch}
-            />
-            <Text style={styles.legendText}>Sessions with surveys</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendSwatch, styles.legendSwatchGray]} />
-            <Text style={styles.legendText}>Sessions without surveys</Text>
-          </View>
-        </View>
-      ) : null}
-
-      <View style={styles.footerStats}>
+      <View style={styles.legendRow}>
         {normalizedPreviewType === 'partialSurveyOptOut' ? (
           <>
-            <Text style={styles.footerStatText}>
-              Sessions without surveys: {partialSurveyCounts?.sessionsWithoutSurveys ?? 0}
-            </Text>
-            <Text style={styles.footerStatText}>
-              Sessions with surveys: {partialSurveyCounts?.sessionsWithSurveys ?? 0}
-            </Text>
-            <Text style={styles.footerStatText}>Active days: {daysPracticedDisplay}</Text>
+            <View style={styles.legendItem}>
+              <LinearGradient
+                colors={['#FFB300', '#F57C00', '#D81B60']}
+                start={{ x: 0.08, y: 0.1 }}
+                end={{ x: 0.92, y: 0.92 }}
+                style={styles.legendSwatch}
+              />
+              <Text style={styles.legendText}>
+                Sessions with surveys: {partialSurveyCounts?.sessionsWithSurveys ?? 0}
+              </Text>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendSwatch, styles.legendSwatchGray]} />
+              <Text style={styles.legendText}>
+                Sessions without surveys: {partialSurveyCounts?.sessionsWithoutSurveys ?? 0}
+              </Text>
+            </View>
           </>
         ) : (
-          <>
-            <Text style={styles.footerStatText}>
-              {normalizedPreviewType === 'inactiveSurvey' ? 'Sessions without surveys' : 'Number of sessions'}: {sessionsDisplay}
+          <View style={styles.legendItem}>
+            {normalizedPreviewType === 'inactiveSurvey' ? (
+              <View style={[styles.legendSwatch, styles.legendSwatchGray]} />
+            ) : (
+              <LinearGradient
+                colors={['#FFB300', '#F57C00', '#D81B60']}
+                start={{ x: 0.08, y: 0.1 }}
+                end={{ x: 0.92, y: 0.92 }}
+                style={styles.legendSwatch}
+              />
+            )}
+            <Text style={styles.legendText}>
+              {normalizedPreviewType === 'inactiveSurvey' ? 'Sessions without surveys' : 'Sessions completed'}:{' '}
+              {sessionsDisplay}
             </Text>
-            <Text style={styles.footerStatText}>
-              {normalizedPreviewType === 'inactiveSurvey' ? 'Active days' : 'Days practiced'}: {daysPracticedDisplay}
-            </Text>
-          </>
+          </View>
         )}
+        <View style={[styles.legendItem, styles.legendItemFullRow]}>
+          <Text style={styles.legendText}>Active days: {daysPracticedDisplay}</Text>
+        </View>
       </View>
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
     borderRadius: borderRadius.lg,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.07)',
-    padding: spacing.md,
+    padding: spacing.md + 2,
     ...shadows.card,
   },
   wrapEmbedded: {
@@ -290,7 +294,7 @@ const styles = StyleSheet.create({
     borderWidth: 0,
     borderRadius: 0,
     paddingHorizontal: 0,
-    paddingTop: spacing.sm,
+    paddingTop: 0,
     paddingBottom: 0,
     shadowColor: 'transparent',
     shadowOpacity: 0,
@@ -302,14 +306,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   title: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 20,
-    lineHeight: 24,
+    lineHeight: 26,
     fontWeight: '800',
-    color: '#2D1B3A',
+    color: '#2C2C2E',
   },
   monthNav: {
     flexDirection: 'row',
@@ -330,11 +334,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 14,
     fontWeight: '700',
-    color: 'rgba(52,37,61,0.88)',
+    color: '#171717AD',
   },
   weekRow: {
     flexDirection: 'row',
-    marginBottom: spacing.xs,
+    marginBottom: spacing.sm,
   },
   weekTxt: {
     fontFamily: PROGRESS_FONT_BOLD,
@@ -342,7 +346,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 13,
     fontWeight: '700',
-    color: 'rgba(52,37,61,0.82)',
+    color: '#171717AD',
   },
   grid: {
     flexDirection: 'row',
@@ -365,7 +369,7 @@ const styles = StyleSheet.create({
   dayText: {
     fontFamily: PROGRESS_FONT_MEDIUM,
     fontSize: 13,
-    color: 'rgba(52,37,61,0.8)',
+    color: '#171717AD',
     fontWeight: '600',
   },
   loggedRing: {
@@ -374,6 +378,7 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
+    opacity: 0.8,
   },
   loggedDayText: {
     fontFamily: PROGRESS_FONT_BOLD,
@@ -396,15 +401,15 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   footerStats: {
-    marginTop: 10,
-    paddingTop: 10,
+    marginTop: 12,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: 'rgba(0,0,0,0.06)',
     gap: 2,
   },
   legendRow: {
-    marginTop: 8,
-    marginBottom: 2,
+    marginTop: 10,
+    marginBottom: 4,
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
@@ -413,6 +418,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
+  },
+  legendItemFullRow: {
+    width: '100%',
   },
   legendSwatch: {
     width: 10,
@@ -424,15 +432,15 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontFamily: PROGRESS_FONT_MEDIUM,
-    fontSize: 11,
-    lineHeight: 14,
-    color: 'rgba(52,37,61,0.78)',
+    fontSize: 13,
+    lineHeight: 26,
+    color: '#171717AD',
   },
   footerStatText: {
     fontFamily: PROGRESS_FONT_MEDIUM,
     fontSize: 13,
-    lineHeight: 18,
-    color: 'rgba(52,37,61,0.9)',
+    lineHeight: 26,
+    color: '#171717AD',
     fontWeight: '600',
   },
 });

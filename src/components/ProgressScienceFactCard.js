@@ -68,15 +68,15 @@ const styles = StyleSheet.create({
     paddingRight: spacing.sm,
   },
   title: {
-    color: '#A64C8A',
+    color: '#2C2C2E',
     fontSize: 14,
-    lineHeight: 18,
+    lineHeight: 26,
     fontWeight: '800',
   },
   body: {
-    color: 'rgba(52,37,61,0.8)',
+    color: '#171717',
     fontSize: 14,
-    lineHeight: 22,
+    lineHeight: 26,
     fontWeight: '500',
   },
 });

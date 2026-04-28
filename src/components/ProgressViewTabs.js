@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { CalendarDays, TrendingUp, Lightbulb } from 'lucide-react-native';
 import { borderRadius, spacing } from '../theme';
 
@@ -16,7 +17,7 @@ export default function ProgressViewTabs({ activeTab = 'trend', onChange, embedd
   const isCompact = width <= 360;
   const iconSize = isCompact ? 11 : 13;
   const labelFontSize = isCompact ? 13 : 14;
-  const labelLineHeight = isCompact ? 17 : 18;
+  const labelLineHeight = 26;
 
   return (
     <View style={[styles.wrap, embedded && styles.wrapEmbedded]}>
@@ -26,7 +27,7 @@ export default function ProgressViewTabs({ activeTab = 'trend', onChange, embedd
         return (
           <TouchableOpacity
             key={key}
-            style={[styles.tabBtn, isCompact && styles.tabBtnCompact, active && styles.tabBtnActive, disabled && styles.tabBtnDisabled]}
+            style={[styles.tabBtn, isCompact && styles.tabBtnCompact, disabled && styles.tabBtnDisabled]}
             onPress={() => {
               if (disabled) return;
               onChange?.(key);
@@ -35,19 +36,43 @@ export default function ProgressViewTabs({ activeTab = 'trend', onChange, embedd
             hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
             disabled={disabled}
           >
-            <Icon size={iconSize} color={disabled ? 'rgba(52,37,61,0.42)' : active ? '#E18B31' : 'rgba(52,37,61,0.8)'} strokeWidth={2} />
-            <Text
-              style={[
-                styles.tabTxt,
-                { fontSize: labelFontSize, lineHeight: labelLineHeight },
-                active && styles.tabTxtActive,
-                disabled && styles.tabTxtDisabled,
-              ]}
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {label}
-            </Text>
+            {active ? (
+              <LinearGradient
+                colors={['#F6A400', '#F18A1F', '#EB6A33']}
+                start={{ x: 0.06, y: 0.1 }}
+                end={{ x: 0.94, y: 0.9 }}
+                style={styles.tabBtnActive}
+              >
+                <Icon size={iconSize} color="#FFFFFF" strokeWidth={2} />
+                <Text
+                  style={[
+                    styles.tabTxt,
+                    { fontSize: labelFontSize, lineHeight: labelLineHeight },
+                    styles.tabTxtActive,
+                    disabled && styles.tabTxtDisabled,
+                  ]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {label}
+                </Text>
+              </LinearGradient>
+            ) : (
+              <>
+                <Icon size={iconSize} color={disabled ? 'rgba(52,37,61,0.42)' : 'rgba(52,37,61,0.8)'} strokeWidth={2} />
+                <Text
+                  style={[
+                    styles.tabTxt,
+                    { fontSize: labelFontSize, lineHeight: labelLineHeight },
+                    disabled && styles.tabTxtDisabled,
+                  ]}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {label}
+                </Text>
+              </>
+            )}
           </TouchableOpacity>
         );
       })}
@@ -92,7 +117,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   tabBtnActive: {
-    backgroundColor: '#F2F2F5',
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 11,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingHorizontal: 6,
   },
   tabBtnDisabled: {
     opacity: 0.72,
@@ -106,7 +137,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   tabTxtActive: {
-    color: '#E18B31',
+    color: '#FFFFFF',
   },
   tabTxtDisabled: {
     color: 'rgba(52,37,61,0.45)',

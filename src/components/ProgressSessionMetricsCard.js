@@ -86,9 +86,9 @@ const styles = StyleSheet.create({
     padding: spacing.md,
   },
   title: {
-    color: '#6A247B',
+    color: '#2C2C2E',
     fontSize: 29 / 2,
-    lineHeight: 19,
+    lineHeight: 26,
     fontWeight: '800',
     marginBottom: spacing.sm,
   },
@@ -105,14 +105,14 @@ const styles = StyleSheet.create({
     minHeight: 68,
   },
   tileLabel: {
-    fontSize: 11,
-    lineHeight: 14,
-    color: 'rgba(52,37,61,0.7)',
+    fontSize: 13,
+    lineHeight: 26,
+    color: '#171717',
     marginBottom: 4,
   },
   tileValue: {
     fontSize: 32 / 2,
-    lineHeight: 20,
+    lineHeight: 26,
     fontWeight: '800',
   },
 });

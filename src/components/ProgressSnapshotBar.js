@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
@@ -96,7 +96,6 @@ function CoherenceDonut({ value = 0 }) {
       </Svg>
       <View style={styles.donutCenter}>
         <Text style={styles.donutValue}>{value}</Text>
-        <Text style={styles.donutLabel}>coherence</Text>
       </View>
     </View>
   );
@@ -148,6 +147,40 @@ export default function ProgressSnapshotBar({
   const sessionsCompletedDisplay = isZeroState ? '-' : sessionsValue;
   const avgSessionDisplay = isZeroState ? '-' : formatDuration(avgSessionSeconds);
   const coherencePointsDisplay = isZeroState ? '-' : coherencePointsValue;
+  const glowDots = useMemo(() => {
+    const sessionsFactor = Math.min(1, sessionsValue / 120);
+    const coherenceFactor = Math.min(1, (Number(coherenceDisplay) || 0) / 5);
+    const intensity = Math.max(0, Math.min(1, sessionsFactor * 0.55 + coherenceFactor * 0.45));
+    const dotCount = 6 + Math.round(intensity * 18);
+
+    // Deterministic pseudo-random generator so dots stay stable per state.
+    let seed = Math.round(sessionsValue * 31 + (Number(coherenceDisplay) || 0) * 137 + 73);
+    const rand = () => {
+      seed = (seed * 1664525 + 1013904223) % 4294967296;
+      return seed / 4294967296;
+    };
+
+    const dots = [];
+    let attempts = 0;
+    while (dots.length < dotCount && attempts < dotCount * 16) {
+      attempts += 1;
+      const x = 8 + rand() * 84; // %
+      const y = 8 + rand() * 84; // %
+
+      // Keep middle area (donut) and bottom label zone visually clear.
+      const inDonutCore = x > 24 && x < 76 && y > 16 && y < 72;
+      const inLabelZone = y > 82;
+      if (inDonutCore || inLabelZone) continue;
+
+      dots.push({
+        left: `${x}%`,
+        top: `${y}%`,
+        size: 2 + rand() * 4.5,
+        opacity: 0.2 + rand() * 0.45,
+      });
+    }
+    return dots;
+  }, [coherenceDisplay, sessionsValue]);
 
   return (
     <LinearGradient
@@ -156,41 +189,68 @@ export default function ProgressSnapshotBar({
       end={{ x: 0.95, y: 0.95 }}
       style={styles.wrap}
     >
-      <View style={styles.leftCol}>
-        <CoherenceDonut value={coherenceDisplay} />
-      </View>
-
-      <View style={styles.metricGrid}>
-        <View style={styles.metricTile}>
-          <View style={styles.metricIconWrap}>
-            <Zap size={13} color="#FFFFFF" strokeWidth={2.2} />
+      <View style={styles.columnsRow}>
+        <View style={styles.leftColumn}>
+          <View style={styles.donutTile}>
+            <View pointerEvents="none" style={styles.glowDotsLayer}>
+              {glowDots.map((dot, idx) => (
+                <View
+                  key={`glow-dot-${idx}`}
+                  style={[
+                    styles.glowDot,
+                    {
+                      left: dot.left,
+                      top: dot.top,
+                      width: dot.size,
+                      height: dot.size,
+                      opacity: dot.opacity,
+                    },
+                  ]}
+                />
+              ))}
+            </View>
+            <View style={styles.donutCenterWrap}>
+              <CoherenceDonut value={coherenceDisplay} />
+            </View>
+            <Text style={styles.donutColumnLabel}>{'Your\nCoherence'}</Text>
           </View>
-          <Text style={styles.tileValue}>{coherencePointsDisplay}</Text>
-          <Text style={styles.tileLabel}>coherence points</Text>
         </View>
 
-        <View style={styles.metricTile}>
-          <View style={styles.metricIconWrap}>
-            <Heart size={13} color="#FFFFFF" strokeWidth={2.2} />
+        <View style={styles.rightColumn}>
+          <View style={[styles.metricsGridRow, styles.metricsGridRowTop]}>
+            <View style={[styles.metricTile, styles.gridMetricTile]}>
+              <View style={styles.metricIconWrap}>
+                <Zap size={13} color="#FFFFFF" strokeWidth={2.2} />
+              </View>
+              <Text style={styles.tileValue}>{coherencePointsDisplay}</Text>
+              <Text style={styles.tileLabel}>{'coherence\npoints'}</Text>
+            </View>
+            <View style={[styles.metricTile, styles.gridMetricTile]}>
+              <View style={styles.metricIconWrap}>
+                <Flame size={13} color="#FFFFFF" strokeWidth={2.2} />
+              </View>
+              <Text style={styles.tileValue}>{streakDisplay}</Text>
+              <Text style={styles.tileLabel}>{'day\nstreak'}</Text>
+            </View>
           </View>
-          <Text style={styles.tileValue}>{sessionsCompletedDisplay}</Text>
-          <Text style={styles.tileLabel}>sessions completed</Text>
-        </View>
 
-        <View style={styles.metricTile}>
-          <View style={styles.metricIconWrap}>
-            <Timer size={13} color="#FFFFFF" strokeWidth={2.2} />
-          </View>
-          <Text style={styles.tileValue}>{avgSessionDisplay}</Text>
-          <Text style={styles.tileLabel}>session length</Text>
-        </View>
+          <View style={styles.metricsGridRow}>
+            <View style={[styles.metricTile, styles.gridMetricTile]}>
+              <View style={styles.metricIconWrap}>
+                <Timer size={13} color="#FFFFFF" strokeWidth={2.2} />
+              </View>
+              <Text style={styles.tileValue}>{avgSessionDisplay}</Text>
+              <Text style={styles.tileLabel}>{'session\nlength'}</Text>
+            </View>
 
-        <View style={styles.metricTile}>
-          <View style={styles.metricIconWrap}>
-            <Flame size={13} color="#FFFFFF" strokeWidth={2.2} />
+            <View style={[styles.metricTile, styles.gridMetricTile]}>
+              <View style={styles.metricIconWrap}>
+                <Heart size={13} color="#FFFFFF" strokeWidth={2.2} />
+              </View>
+              <Text style={styles.tileValue}>{sessionsCompletedDisplay}</Text>
+              <Text style={styles.tileLabel}>{'sessions\ncompleted'}</Text>
+            </View>
           </View>
-          <Text style={styles.tileValue}>{streakDisplay}</Text>
-          <Text style={styles.tileLabel}>{'day\nstreak'}</Text>
         </View>
       </View>
     </LinearGradient>
@@ -205,14 +265,50 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    flexDirection: 'row',
     alignItems: 'stretch',
   },
-  leftCol: {
-    width: '33%',
+  columnsRow: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    justifyContent: 'space-between',
+    gap: 6,
+  },
+  leftColumn: {
+    width: '39%',
+    alignSelf: 'stretch',
+  },
+  rightColumn: {
+    width: '61%',
+  },
+  donutTile: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingRight: 4,
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 12,
+    backgroundColor: 'rgba(255,255,255,0.22)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.42)',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  glowDotsLayer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
+  },
+  glowDot: {
+    position: 'absolute',
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
+  },
+  donutCenterWrap: {
+    flex: 1,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
   },
   donutWrap: {
     width: 92,
@@ -226,44 +322,51 @@ const styles = StyleSheet.create({
   donutCenter: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 2,
-    paddingHorizontal: 4,
-    paddingTop: 2,
+    gap: 0,
+    paddingHorizontal: 8,
+    paddingTop: 6,
+    paddingBottom: 4,
   },
   donutValue: {
     fontFamily: PROGRESS_FONT_BOLD,
     color: '#FFF2CC',
     fontSize: 25,
-    lineHeight: 29,
+    lineHeight: 26,
     fontWeight: '800',
   },
-  donutLabel: {
+  donutColumnLabel: {
     fontFamily: PROGRESS_FONT_MEDIUM,
     color: '#FFF1D3',
-    fontSize: 10,
-    lineHeight: 13,
+    fontSize: 13,
+    lineHeight: 26,
     fontWeight: '500',
     textAlign: 'center',
+    position: 'absolute',
+    bottom: 10,
+    zIndex: 2,
   },
-  metricGrid: {
-    flex: 1,
-    marginLeft: 6,
+  metricsGridRow: {
+    width: '100%',
     flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: 6,
   },
+  metricsGridRowTop: {
+    marginBottom: 6,
+  },
   metricTile: {
-    width: '48.5%',
     minHeight: 74,
     borderRadius: 14,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    backgroundColor: 'rgba(61,28,73,0.34)',
+    backgroundColor: 'rgba(255,255,255,0.22)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.24)',
+    borderColor: 'rgba(255,255,255,0.42)',
     justifyContent: 'center',
     alignItems: 'flex-start',
+  },
+  gridMetricTile: {
+    flex: 1,
   },
   metricIconWrap: {
     width: 20,
@@ -271,21 +374,21 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.16)',
+    backgroundColor: 'rgba(255,255,255,0.28)',
   },
   tileValue: {
     fontFamily: PROGRESS_FONT_BOLD,
     color: '#FFFFFF',
     fontSize: 15,
-    lineHeight: 19,
+    lineHeight: 26,
     fontWeight: '800',
     marginTop: 6,
   },
   tileLabel: {
     fontFamily: PROGRESS_FONT_MEDIUM,
     color: '#FFF3DE',
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 13,
+    lineHeight: 26,
     fontWeight: '500',
     marginTop: 1,
   },

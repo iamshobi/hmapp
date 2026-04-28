@@ -622,7 +622,10 @@ export default function ProgressMainScreen() {
   const tabsSection = hasEnoughSessionsForProgressTabs ? (
     <View style={styles.tabsSharedCard}>
       <TouchableOpacity
-        style={styles.collapsibleHeaderRow}
+        style={[
+          styles.collapsibleHeaderRow,
+          !isSessionInsightsExpanded && styles.sessionInsightsHeaderCollapsed,
+        ]}
         onPress={() => setIsSessionInsightsExpanded((prev) => !prev)}
         activeOpacity={0.84}
       >
@@ -662,7 +665,6 @@ export default function ProgressMainScreen() {
         {activeProgressTab === 'checkins' ? (
           effectiveScienceType === 'zero' ? (
             <View style={styles.emptyStateCardEmbedded}>
-              <Text style={styles.tabIntroTitle}>My Practice Days</Text>
               <Text style={styles.tabIntroSub}>Check what has changed over time in your journey with us.</Text>
               <Text style={styles.emptyStateTitle}>No practice days yet</Text>
               <Text style={styles.emptyStateBody}>
@@ -672,10 +674,7 @@ export default function ProgressMainScreen() {
           ) : (
             <>
               {!hasSurveyInsightsOptOutState ? (
-                <>
-                  <Text style={styles.tabIntroTitle}>My Practice Days</Text>
-                  <Text style={styles.tabIntroSub}>Check what has changed over time in your journey with us.</Text>
-                </>
+                <Text style={styles.tabIntroSub}>Check what has changed over time in your journey with us.</Text>
               ) : null}
               <ProgressCheckinsCalendar
                 moodEntries={moodEntries}
@@ -693,7 +692,6 @@ export default function ProgressMainScreen() {
             null
           ) : shouldShowEmptyState || trendSessionCount <= 0 ? (
             <View style={styles.emptyStateCardEmbedded}>
-              <Text style={styles.tabIntroTitle}>My Trends</Text>
               <Text style={styles.tabIntroSub}>Check what has changed over time in your journey with us.</Text>
               <Text style={styles.emptyStateTitle}>No trends yet</Text>
               <Text style={styles.emptyStateBody}>
@@ -703,10 +701,7 @@ export default function ProgressMainScreen() {
           ) : (
             <>
               {!hasSurveyInsightsOptOutState ? (
-                <>
-                  <Text style={styles.tabIntroTitle}>My Trends</Text>
-                  <Text style={styles.tabIntroSub}>Check what has changed over time in your journey with us.</Text>
-                </>
+                <Text style={styles.tabIntroSub}>Check what has changed over time in your journey with us.</Text>
               ) : null}
               <TrendLayerComparisonCard
                 sessionCount={trendSessionCount}
@@ -737,10 +732,7 @@ export default function ProgressMainScreen() {
             <View style={[styles.notesContainerCard, styles.notesContainerCardEmbedded]}>
               <View style={styles.notesHistoryCard}>
                 {!hasSurveyInsightsOptOutState ? (
-                  <>
-                    <Text style={styles.tabIntroTitle}>My Notes</Text>
-                    <Text style={styles.notesHistorySub}>Check what has changed over time in your journey with us.</Text>
-                  </>
+                  <Text style={styles.notesHistorySub}>Check what has changed over time in your journey with us.</Text>
                 ) : null}
                 <View style={styles.notesRangeTabs}>
                   {(hasAtLeastThirtySessions
@@ -929,11 +921,14 @@ export default function ProgressMainScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.journeySummaryRow}>
-            <View style={styles.journeySummaryIconWrap}>
-              <Heart size={12} color="#FFFFFF" fill="#FFFFFF" strokeWidth={2.4} />
-            </View>
             <Text style={styles.journeySummaryText}>
-              Great, You're in the Deep Practice level and among the top 1% of our practitioners!
+              {trendSessionCount === 0
+                ? 'Start your journey by completing a Coherence Session!'
+                : activePhaseIdx >= 3
+                  ? "Great, You're in the Deep Practice level and among the top 1% of our practitioners!"
+                  : activePhaseIdx >= 2
+                    ? "Awesome! You're 30 sessions away from Deep Practice level. Keep practicing!"
+                    : "Wow! You're only 15 sessions away from Habit level."}
             </Text>
           </View>
           {isJourneyExpanded ? (
@@ -978,17 +973,6 @@ export default function ProgressMainScreen() {
                 })}
                 </View>
               </View>
-              {activePhaseIdx >= 3 ? null : (
-                <Text style={styles.phaseTimelineSub}>
-                  {trendSessionCount === 0
-                    ? 'Start your journey by completing a Coherence Session!'
-                    : activePhaseIdx >= 2
-                      ? "Awesome! You're 30 sessions away from Deep Practice level. Keep practicing!"
-                      : activePhaseIdx >= 1
-                        ? "Wow! You're only 15 sessions away from Habit level."
-                        : "Great step. You're only 5 sessions away from Seed level."}
-                </Text>
-              )}
             </>
           ) : null}
         </TouchableOpacity>
@@ -1049,11 +1033,11 @@ export default function ProgressMainScreen() {
         ) : null}
         <View style={styles.milestoneActionCard}>
           <TouchableOpacity
-            style={styles.collapsibleHeaderRow}
+            style={styles.milestoneHeaderRow}
             onPress={() => setIsMilestoneExpanded((prev) => !prev)}
             activeOpacity={0.84}
           >
-            <Text style={styles.collapsibleHeaderTitle}>{milestoneHeaderText}</Text>
+            <Text style={styles.milestoneHeaderTitle}>{milestoneHeaderText}</Text>
             {isMilestoneExpanded ? (
               <ChevronUp size={16} color="#E18B31" strokeWidth={2.4} />
             ) : (
@@ -1109,17 +1093,13 @@ export default function ProgressMainScreen() {
         {!shouldPrioritizeInsightsCard ? tabsSection : null}
 
         <TouchableOpacity
-          style={styles.communityTapWrap}
+          style={styles.communityCardFrame}
           onPress={() => setIsCommunityExpanded((prev) => !prev)}
           activeOpacity={0.92}
         >
-          <LinearGradient
-            colors={['#F6A400', '#F18A1F', '#EB6A33']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.community}
+          <View
+            style={styles.communityHeaderRow}
           >
-          <View style={styles.communityHeaderRow}>
             <Text style={styles.communityTitle}>Community Coherence Points</Text>
             <TouchableOpacity
               style={styles.communityToggleBtn}
@@ -1129,22 +1109,26 @@ export default function ProgressMainScreen() {
               accessibilityLabel={isCommunityExpanded ? 'Collapse community card' : 'Expand community card'}
             >
               {isCommunityExpanded ? (
-                <ChevronUp size={16} color="#FFFFFF" strokeWidth={2.4} />
+                <ChevronUp size={16} color="#E18B31" strokeWidth={2.4} />
               ) : (
-                <ChevronDown size={16} color="#FFFFFF" strokeWidth={2.4} />
+                <ChevronDown size={16} color="#E18B31" strokeWidth={2.4} />
               )}
             </TouchableOpacity>
           </View>
             {isCommunityExpanded ? (
-            <>
-              <Text style={styles.communityToday}>Today</Text>
-              <Text style={styles.communityBig}>2,623,382</Text>
-              <View style={styles.commRule} />
-              <Text style={styles.communitySub}>Highest Day Ever</Text>
-              <Text style={styles.communityBig}>3,400,657</Text>
-            </>
+              <LinearGradient
+                colors={['#F6A400', '#F18A1F', '#EB6A33']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.communityStatsRect}
+              >
+                <Text style={styles.communityToday}>Today</Text>
+                <Text style={styles.communityBig}>2,623,382</Text>
+                <View style={styles.commRule} />
+                <Text style={styles.communitySub}>Highest Day Ever</Text>
+                <Text style={styles.communityBig}>3,400,657</Text>
+              </LinearGradient>
             ) : null}
-          </LinearGradient>
         </TouchableOpacity>
 
         <View style={styles.editorialQuoteCard}>
@@ -1212,7 +1196,7 @@ const styles = StyleSheet.create({
     fontFamily: PROGRESS_FONT_BOLD,
     color: colors.white,
     fontSize: 28,
-    lineHeight: 32,
+    lineHeight: 26,
     fontWeight: '700',
     flex: 1,
     textAlign: 'center',
@@ -1221,24 +1205,27 @@ const styles = StyleSheet.create({
   headerIconBtn: { flexDirection: 'row', alignItems: 'center', padding: 6 },
   scroll: {
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.xl,
   },
-  community: {
+  communityCardFrame: {
+    width: '100%',
+    alignSelf: 'stretch',
     borderRadius: borderRadius.lg,
-    padding: spacing.xl,
-    marginTop: 2,
-    marginBottom: spacing.lg,
-    alignItems: 'center',
-  },
-  communityTapWrap: {
-    borderRadius: borderRadius.lg,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.07)',
+    paddingHorizontal: spacing.md + 2,
+    paddingTop: spacing.md + 2,
+    paddingBottom: spacing.md + 2,
+    marginBottom: spacing.xl,
   },
   communityHeaderRow: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 2,
+    minHeight: 28,
+    marginBottom: 10,
   },
   communityToggleBtn: {
     width: 28,
@@ -1249,13 +1236,18 @@ const styles = StyleSheet.create({
   },
   communityTitle: {
     fontFamily: PROGRESS_FONT_BOLD,
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 26,
     fontWeight: '800',
-    color: colors.white,
-    marginBottom: spacing.sm,
+    color: '#2C2C2E',
   },
-  communityToday: { fontFamily: PROGRESS_FONT_REGULAR, fontSize: 13, lineHeight: 20, color: '#3E214A' },
+  communityStatsRect: {
+    borderRadius: 16,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.xl,
+    alignItems: 'center',
+  },
+  communityToday: { fontFamily: PROGRESS_FONT_REGULAR, fontSize: 13, lineHeight: 26, color: '#171717' },
   communityBig: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 28,
@@ -1269,7 +1261,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.28)',
     marginVertical: spacing.md,
   },
-  communitySub: { fontFamily: PROGRESS_FONT_REGULAR, fontSize: 13, lineHeight: 20, color: '#3E214A' },
+  communitySub: { fontFamily: PROGRESS_FONT_REGULAR, fontSize: 13, lineHeight: 26, color: '#171717' },
   shareProgressBtn: {
     marginTop: spacing.md,
     marginBottom: 0,
@@ -1288,12 +1280,13 @@ const styles = StyleSheet.create({
     fontFamily: PROGRESS_FONT_BOLD,
     color: '#FFFFFF',
     fontSize: 16,
-    lineHeight: 20,
+    lineHeight: 26,
     fontWeight: '700',
     letterSpacing: 0.2,
   },
   sessionHistoryBtn: {
-    marginTop: spacing.md,
+    alignSelf: 'stretch',
+    marginTop: spacing.lg,
     marginBottom: 0,
     height: 48,
     borderRadius: 24,
@@ -1307,7 +1300,7 @@ const styles = StyleSheet.create({
     fontFamily: PROGRESS_FONT_BOLD,
     color: '#C26D1A',
     fontSize: 16,
-    lineHeight: 20,
+    lineHeight: 26,
     fontWeight: '700',
     letterSpacing: 0.2,
   },
@@ -1323,17 +1316,17 @@ const styles = StyleSheet.create({
   insightsSummaryTitle: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 13,
-    lineHeight: 20,
+    lineHeight: 26,
     fontWeight: '700',
-    color: '#8F4B0A',
+    color: '#2C2C2E',
     marginBottom: 4,
   },
   insightsSummaryText: {
     fontFamily: PROGRESS_FONT_MEDIUM,
     fontSize: 15,
-    lineHeight: 22,
+    lineHeight: 26,
     fontWeight: '600',
-    color: '#2D1B3A',
+    color: '#171717',
   },
   emptyStateCard: {
     marginBottom: spacing.md,
@@ -1358,22 +1351,22 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 19,
-    lineHeight: 24,
+    lineHeight: 26,
     fontWeight: '800',
-    color: '#2D1B3A',
+    color: '#2C2C2E',
     marginBottom: 6,
   },
   emptyStateBody: {
     fontFamily: PROGRESS_FONT_REGULAR,
     fontSize: 15,
-    lineHeight: 24,
-    color: 'rgba(52,37,61,0.76)',
+    lineHeight: 26,
+    color: '#171717',
   },
   historicalDataHint: {
     fontFamily: PROGRESS_FONT_REGULAR,
-    fontSize: 11,
-    lineHeight: 16,
-    color: 'rgba(52,37,61,0.74)',
+    fontSize: 13,
+    lineHeight: 26,
+    color: '#171717AD',
     marginTop: 8,
   },
   notesHistoryCard: {
@@ -1383,7 +1376,8 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
   },
   notesContainerCard: {
-    marginBottom: spacing.md,
+    alignSelf: 'stretch',
+    marginBottom: spacing.lg,
     borderRadius: borderRadius.lg,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -1410,34 +1404,35 @@ const styles = StyleSheet.create({
   notesHistoryTitle: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 17,
-    lineHeight: 21,
+    lineHeight: 26,
     fontWeight: '800',
-    color: '#2D1B3A',
+    color: '#2C2C2E',
     marginBottom: 2,
   },
   notesHistorySub: {
     fontFamily: PROGRESS_FONT_REGULAR,
-    fontSize: 12,
-    lineHeight: 19,
-    color: 'rgba(52,37,61,0.82)',
+    fontSize: 13,
+    lineHeight: 26,
+    color: '#171717',
+    marginBottom: spacing.sm,
   },
   tabIntroTitle: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 14,
-    lineHeight: 18,
+    lineHeight: 26,
     fontWeight: '800',
-    color: '#2D1B3A',
+    color: '#2C2C2E',
     marginBottom: 2,
   },
   tabIntroSub: {
     fontFamily: PROGRESS_FONT_REGULAR,
-    fontSize: 12,
-    lineHeight: 19,
-    color: 'rgba(52,37,61,0.82)',
+    fontSize: 13,
+    lineHeight: 26,
+    color: '#171717',
     marginBottom: spacing.sm,
   },
   notesRangeTabs: {
-    marginTop: spacing.sm,
+    marginTop: 10,
     flexDirection: 'row',
     gap: 8,
   },
@@ -1457,7 +1452,7 @@ const styles = StyleSheet.create({
   },
   notesRangeTabTxt: {
     fontFamily: PROGRESS_FONT_MEDIUM,
-    color: 'rgba(52,37,61,0.82)',
+    color: '#171717',
     fontSize: 13,
     fontWeight: '600',
   },
@@ -1476,16 +1471,16 @@ const styles = StyleSheet.create({
   emptyNotesTitle: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 14,
-    lineHeight: 18,
+    lineHeight: 26,
     fontWeight: '700',
-    color: '#2D1B3A',
+    color: '#2C2C2E',
     marginBottom: 2,
   },
   emptyNotesBody: {
     fontFamily: PROGRESS_FONT_REGULAR,
-    fontSize: 12,
-    lineHeight: 19,
-    color: 'rgba(52,37,61,0.82)',
+    fontSize: 13,
+    lineHeight: 26,
+    color: '#171717',
   },
   noteCard: {
     borderRadius: 0,
@@ -1498,16 +1493,16 @@ const styles = StyleSheet.create({
   noteDate: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 13,
-    lineHeight: 18,
-    color: '#8F4B0A',
+    lineHeight: 26,
+    color: '#2C2C2EAD',
     fontWeight: '700',
     marginBottom: 6,
   },
   noteBody: {
     fontFamily: PROGRESS_FONT_REGULAR,
     fontSize: 13,
-    lineHeight: 20,
-    color: '#2D1B3A',
+    lineHeight: 26,
+    color: '#171717',
   },
   swipeRowWrap: {
     marginBottom: 0,
@@ -1563,7 +1558,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 18,
-    lineHeight: 24,
+    lineHeight: 26,
     fontWeight: '800',
     color: '#2D1B3A',
     marginBottom: spacing.sm,
@@ -1576,9 +1571,9 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(225,139,49,0.28)',
     paddingHorizontal: 12,
     paddingVertical: 10,
-    color: '#2D1B3A',
+    color: '#171717',
     fontSize: 15,
-    lineHeight: 22,
+    lineHeight: 26,
     textAlignVertical: 'top',
     backgroundColor: '#FCF7FC',
   },
@@ -1626,7 +1621,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(225,139,49,0.42)',
   },
   phaseTimelineCard: {
-    marginBottom: spacing.lg,
+    alignSelf: 'stretch',
+    marginBottom: spacing.xl,
     borderRadius: borderRadius.lg,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -1639,6 +1635,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 28,
     marginBottom: 10,
   },
   journeySummaryRow: {
@@ -1646,50 +1643,64 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginTop: 2,
-    marginBottom: 10,
+    marginBottom: 18,
     paddingVertical: 2,
-  },
-  journeySummaryIconWrap: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#E18B31',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   journeySummaryText: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 13,
-    lineHeight: 18,
-    color: '#2D1B3A',
+    lineHeight: 26,
+    color: '#171717',
     fontWeight: '700',
     flexShrink: 1,
   },
   collapsibleCard: {
-    marginBottom: spacing.lg,
+    alignSelf: 'stretch',
+    marginBottom: spacing.xl,
     borderRadius: borderRadius.lg,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.07)',
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
+    paddingTop: spacing.md + 2,
+    paddingBottom: spacing.md,
   },
   collapsibleHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    minHeight: 28,
+    marginBottom: 10,
+  },
+  sessionInsightsHeaderCollapsed: {
+    marginBottom: 0,
+  },
+  milestoneHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    minHeight: 28,
+    marginBottom: 10,
+  },
+  milestoneHeaderTitle: {
+    flex: 1,
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 14,
+    lineHeight: 26,
+    color: '#2C2C2E',
+    fontWeight: '800',
   },
   collapsibleHeaderTitle: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 14,
-    lineHeight: 18,
-    color: '#2D1B3A',
+    lineHeight: 26,
+    color: '#2C2C2E',
     fontWeight: '800',
   },
   snapshotCompactRow: {
-    marginTop: 10,
-    marginBottom: 2,
+    marginTop: 0,
+    marginBottom: 4,
     minHeight: 56,
     borderRadius: 14,
     borderWidth: 1,
@@ -1700,7 +1711,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   snapshotExpandedWrap: {
-    marginTop: 10,
+    marginTop: 0,
   },
   snapshotCompactItem: {
     flex: 1,
@@ -1715,23 +1726,23 @@ const styles = StyleSheet.create({
   },
   snapshotCompactValue: {
     fontFamily: PROGRESS_FONT_BOLD,
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 20,
+    lineHeight: 26,
     color: '#FFFFFF',
     fontWeight: '800',
   },
   snapshotCompactLabel: {
     marginTop: 2,
     fontFamily: PROGRESS_FONT_REGULAR,
-    fontSize: 11,
-    lineHeight: 14,
-    color: '#FFF3DE',
+    fontSize: 13,
+    lineHeight: 26,
+    color: '#FFFFFF',
   },
   phaseTimelineTitle: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 14,
-    lineHeight: 18,
-    color: '#2D1B3A',
+    lineHeight: 26,
+    color: '#2C2C2E',
     fontWeight: '800',
   },
   phaseLineWrap: {
@@ -1784,7 +1795,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F8FA',
   },
   phasePendingDash: {
-    color: 'rgba(52,37,61,0.62)',
+    color: '#171717AD',
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 13,
     marginTop: -1,
@@ -1792,76 +1803,79 @@ const styles = StyleSheet.create({
   phaseNodeLabel: {
     marginTop: 8,
     fontFamily: PROGRESS_FONT_REGULAR,
-    fontSize: 11,
-    lineHeight: 13,
+    fontSize: 13,
+    lineHeight: 26,
     textAlign: 'center',
     minHeight: 24,
   },
   phaseNodeLabelCompleted: {
-    color: 'rgba(52,37,61,0.78)',
+    color: '#171717AD',
   },
   phaseNodeLabelActive: {
-    color: '#C26D1A',
+    color: '#171717AD',
     fontFamily: PROGRESS_FONT_BOLD,
   },
   phaseNodeLabelFuture: {
-    color: 'rgba(52,37,61,0.64)',
+    color: '#171717AD',
   },
   phaseTimelineSub: {
     marginTop: 6,
     marginBottom: 2,
     textAlign: 'center',
     fontFamily: PROGRESS_FONT_MEDIUM,
-    color: 'rgba(52,37,61,0.78)',
-    fontSize: 12,
-    lineHeight: 16,
+    color: '#171717AD',
+    fontSize: 13,
+    lineHeight: 26,
   },
   milestoneActionCard: {
-    marginBottom: spacing.lg,
+    alignSelf: 'stretch',
+    marginBottom: spacing.xl,
     borderRadius: borderRadius.lg,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.07)',
-    padding: spacing.md,
+    padding: spacing.md + 2,
   },
   tabsSharedCard: {
-    marginBottom: spacing.lg,
+    alignSelf: 'stretch',
+    marginBottom: spacing.xl,
     borderRadius: borderRadius.lg,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.07)',
     overflow: 'hidden',
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
+    paddingTop: spacing.md + 2,
+    paddingBottom: spacing.md + 2,
   },
   tabsSharedContent: {
-    paddingTop: spacing.md,
+    paddingTop: spacing.md + 2,
   },
   sessionInsightsTabsWrap: {
-    marginTop: 16,
+    marginTop: spacing.sm,
   },
   tabsLockedCard: {
-    marginBottom: spacing.lg,
+    alignSelf: 'stretch',
+    marginBottom: spacing.xl,
     borderRadius: borderRadius.lg,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.07)',
-    padding: spacing.md,
+    padding: spacing.md + 2,
   },
   tabsLockedTitle: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 14,
-    lineHeight: 18,
+    lineHeight: 26,
     fontWeight: '800',
-    color: '#2D1B3A',
+    color: '#2C2C2E',
     marginBottom: 4,
   },
   tabsLockedBody: {
     fontFamily: PROGRESS_FONT_REGULAR,
-    fontSize: 12,
-    lineHeight: 19,
-    color: 'rgba(52,37,61,0.82)',
+    fontSize: 13,
+    lineHeight: 26,
+    color: '#171717',
   },
   tabsLockedToggleSwitchRow: {
     marginTop: 8,
@@ -1899,13 +1913,13 @@ const styles = StyleSheet.create({
   },
   tabsLockedToggleSwitchText: {
     fontFamily: PROGRESS_FONT_MEDIUM,
-    color: 'rgba(52,37,61,0.68)',
+    color: '#171717',
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 26,
     fontWeight: '600',
   },
   tabsLockedToggleSwitchTextActive: {
-    color: '#C26D1A',
+    color: '#171717',
   },
   surveyOptInCard: {
     marginBottom: spacing.lg,
@@ -1918,9 +1932,9 @@ const styles = StyleSheet.create({
   },
   surveyOptInText: {
     fontFamily: PROGRESS_FONT_BOLD,
-    color: 'rgba(52,37,61,0.82)',
+    color: '#171717',
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 26,
     marginBottom: spacing.sm,
   },
   surveyOptInBtn: {
@@ -1938,23 +1952,23 @@ const styles = StyleSheet.create({
     fontFamily: PROGRESS_FONT_BOLD,
     color: '#C26D1A',
     fontSize: 14,
-    lineHeight: 18,
+    lineHeight: 26,
     fontWeight: '700',
   },
   inactiveSurveyCard: {
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.08)',
     backgroundColor: '#FFFFFF',
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.md + 2,
   },
   inactiveSurveyBody: {
     fontFamily: PROGRESS_FONT_REGULAR,
-    color: 'rgba(52,37,61,0.86)',
-    fontSize: 12,
-    lineHeight: 19,
+    color: '#171717',
+    fontSize: 13,
+    lineHeight: 26,
   },
   inactiveSurveyToggleRow: {
     marginTop: spacing.sm,
@@ -1982,17 +1996,17 @@ const styles = StyleSheet.create({
   },
   inactiveSurveyToggleTxt: {
     fontFamily: PROGRESS_FONT_MEDIUM,
-    color: 'rgba(52,37,61,0.88)',
-    fontSize: 12,
-    lineHeight: 16,
+    color: '#171717',
+    fontSize: 13,
+    lineHeight: 26,
   },
   inactiveSurveyToggleTxtActive: {
     fontFamily: PROGRESS_FONT_BOLD,
-    color: '#C26D1A',
+    color: '#171717',
   },
   inactiveSurveyToggleTxtMuted: {
     fontFamily: PROGRESS_FONT_BOLD,
-    color: 'rgba(52,37,61,0.74)',
+    color: '#171717',
   },
   firstSessionBtnTxt: {
     fontFamily: PROGRESS_FONT_BOLD,
@@ -2002,27 +2016,28 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   editorialQuoteCard: {
+    alignSelf: 'stretch',
     marginBottom: 0,
     borderRadius: 24,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.08)',
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.xl + 4,
+    paddingHorizontal: spacing.xl + 2,
+    paddingVertical: spacing.xl + 6,
   },
   editorialQuoteText: {
     fontFamily: 'Sailec-RegularItalic',
-    color: '#4B3A2E',
-    fontSize: 10,
-    lineHeight: 18,
+    color: '#171717',
+    fontSize: 13,
+    lineHeight: 26,
     fontWeight: '400',
     textAlign: 'center',
     marginBottom: spacing.md,
   },
   editorialQuoteSource: {
     fontFamily: PROGRESS_FONT_BOLD,
-    color: '#A88A66',
+    color: '#171717',
     fontSize: 15,
-    lineHeight: 22,
+    lineHeight: 26,
   },
 });
