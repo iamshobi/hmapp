@@ -24,43 +24,43 @@ function minSessionsForType(type) {
 function getProgressCopy(type, totalSessions) {
   if (type === 'inactiveSurvey') {
     return {
-      title: 'You have session activity, but pre- and post-session survey answers are missing.',
-      body: 'Opt-in for the surveys and answer them to unlock your progress insights.',
+      title: '',
+      body: 'You have session activity, but pre- and post-session survey answers are missing. Opt in to unlock Trends, Practice Days, and Notes insights.',
     };
   }
   if (type === 'partialSurveyOptOut') {
     return {
-      title: 'You have prior survey data and continued sessions.',
-      body: 'But right now it looks like you have opted out of the surveys. Opt-in for the surveys once again and answer them regularly to unlock your progress insights.',
+      title: '',
+      body: 'You have prior survey data and continued sessions. But right now it looks like you have opted out of the surveys. Opt-in for the surveys once again and answer them regularly to unlock your progress insights.',
     };
   }
   if (type === 'zero') {
     return {
-      title: 'Your journey starts here.',
-      body: 'Take your first Coherence Session and complete the survey to start seeing progress insights here.',
+      title: '',
+      body: 'Your journey starts here. Take your first Coherence Session and complete the survey to start seeing progress insights here.',
     };
   }
   if (type === 'pro') {
     return {
-      title: 'You built a lasting rhythm.',
-      body: "Your practice is now a dependable reset. This level of consistency reshapes how well you've improved in terms of reducing stress, and improvng your energy & mood.",
+      title: '',
+      body: "You built a lasting rhythm. Your practice is now a dependable reset. This level of consistency reshapes how well you've improved in terms of reducing stress, and improvng your energy & mood.",
     };
   }
   if (type === 'advanced') {
     return {
-      title: 'Your Practice Days are forming a clear pattern.',
-      body: 'Calmer stress response, steadier energy, and better emotional recovery.',
+      title: '',
+      body: 'Your Practice Days are forming a clear pattern. Calmer stress response, steadier energy, and better emotional recovery.',
     };
   }
   if (type === 'building') {
     return {
-      title: 'The momentum is building. You are beginning to establish a pattern!',
-      body: 'Continue to attend more Coherence Sessions and complete the surveys to start seeing your progress here.',
+      title: '',
+      body: 'The momentum is building. You are beginning to establish a pattern! Continue to attend more Coherence Sessions and complete the surveys to start seeing your progress here.',
     };
   }
   return {
-    title: 'You did it! First session complete.',
-    body: 'One session is a real beginning. Continue to attend more Coherence Sessions and complete the surveys to start seeing your progress here.',
+    title: '',
+    body: 'You did it! First session complete. One session is a real beginning. Continue to attend more Coherence Sessions and complete the surveys to start seeing your progress here.',
   };
 }
 
@@ -99,7 +99,7 @@ export default function ProgressMilestoneCard({
     >
       <View style={[styles.gradient, embedded && styles.gradientEmbedded]}>
         <View style={styles.textWrap}>
-          <Text style={styles.title}>{renderedTitle}</Text>
+          {renderedTitle ? <Text style={styles.title}>{renderedTitle}</Text> : null}
           <Text style={styles.body}>{copy.body}</Text>
         </View>
       </View>
@@ -109,7 +109,7 @@ export default function ProgressMilestoneCard({
 
 const styles = StyleSheet.create({
   wrap: {
-    marginBottom: 14,
+    marginBottom: 16,
     borderRadius: borderRadius.lg,
     overflow: 'visible',
   },
@@ -121,8 +121,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.07)',
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
   },
   gradientEmbedded: {
     borderWidth: 0,
@@ -132,22 +132,22 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   textWrap: {
-    gap: 8,
+    gap: 4,
     paddingRight: 0,
   },
   title: {
     fontFamily: PROGRESS_FONT_BOLD,
-    color: '#2D1B3A',
+    color: '#2C2C2E',
     fontSize: 14,
-    lineHeight: 18,
+    lineHeight: 26,
     fontWeight: '800',
     flexShrink: 1,
   },
   body: {
     fontFamily: PROGRESS_FONT_REGULAR,
-    color: 'rgba(52,37,61,0.86)',
-    fontSize: 12,
-    lineHeight: 19,
+    color: '#171717',
+    fontSize: 13,
+    lineHeight: 26,
     fontWeight: '500',
     flexShrink: 1,
   },
