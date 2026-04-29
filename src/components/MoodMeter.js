@@ -509,7 +509,7 @@ function computeStressInsightFromDayLevels(dayLevelByKey) {
     return {
       trend: 'better',
       title: `Your stress levels are ${deltaPct}% lower in the second half of this period.`,
-      body: 'This is great progress. Keep your breathing rhythm and daily Practice Days.',
+      body: 'This is great progress. Keep your breathing rhythm and daily Activity.',
     };
   }
   const risePct = Math.abs(deltaPct);

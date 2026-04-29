@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { CalendarDays, TrendingUp, Lightbulb } from 'lucide-react-native';
+import { CalendarDays, TrendingUp, Pencil } from 'lucide-react-native';
 import { borderRadius, spacing } from '../theme';
 
 const PROGRESS_FONT_BOLD = 'Sailec-Bold';
@@ -9,7 +9,7 @@ const PROGRESS_FONT_BOLD = 'Sailec-Bold';
 const TABS = [
   { key: 'trend', label: 'Trends', Icon: TrendingUp },
   { key: 'checkins', label: 'Activity', Icon: CalendarDays },
-  { key: 'insights', label: 'Notes', Icon: Lightbulb },
+  { key: 'insights', label: 'Notes', Icon: Pencil },
 ];
 
 export default function ProgressViewTabs({ activeTab = 'trend', onChange, embedded = false, disabledTabs = [] }) {

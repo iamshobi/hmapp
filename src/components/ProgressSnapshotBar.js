@@ -248,7 +248,7 @@ export default function ProgressSnapshotBar({
                 <Heart size={13} color="#FFFFFF" strokeWidth={2.2} />
               </View>
               <Text style={styles.tileValue}>{sessionsCompletedDisplay}</Text>
-              <Text style={styles.tileLabel}>{'sessions\ncompleted'}</Text>
+              <Text style={styles.tileLabel}>{'sessions\ndone'}</Text>
             </View>
           </View>
         </View>
@@ -275,11 +275,11 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   leftColumn: {
-    width: '39%',
+    width: '34%',
     alignSelf: 'stretch',
   },
   rightColumn: {
-    width: '61%',
+    width: '66%',
   },
   donutTile: {
     flex: 1,
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 6,
+    gap: 4,
   },
   metricsGridRowTop: {
     marginBottom: 6,
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
   metricTile: {
     minHeight: 74,
     borderRadius: 14,
-    paddingHorizontal: 10,
+    paddingHorizontal: 6,
     paddingVertical: 8,
     backgroundColor: 'rgba(255,255,255,0.22)',
     borderWidth: 1,
@@ -386,11 +386,13 @@ const styles = StyleSheet.create({
   },
   tileLabel: {
     fontFamily: PROGRESS_FONT_MEDIUM,
-    color: '#FFF3DE',
+    color: '#FFFFFF',
     fontSize: 13,
     lineHeight: 26,
     fontWeight: '500',
     marginTop: 1,
+    width: '100%',
+    textAlign: 'left',
   },
 });
 

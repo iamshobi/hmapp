@@ -171,7 +171,7 @@ export default function ProgressCheckinsCalendar({
   return (
     <View style={[styles.wrap, embedded && styles.wrapEmbedded]}>
       <View style={styles.headerRow}>
-        {embedded ? <View /> : <Text style={styles.title}>Practice Days</Text>}
+        {embedded ? <View /> : <Text style={styles.title}>Activity</Text>}
         <View style={styles.monthNav}>
           <TouchableOpacity
             onPress={() => shiftMonth(-1)}
@@ -271,7 +271,7 @@ export default function ProgressCheckinsCalendar({
           </View>
         )}
         <View style={[styles.legendItem, styles.legendItemFullRow]}>
-          <Text style={styles.legendText}>Active days: {daysPracticedDisplay}</Text>
+          <Text style={styles.legendText}>Active Days: {daysPracticedDisplay}</Text>
         </View>
       </View>
 

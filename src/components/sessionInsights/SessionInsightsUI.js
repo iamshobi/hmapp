@@ -13,7 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import Svg, { Polyline, Line, Circle as SvgCircle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronDown, ChevronLeft, ChevronUp, Ellipsis } from 'lucide-react-native';
+import { ChevronDown, ChevronLeft, ChevronUp, Ellipsis, Check } from 'lucide-react-native';
 import {
   getMetricEndpointLabels,
   getShiftInsight,
@@ -705,7 +705,7 @@ export function TrendLayerComparisonCard({
     Math.max(
       42,
       Math.round(
-        avgOf(activeWellbeingVals.length ? activeWellbeingVals : wellbeingPointsByMetric.stress ?? []) +
+        avgOf(activeWellbeingVals.length ? activeWellbeingVals : activePointsByMetric.stress ?? []) +
           (reportRange === 'weekly' || reportRange === 'week'
             ? 7
             : reportRange === 'today'
@@ -855,16 +855,25 @@ export function TrendLayerComparisonCard({
             onPress={() => toggleMetric(metric)}
             activeOpacity={0.85}
           >
-            <Text
-              style={[
-                styles.metricTabTxt,
-                isProgressTheme && styles.progressTabTxt,
-                selectedMetrics[metric] && styles.metricTabTxtActive,
-                selectedMetrics[metric] && isProgressTheme && styles.progressTabTxtActive,
-              ]}
-            >
-              {metric.charAt(0).toUpperCase() + metric.slice(1)}
-            </Text>
+            <View style={styles.metricTabInnerRow}>
+              {selectedMetrics[metric] ? (
+                <Check
+                  size={14}
+                  color={isProgressTheme ? '#C26D1A' : T.colors.textPrimary}
+                  strokeWidth={2.6}
+                />
+              ) : null}
+              <Text
+                style={[
+                  styles.metricTabTxt,
+                  isProgressTheme && styles.progressTabTxt,
+                  selectedMetrics[metric] && styles.metricTabTxtActive,
+                  selectedMetrics[metric] && isProgressTheme && styles.progressTabTxtActive,
+                ]}
+              >
+                {metric.charAt(0).toUpperCase() + metric.slice(1)}
+              </Text>
+            </View>
           </TouchableOpacity>
         ))}
       </View>
@@ -1010,8 +1019,8 @@ export function TrendLayerComparisonCard({
             : reportRange === 'year'
               ? 'months'
             : reportRange === 'day' || reportRange === 'today'
-              ? 'Practice Days today'
-              : 'total Practice Days'}
+              ? 'Activity today'
+              : 'total Activity'}
         , stronger breathing consistency tracks with improved {metricLabelsText.toLowerCase()}, showing a clear mind-body correlation.
       </Text>
       </>
@@ -1543,6 +1552,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.08)',
     paddingVertical: 9,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  metricTabInnerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
   metricTabBtnActive: {
     backgroundColor: 'rgba(243,239,217,0.92)',
