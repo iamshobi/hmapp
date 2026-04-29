@@ -25,13 +25,13 @@ function getProgressCopy(type, totalSessions) {
   if (type === 'inactiveSurvey') {
     return {
       title: '',
-      body: 'You have session activity, but pre- and post-session survey answers are missing. Opt in to unlock Trends, Practice Days, and Notes insights.',
+      body: 'Looks like you have completed Coherence Sessions but have not opted in for the session surveys. Tap on the toggle below to opt in and view the session insights.',
     };
   }
   if (type === 'partialSurveyOptOut') {
     return {
       title: '',
-      body: 'You have prior survey data and continued sessions. But right now it looks like you have opted out of the surveys. Opt-in for the surveys once again and answer them regularly to unlock your progress insights.',
+      body: 'You have prior survey data and continued sessions. But right now it looks like you have opted out of the surveys. Opt in for the surveys once again and answer them regularly to unlock your progress insights.',
     };
   }
   if (type === 'zero') {
@@ -43,13 +43,13 @@ function getProgressCopy(type, totalSessions) {
   if (type === 'pro') {
     return {
       title: '',
-      body: "You built a lasting rhythm. Your practice is now a dependable reset. This level of consistency reshapes how well you've improved in terms of reducing stress, and improvng your energy & mood.",
+      body: "You built a lasting rhythm. Your practice is now a dependable reset. This level of consistency reshapes how well you're improving by reducing stress and improving your energy and mood.",
     };
   }
   if (type === 'advanced') {
     return {
       title: '',
-      body: 'Your Practice Days are forming a clear pattern. Calmer stress response, steadier energy, and better emotional recovery.',
+      body: 'Your Activity pattern is forming clearly. Calmer stress response, steadier energy, and better emotional recovery.',
     };
   }
   if (type === 'building') {

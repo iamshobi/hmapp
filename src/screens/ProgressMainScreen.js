@@ -1,7 +1,7 @@
 /**
  * My Progress — HeartMath-style: warm header, Practice Stats, streaks, community banner, MoodMeter.
  */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -248,6 +248,9 @@ export default function ProgressMainScreen() {
   const [isMilestoneExpanded, setIsMilestoneExpanded] = useState(false);
   const [isCommunityExpanded, setIsCommunityExpanded] = useState(false);
   const [isSessionInsightsExpanded, setIsSessionInsightsExpanded] = useState(true);
+  const [surveyPreferenceUpdatedVisible, setSurveyPreferenceUpdatedVisible] = useState(false);
+  const surveyPreferenceFadeAnim = useRef(new Animated.Value(0)).current;
+  const surveyPreferenceTimeoutRef = useRef(null);
   const isInactiveSurveyPreview = sciencePreviewType === 'inactiveSurvey';
   const isPartialSurveyOptOutPreview = sciencePreviewType === 'partialSurveyOptOut';
   const progressTabOrder = React.useMemo(() => ['trend', 'checkins', 'insights'], []);
@@ -361,7 +364,54 @@ export default function ProgressMainScreen() {
     isPartialSurveyOptOutPreview ||
     (!sciencePreviewType && totalSessions > 0 && surveyResultsCount > 0 && surveyResultsCount < totalSessions);
   const hasSurveyInsightsOptOutState = hasIncompleteOrInactiveSurveyData || hasPartialSurveyOptOutData;
+  const isSurveyFullyPaused = hasIncompleteOrInactiveSurveyData;
+  const isSurveyHistoricalOnly = hasPartialSurveyOptOutData;
+  const sessionInsightsStateBadgeText = isSurveyFullyPaused
+    ? 'Fully paused'
+    : isSurveyHistoricalOnly
+      ? 'Historical only'
+      : 'Live insights';
+  const sessionInsightsPanelTitle = isSurveyFullyPaused
+    ? 'Survey insights are fully paused'
+    : 'Historical insights only';
+  const sessionInsightsPanelBody = isSurveyFullyPaused
+    ? 'Trends and Notes are unavailable until surveys are turned on.'
+    : 'Earlier survey entries remain visible. New Trends and Notes are paused until surveys are turned on.';
   const shouldFullyLockInsights = hasIncompleteOrInactiveSurveyData;
+  const showSurveyPreferenceUpdated = () => {
+    if (surveyPreferenceTimeoutRef.current) {
+      clearTimeout(surveyPreferenceTimeoutRef.current);
+    }
+    setSurveyPreferenceUpdatedVisible(true);
+    surveyPreferenceFadeAnim.stopAnimation();
+    surveyPreferenceFadeAnim.setValue(0);
+    Animated.timing(surveyPreferenceFadeAnim, {
+      toValue: 1,
+      duration: 220,
+      useNativeDriver: true,
+    }).start();
+    surveyPreferenceTimeoutRef.current = setTimeout(() => {
+      Animated.timing(surveyPreferenceFadeAnim, {
+        toValue: 0,
+        duration: 220,
+        useNativeDriver: true,
+      }).start(({ finished }) => {
+        if (finished) {
+          setSurveyPreferenceUpdatedVisible(false);
+        }
+        surveyPreferenceTimeoutRef.current = null;
+      });
+    }, 2500);
+  };
+  useEffect(
+    () => () => {
+      if (surveyPreferenceTimeoutRef.current) {
+        clearTimeout(surveyPreferenceTimeoutRef.current);
+      }
+      surveyPreferenceFadeAnim.stopAnimation();
+    },
+    [surveyPreferenceFadeAnim]
+  );
   useEffect(() => {
     if (shouldFullyLockInsights && activeProgressTab !== 'checkins') {
       setActiveProgressTab('checkins');
@@ -387,40 +437,91 @@ export default function ProgressMainScreen() {
   const effectiveScienceType = sciencePreviewType || getScienceTypeFromSessions(totalSessions);
   const hasNoProgressData = totalSessions <= 0;
   const shouldShowEmptyState = hasNoProgressData && !sciencePreviewType;
-  const inactiveSurveyMessage = hasPartialSurveyOptOutData
-    ? 'You opted out after earlier survey entries. Newer Practice Days are shown in gray. Opt in again to unlock updated Trends and Notes.'
-    : 'Looks like you have completed Coherence Sessions but have not opted in for the session surveys. Opt-in to view the updated Trends, Practice Days calender, Notes and insights.';
   const renderInactiveSurveyToggle = () => (
-    <TouchableOpacity
-      style={styles.tabsLockedToggleSwitchRow}
-      onPress={() => {
-        const nextChoice = inactiveSurveyOptInChoice === 'yes' ? 'no' : 'yes';
-        setInactiveSurveyOptInChoice(nextChoice);
-      }}
-      activeOpacity={0.88}
-    >
-      <View
-        style={[
-          styles.tabsLockedToggleSwitchKnob,
-          inactiveSurveyOptInChoice === 'yes' && styles.tabsLockedToggleSwitchKnobActive,
-        ]}
+    <View>
+      <TouchableOpacity
+        style={styles.tabsLockedToggleSwitchRow}
+        onPress={() => {
+          const nextChoice = inactiveSurveyOptInChoice === 'yes' ? 'no' : 'yes';
+          setInactiveSurveyOptInChoice(nextChoice);
+          showSurveyPreferenceUpdated();
+        }}
+        activeOpacity={0.88}
       >
         <View
           style={[
-            styles.tabsLockedToggleSwitchDot,
-            inactiveSurveyOptInChoice === 'yes' && styles.tabsLockedToggleSwitchDotActive,
+            styles.tabsLockedToggleSwitchKnob,
+            inactiveSurveyOptInChoice === 'yes' && styles.tabsLockedToggleSwitchKnobActive,
           ]}
-        />
-      </View>
-      <Text
-        style={[
-          styles.tabsLockedToggleSwitchText,
-          inactiveSurveyOptInChoice === 'yes' && styles.tabsLockedToggleSwitchTextActive,
-        ]}
-      >
-        {inactiveSurveyOptInChoice === 'yes' ? 'Yes, opt in' : 'No, thank you'}
+        >
+          <View
+            style={[
+              styles.tabsLockedToggleSwitchDot,
+              inactiveSurveyOptInChoice === 'yes' && styles.tabsLockedToggleSwitchDotActive,
+            ]}
+          />
+        </View>
+        <Text
+          style={[
+            styles.tabsLockedToggleSwitchText,
+            inactiveSurveyOptInChoice === 'yes' && styles.tabsLockedToggleSwitchTextActive,
+          ]}
+        >
+          {inactiveSurveyOptInChoice === 'yes' ? 'Yes, keep surveys on' : 'No, pause surveys for now'}
+        </Text>
+      </TouchableOpacity>
+      <Text style={styles.toggleMicrocopy}>
+        This only updates your survey preference. You can change it anytime.
       </Text>
-    </TouchableOpacity>
+      {surveyPreferenceUpdatedVisible ? (
+        <Animated.Text style={[styles.toggleConfirmationText, { opacity: surveyPreferenceFadeAnim }]}>
+          Survey preference updated
+        </Animated.Text>
+      ) : null}
+    </View>
+  );
+  const renderPartialSurveyToggle = () => (
+    <View>
+      <TouchableOpacity
+        style={styles.tabsLockedToggleSwitchRow}
+        onPress={() => {
+          const nextChoice = progressOptInChoice === 'yes' ? 'no' : 'yes';
+          setProgressOptInChoice(nextChoice);
+          showSurveyPreferenceUpdated();
+        }}
+        activeOpacity={0.88}
+      >
+        <View
+          style={[
+            styles.tabsLockedToggleSwitchKnob,
+            progressOptInChoice === 'yes' && styles.tabsLockedToggleSwitchKnobActive,
+          ]}
+        >
+          <View
+            style={[
+              styles.tabsLockedToggleSwitchDot,
+              progressOptInChoice === 'yes' && styles.tabsLockedToggleSwitchDotActive,
+            ]}
+          />
+        </View>
+        <Text
+          style={[
+            styles.tabsLockedToggleSwitchText,
+            progressOptInChoice === 'yes' && styles.tabsLockedToggleSwitchTextActive,
+          ]}
+        >
+          {progressOptInChoice === 'yes' ? 'Yes, keep surveys on' : 'No, pause surveys for now'}
+        </Text>
+      </TouchableOpacity>
+      <Text style={styles.toggleMicrocopy}>
+        This only updates your survey preference. You can change it anytime.
+      </Text>
+      {surveyPreferenceUpdatedVisible ? (
+        <Animated.Text style={[styles.toggleConfirmationText, { opacity: surveyPreferenceFadeAnim }]}>
+          Survey preference updated
+        </Animated.Text>
+      ) : null}
+    </View>
   );
   const insightsSummaryLine = React.useMemo(() => {
     const stressPct = calcShiftPct('stress', trendAverages.stressBefore, trendAverages.stressAfter);
@@ -577,13 +678,16 @@ export default function ProgressMainScreen() {
     }
   };
   const shouldPrioritizeInsightsCard =
-    hasEnoughSessionsForProgressTabs && trendSessionCount > 0 && !shouldFullyLockInsights;
+    hasEnoughSessionsForProgressTabs &&
+    trendSessionCount > 0 &&
+    !shouldFullyLockInsights &&
+    !hasSurveyInsightsOptOutState;
   const milestoneHeaderText = React.useMemo(() => {
     if (hasPartialSurveyOptOutData) {
-      return "Great, You've completed 18 sessions. But Surveys are temporarily turned off!";
+      return "Great, You've completed 18 sessions, but surveys are temporarily turned off!";
     }
     if (hasIncompleteOrInactiveSurveyData) {
-      return "Great, You've completed 12 sessions (without surveys)!";
+      return "Great, You've completed 12 sessions.";
     }
     if (trendSessionCount >= 100) {
       return "Wow, You've completed 100 sessions!";
@@ -592,7 +696,7 @@ export default function ProgressMainScreen() {
       return 'You are 17 sessions strong!';
     }
     if (trendSessionCount >= 5) {
-      return "Great, you've completed 5 sessions!";
+      return "Great, You've completed 5 sessions!";
     }
     if (trendSessionCount >= 1) {
       return "You've completed your 1st session!";
@@ -616,8 +720,6 @@ export default function ProgressMainScreen() {
       streak: isZero ? '-' : `${Math.max(0, Math.round(Number(streak) || 0))}d`,
     };
   }, [sciencePreviewType, totalSessions, coherencePoints, streak]);
-  const pausedReasonLine =
-    'New insights are paused. Consider to opt-in for the Coherence session surveys to get the updated insights.';
   const disabledTabs = shouldFullyLockInsights ? ['trend', 'insights'] : [];
   const tabsSection = hasEnoughSessionsForProgressTabs ? (
     <View style={styles.tabsSharedCard}>
@@ -629,7 +731,21 @@ export default function ProgressMainScreen() {
         onPress={() => setIsSessionInsightsExpanded((prev) => !prev)}
         activeOpacity={0.84}
       >
-        <Text style={styles.collapsibleHeaderTitle}>Session Insights</Text>
+        <View style={styles.sessionInsightsHeaderLeft}>
+          <Text style={styles.collapsibleHeaderTitle}>Session Insights</Text>
+          <View
+            style={[
+              styles.sessionInsightsStateBadgePill,
+              isSurveyFullyPaused
+                ? styles.sessionInsightsStateBadgePillPaused
+                : isSurveyHistoricalOnly
+                  ? styles.sessionInsightsStateBadgePillHistorical
+                  : styles.sessionInsightsStateBadgePillLive,
+            ]}
+          >
+            <Text style={styles.sessionInsightsStateBadgeText}>{sessionInsightsStateBadgeText}</Text>
+          </View>
+        </View>
         {isSessionInsightsExpanded ? (
           <ChevronUp size={16} color="#E18B31" strokeWidth={2.4} />
         ) : (
@@ -652,23 +768,22 @@ export default function ProgressMainScreen() {
               ? notesToCheckinsSwipeResponder.panHandlers
               : tabsSwipeResponder.panHandlers)}
           >
-        {hasSurveyInsightsOptOutState ? (
+        {hasSurveyInsightsOptOutState && activeProgressTab !== 'checkins' ? (
           <View style={styles.inactiveSurveyCard}>
+            <Text style={styles.inactiveSurveyTitle}>{sessionInsightsPanelTitle}</Text>
             <Text style={styles.inactiveSurveyBody}>
-              {activeProgressTab === 'trend' || activeProgressTab === 'insights'
-                ? pausedReasonLine
-                : inactiveSurveyMessage}
+              {sessionInsightsPanelBody}
             </Text>
-            {renderInactiveSurveyToggle()}
+            {!hasPartialSurveyOptOutData ? renderInactiveSurveyToggle() : null}
           </View>
         ) : null}
         {activeProgressTab === 'checkins' ? (
           effectiveScienceType === 'zero' ? (
             <View style={styles.emptyStateCardEmbedded}>
               <Text style={styles.tabIntroSub}>Check what has changed over time in your journey with us.</Text>
-              <Text style={styles.emptyStateTitle}>No practice days yet</Text>
+              <Text style={styles.emptyStateTitle}>No activity yet</Text>
               <Text style={styles.emptyStateBody}>
-                Complete your first session, respond to the pre- and post-session survey, and your Practice Days calendar will start populating here.
+                Complete your first session, respond to the pre- and post-session survey, and your Activity calendar will start populating here.
               </Text>
             </View>
           ) : (
@@ -822,40 +937,9 @@ export default function ProgressMainScreen() {
     <View style={styles.tabsLockedCard}>
       <Text style={styles.tabsLockedTitle}>Your pattern is still forming</Text>
       <Text style={styles.tabsLockedBody}>
-        Complete a few more sessions and record your answers to the pre- and post-session surveys to view Trends, Practice Days, and Notes here.
+        Complete a few more sessions and record your answers to the pre- and post-session surveys to view Trends, Activity, and Notes here.
       </Text>
-      <TouchableOpacity
-        style={styles.tabsLockedToggleSwitchRow}
-        onPress={() => {
-          const nextChoice = progressOptInChoice === 'yes' ? 'no' : 'yes';
-          setProgressOptInChoice(nextChoice);
-        }}
-        activeOpacity={0.88}
-      >
-        <View
-          style={[
-            styles.tabsLockedToggleSwitchKnob,
-            progressOptInChoice === 'yes' && styles.tabsLockedToggleSwitchKnobActive,
-          ]}
-        >
-          <View
-            style={[
-              styles.tabsLockedToggleSwitchDot,
-              progressOptInChoice === 'yes' && styles.tabsLockedToggleSwitchDotActive,
-            ]}
-          />
-        </View>
-        <Text
-          style={[
-            styles.tabsLockedToggleSwitchText,
-            progressOptInChoice === 'yes' && styles.tabsLockedToggleSwitchTextActive,
-          ]}
-        >
-          {progressOptInChoice === 'yes'
-            ? 'Yes, I would like to opt in.'
-            : 'No, thank you.'}
-        </Text>
-      </TouchableOpacity>
+      {renderPartialSurveyToggle()}
     </View>
   );
 
@@ -1060,6 +1144,10 @@ export default function ProgressMainScreen() {
                 onPress={() => setIsMilestoneExpanded((prev) => !prev)}
                 embedded
               />
+              {hasIncompleteOrInactiveSurveyData && !hasPartialSurveyOptOutData ? (
+                renderInactiveSurveyToggle()
+              ) : null}
+              {hasPartialSurveyOptOutData ? renderPartialSurveyToggle() : null}
               {!hasSurveyInsightsOptOutState && shouldShowStartFirstSessionCta ? (
                 <TouchableOpacity
                   style={styles.firstSessionBtn}
@@ -1247,7 +1335,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xl,
     alignItems: 'center',
   },
-  communityToday: { fontFamily: PROGRESS_FONT_REGULAR, fontSize: 13, lineHeight: 26, color: '#171717' },
+  communityToday: { fontFamily: PROGRESS_FONT_REGULAR, fontSize: 13, lineHeight: 26, color: '#FFFFFF' },
   communityBig: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 28,
@@ -1261,7 +1349,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.28)',
     marginVertical: spacing.md,
   },
-  communitySub: { fontFamily: PROGRESS_FONT_REGULAR, fontSize: 13, lineHeight: 26, color: '#171717' },
+  communitySub: { fontFamily: PROGRESS_FONT_REGULAR, fontSize: 13, lineHeight: 26, color: '#FFFFFF' },
   shareProgressBtn: {
     marginTop: spacing.md,
     marginBottom: 0,
@@ -1491,11 +1579,11 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   noteDate: {
-    fontFamily: PROGRESS_FONT_BOLD,
+    fontFamily: PROGRESS_FONT_REGULAR,
     fontSize: 13,
     lineHeight: 26,
-    color: '#2C2C2EAD',
-    fontWeight: '700',
+    color: '#2C2C2E7A',
+    fontWeight: '400',
     marginBottom: 6,
   },
   noteBody: {
@@ -1854,6 +1942,38 @@ const styles = StyleSheet.create({
   sessionInsightsTabsWrap: {
     marginTop: spacing.sm,
   },
+  sessionInsightsHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 1,
+    paddingRight: 8,
+  },
+  sessionInsightsStateBadgePill: {
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  sessionInsightsStateBadgePillPaused: {
+    borderColor: 'rgba(196,82,69,0.36)',
+    backgroundColor: '#FFF2EF',
+  },
+  sessionInsightsStateBadgePillHistorical: {
+    borderColor: 'rgba(225,139,49,0.34)',
+    backgroundColor: '#FFF8EE',
+  },
+  sessionInsightsStateBadgePillLive: {
+    borderColor: 'rgba(44,154,95,0.32)',
+    backgroundColor: '#EEF9F2',
+  },
+  sessionInsightsStateBadgeText: {
+    fontFamily: PROGRESS_FONT_MEDIUM,
+    fontSize: 13,
+    lineHeight: 26,
+    color: '#171717',
+    fontWeight: '600',
+  },
   tabsLockedCard: {
     alignSelf: 'stretch',
     marginBottom: spacing.xl,
@@ -1876,6 +1996,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 26,
     color: '#171717',
+  },
+  toggleMicrocopy: {
+    marginTop: 4,
+    fontFamily: PROGRESS_FONT_REGULAR,
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#1717177A',
+  },
+  toggleConfirmationText: {
+    marginTop: 4,
+    fontFamily: PROGRESS_FONT_MEDIUM,
+    fontSize: 13,
+    lineHeight: 26,
+    color: '#2C9A5F',
+    fontWeight: '600',
   },
   tabsLockedToggleSwitchRow: {
     marginTop: 8,
@@ -1969,6 +2104,13 @@ const styles = StyleSheet.create({
     color: '#171717',
     fontSize: 13,
     lineHeight: 26,
+  },
+  inactiveSurveyTitle: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: '#2C2C2E',
+    fontSize: 13,
+    lineHeight: 26,
+    marginBottom: 2,
   },
   inactiveSurveyToggleRow: {
     marginTop: spacing.sm,
