@@ -8,14 +8,16 @@ import { spacing, borderRadius } from '../theme';
 const PROGRESS_FONT_REGULAR = 'Sailec-Medium';
 const PROGRESS_FONT_BOLD = 'Sailec-Bold';
 
+/** Matches My Journey phases on ProgressMainScreen — preview counts are representative mid-band values. */
 const STATE_OPTIONS = [
   { label: 'Zero sessions', previewType: 'zero' },
-  { label: 'First Time User', previewType: 'firstTime' },
-  { label: 'First few Sessions', previewType: 'building' },
+  { label: 'Foundation (0–5 sessions)', previewType: 'foundation' },
+  { label: 'Seed (6–10 sessions)', previewType: 'seed' },
+  { label: 'Habit (11–30 sessions)', previewType: 'habit' },
+  { label: 'Deep Practice (31+ sessions)', previewType: 'deepPractice' },
   { label: 'Inactive Survey', previewType: 'inactiveSurvey' },
   { label: 'Partial Survey', previewType: 'partialSurveyOptOut' },
-  { label: '16+ Sessions', previewType: 'advanced' },
-  { label: '100+ Sessions', previewType: 'pro' },
+  { label: '100+ sessions', previewType: 'pro' },
 ];
 
 export default function ProgressStatePickerScreen() {
@@ -38,14 +40,22 @@ export default function ProgressStatePickerScreen() {
         <Text style={styles.subtitle}>Tap a button to open the corresponding My Progress screen state.</Text>
 
         {STATE_OPTIONS.map((item) => (
-          <TouchableOpacity
-            key={item.previewType}
-            style={styles.optionBtn}
-            activeOpacity={0.88}
-            onPress={() => navigation.navigate('ProgressMain', { previewType: item.previewType })}
-          >
-            <Text style={styles.optionBtnTxt}>{item.label}</Text>
-          </TouchableOpacity>
+          <React.Fragment key={item.previewType}>
+            {item.previewType === 'zero' ? (
+              <Text style={styles.scopeHeader}>Scope: This release</Text>
+            ) : null}
+            {item.previewType === 'deepPractice' ? <View style={styles.deepPracticeDivider} /> : null}
+            {item.previewType === 'deepPractice' ? (
+              <Text style={styles.scopeHeader}>Scope: Future release</Text>
+            ) : null}
+            <TouchableOpacity
+              style={styles.optionBtn}
+              activeOpacity={0.88}
+              onPress={() => navigation.navigate('ProgressMain', { previewType: item.previewType })}
+            >
+              <Text style={styles.optionBtnTxt}>{item.label}</Text>
+            </TouchableOpacity>
+          </React.Fragment>
         ))}
       </ScrollView>
     </View>
@@ -100,11 +110,27 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingHorizontal: spacing.md,
   },
+  deepPracticeDivider: {
+    height: 1,
+    backgroundColor: 'rgba(44,44,46,0.14)',
+    marginHorizontal: 2,
+    marginTop: 12,
+    marginBottom: 14,
+  },
+  scopeHeader: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: 'rgba(52,37,61,0.68)',
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 8,
+    marginTop: 2,
+  },
   optionBtnTxt: {
     fontFamily: PROGRESS_FONT_BOLD,
     color: '#C26D1A',
     fontSize: 16,
     lineHeight: 26,
     fontWeight: '700',
+    textAlign: 'center',
   },
 });

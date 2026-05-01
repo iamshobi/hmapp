@@ -28,6 +28,10 @@ function buildPreviewLoggedSet(year, monthIndex, previewType) {
   const map = {
     zero: [],
     firstTime: [8],
+    foundation: [6, 12, 18],
+    seed: [3, 6, 9, 12, 15, 18, 21, 24],
+    habit: [2, 5, 8, 11, 14, 17, 20, 23, 26, 29],
+    deepPractice: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27],
     building: [3, 8, 14, 21, 27],
     inactiveSurvey: [4, 11, 19, 26],
     partialSurveyOptOut: [3, 9, 15],
@@ -63,7 +67,11 @@ function normalizePreviewType(type) {
 function getSessionsForType(type) {
   const t = normalizePreviewType(type);
   if (t === 'pro') return 100;
-  if (t === 'advanced') return 17;
+  if (t === 'deepPractice') return 35;
+  if (t === 'habit') return 18;
+  if (t === 'advanced') return 18;
+  if (t === 'seed') return 8;
+  if (t === 'foundation') return 3;
   if (t === 'inactiveSurvey') return 12;
   if (t === 'partialSurveyOptOut') return 18;
   if (t === 'building') return 5;

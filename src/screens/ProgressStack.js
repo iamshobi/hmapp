@@ -5,6 +5,7 @@ import ProgressStatePickerScreen from './ProgressStatePickerScreen';
 import ProgressHubScreen from './ProgressHubScreen';
 import MyProgressMockupScreen from './MyProgressMockupScreen';
 import OverallMoodScreen from './OverallMoodScreen';
+import SessionHistoryScreen from './SessionHistoryScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -22,6 +23,7 @@ export default function ProgressStack() {
       <Stack.Screen name="ProgressHub" component={ProgressHubScreen} />
       <Stack.Screen name="MyProgressMockup" component={MyProgressMockupScreen} />
       <Stack.Screen name="OverallMood" component={OverallMoodScreen} />
+      <Stack.Screen name="SessionHistory" component={SessionHistoryScreen} />
     </Stack.Navigator>
   );
 }

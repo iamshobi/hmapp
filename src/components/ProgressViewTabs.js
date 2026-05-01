@@ -12,7 +12,13 @@ const TABS = [
   { key: 'insights', label: 'Notes', Icon: Pencil },
 ];
 
-export default function ProgressViewTabs({ activeTab = 'trend', onChange, embedded = false, disabledTabs = [] }) {
+export default function ProgressViewTabs({
+  activeTab = 'trend',
+  onChange,
+  embedded = false,
+  disabledTabs = [],
+  onDisabledTabPress,
+}) {
   const { width } = useWindowDimensions();
   const isCompact = width <= 360;
   const iconSize = isCompact ? 11 : 13;
@@ -29,12 +35,14 @@ export default function ProgressViewTabs({ activeTab = 'trend', onChange, embedd
             key={key}
             style={[styles.tabBtn, isCompact && styles.tabBtnCompact, disabled && styles.tabBtnDisabled]}
             onPress={() => {
-              if (disabled) return;
+              if (disabled) {
+                onDisabledTabPress?.(key);
+                return;
+              }
               onChange?.(key);
             }}
-            activeOpacity={disabled ? 1 : 0.86}
+            activeOpacity={disabled ? 0.86 : 0.86}
             hitSlop={{ top: 6, bottom: 6, left: 4, right: 4 }}
-            disabled={disabled}
           >
             {active ? (
               <LinearGradient

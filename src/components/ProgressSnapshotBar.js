@@ -25,8 +25,17 @@ function getSnapshotForType(type) {
   if (t === 'pro') {
     return { sessions: 100, streak: 14, coherence: 4.8 };
   }
-  if (t === 'advanced') {
-    return { sessions: 17, streak: 7, coherence: 3.1 };
+  if (t === 'deepPractice') {
+    return { sessions: 35, streak: 10, coherence: 3.35 };
+  }
+  if (t === 'habit' || t === 'advanced') {
+    return { sessions: 18, streak: 6, coherence: 3.0 };
+  }
+  if (t === 'seed') {
+    return { sessions: 8, streak: 4, coherence: 2.45 };
+  }
+  if (t === 'foundation') {
+    return { sessions: 3, streak: 2, coherence: 1.85 };
   }
   if (t === 'building') {
     return { sessions: 5, streak: 3, coherence: 2.3 };
@@ -38,19 +47,50 @@ function getSnapshotForType(type) {
 }
 
 function getTypeFromTotalSessions(totalSessions) {
-  if (totalSessions >= 100) return 'pro';
-  if (totalSessions >= 17) return 'advanced';
-  if (totalSessions >= 5) return 'building';
-  if (totalSessions >= 1) return 'firstTime';
+  const n = Math.max(0, Math.floor(Number(totalSessions) || 0));
+  if (n >= 100) return 'pro';
+  if (n >= 31) return 'deepPractice';
+  if (n >= 11) return 'habit';
+  if (n >= 6) return 'seed';
+  if (n >= 2) return 'building';
+  if (n >= 1) return 'firstTime';
   return 'zero';
 }
 
 function getCoherenceFromSessions(totalSessions) {
-  if (totalSessions >= 100) return 4.8;
-  if (totalSessions >= 17) return 3.1;
-  if (totalSessions >= 5) return 2.3;
-  if (totalSessions >= 1) return 1.7;
+  const n = Math.max(0, Number(totalSessions) || 0);
+  if (n >= 100) return 4.8;
+  if (n >= 31) return 3.35;
+  if (n >= 11) return 3.1;
+  if (n >= 6) return 2.45;
+  if (n >= 1) return 1.85;
   return 0.0;
+}
+
+function previewCoherencePointsForType(activeType) {
+  switch (activeType) {
+    case 'pro':
+      return 210;
+    case 'deepPractice':
+      return 158;
+    case 'habit':
+    case 'advanced':
+      return 122;
+    case 'seed':
+      return 86;
+    case 'foundation':
+      return 54;
+    case 'inactiveSurvey':
+      return 92;
+    case 'partialSurveyOptOut':
+      return 128;
+    case 'building':
+      return 75;
+    case 'firstTime':
+      return 40;
+    default:
+      return 0;
+  }
 }
 
 function CoherenceDonut({ value = 0 }) {
@@ -126,19 +166,7 @@ export default function ProgressSnapshotBar({
       ? ((previewType ? snapshot.sessions * 195 : totalMinutes * 60) / Math.max(1, sessionsValue))
       : 0;
   const coherencePointsValue = previewType
-    ? activeType === 'pro'
-      ? 210
-      : activeType === 'advanced'
-        ? 110
-        : activeType === 'inactiveSurvey'
-          ? 92
-          : activeType === 'partialSurveyOptOut'
-            ? 128
-        : activeType === 'building'
-          ? 75
-          : activeType === 'firstTime'
-            ? 40
-            : 0
+    ? previewCoherencePointsForType(normalizeType(activeType))
     : Math.max(0, Math.round(coherencePoints));
   const isZeroState = activeType === 'zero' || (!previewType && totalSessions <= 0);
   const sessionsDisplay = isZeroState ? '-' : sessionsValue;
