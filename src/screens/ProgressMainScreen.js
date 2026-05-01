@@ -19,17 +19,18 @@ import {
   PanResponder,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Plus, Heart, Sparkles, Settings, MessageCircle, Pencil, Trash2, Check, ChevronDown, ChevronUp } from 'lucide-react-native';
 import ProgressSnapshotBar from '../components/ProgressSnapshotBar';
-import ProgressMilestoneCard from '../components/ProgressMilestoneCard';
 import ProgressSurveyDeltaCard from '../components/ProgressSurveyDeltaCard';
 import ProgressViewTabs from '../components/ProgressViewTabs';
 import ProgressCheckinsCalendar from '../components/ProgressCheckinsCalendar';
 import { TrendLayerComparisonCard } from '../components/sessionInsights/SessionInsightsUI';
 import { useMysession } from '../context/mysessionContext';
 import { colors, spacing, borderRadius, typography } from '../theme';
+import { getJourneyPhaseDetail, getEditorialQuotePoolKey } from '../utils/journeyPhase';
 
 const PROGRESS_FONT_REGULAR = 'Sailec-Medium';
 const PROGRESS_FONT_MEDIUM = 'Sailec-Medium';
@@ -39,11 +40,16 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
+/** Milestone bands: Foundation 0–5, Seed 6–10, Habit 11–30, Deep Practice 31+, pro 100+. */
+
 function getScienceTypeFromSessions(totalSessions) {
-  if (totalSessions >= 100) return 'pro';
-  if (totalSessions >= 17) return 'advanced';
-  if (totalSessions >= 5) return 'building';
-  if (totalSessions >= 1) return 'firstTime';
+  const n = Math.max(0, Math.floor(Number(totalSessions) || 0));
+  if (n >= 100) return 'pro';
+  if (n >= 31) return 'deepPractice';
+  if (n >= 11) return 'habit';
+  if (n >= 6) return 'seed';
+  if (n >= 2) return 'building';
+  if (n >= 1) return 'firstTime';
   return 'zero';
 }
 
@@ -52,17 +58,23 @@ function getSnapshotForPreviewType(type) {
   if (t === 'inactiveSurvey') return { sessions: 12, streak: 4, coherence: 2.8, points: 92 };
   if (t === 'partialSurveyOptOut') return { sessions: 18, streak: 6, coherence: 3.0, points: 128 };
   if (t === 'pro') return { sessions: 100, streak: 14, coherence: 4.8, points: 210 };
-  if (t === 'advanced') return { sessions: 17, streak: 7, coherence: 3.1, points: 110 };
+  if (t === 'deepPractice') return { sessions: 35, streak: 10, coherence: 3.35, points: 158 };
+  if (t === 'habit') return { sessions: 18, streak: 6, coherence: 3.0, points: 122 };
+  if (t === 'seed') return { sessions: 8, streak: 4, coherence: 2.45, points: 86 };
+  if (t === 'foundation') return { sessions: 3, streak: 2, coherence: 1.85, points: 54 };
+  if (t === 'advanced') return { sessions: 18, streak: 6, coherence: 3.0, points: 122 };
   if (t === 'building') return { sessions: 5, streak: 3, coherence: 2.3, points: 75 };
   if (t === 'firstTime') return { sessions: 1, streak: 1, coherence: 1.7, points: 40 };
   return { sessions: 0, streak: 0, coherence: 0, points: 0 };
 }
 
 function getCoherenceFromSessions(totalSessions) {
-  if (totalSessions >= 100) return 4.8;
-  if (totalSessions >= 17) return 3.1;
-  if (totalSessions >= 5) return 2.3;
-  if (totalSessions >= 1) return 1.7;
+  const n = Math.max(0, Number(totalSessions) || 0);
+  if (n >= 100) return 4.8;
+  if (n >= 31) return 3.35;
+  if (n >= 11) return 3.1;
+  if (n >= 6) return 2.45;
+  if (n >= 1) return 1.85;
   return 0.0;
 }
 
@@ -89,7 +101,17 @@ function getPreviewAveragesByType(type) {
       moodAfter: 8,
     };
   }
-  if (t === 'advanced') {
+  if (t === 'deepPractice') {
+    return {
+      stressBefore: 7.5,
+      stressAfter: 4,
+      energyBefore: 3.5,
+      energyAfter: 7,
+      moodBefore: 4,
+      moodAfter: 7.5,
+    };
+  }
+  if (t === 'habit' || t === 'advanced') {
     return {
       stressBefore: 7,
       stressAfter: 4,
@@ -97,6 +119,26 @@ function getPreviewAveragesByType(type) {
       energyAfter: 7,
       moodBefore: 4,
       moodAfter: 7,
+    };
+  }
+  if (t === 'seed') {
+    return {
+      stressBefore: 7,
+      stressAfter: 5,
+      energyBefore: 4,
+      energyAfter: 6,
+      moodBefore: 4,
+      moodAfter: 6.5,
+    };
+  }
+  if (t === 'foundation') {
+    return {
+      stressBefore: 7,
+      stressAfter: 5,
+      energyBefore: 4,
+      energyAfter: 6,
+      moodBefore: 4,
+      moodAfter: 6,
     };
   }
   if (t === 'building') {
@@ -133,10 +175,12 @@ function clamp(val, min, max) {
   return Math.max(min, Math.min(max, val));
 }
 
+/** My Journey active phase by sessions completed: Foundation 0–5, Seed 6–10, Habit 11–30, Deep Practice 31+. */
 function getProgressPhaseIndex(sessionCount) {
-  if (sessionCount >= 17) return 3;
-  if (sessionCount >= 5) return 2;
-  if (sessionCount >= 1) return 1;
+  const n = Math.max(0, Math.floor(Number(sessionCount) || 0));
+  if (n >= 31) return 3;
+  if (n >= 11) return 2;
+  if (n >= 6) return 1;
   return 0;
 }
 
@@ -162,9 +206,32 @@ const EDITORIAL_QUOTES = {
     'It does not matter how slowly you go as long as you do not stop.',
   ],
 };
+const JOURNEY_INACTIVE_SURVEY_COPY =
+  'Looks like you have completed Coherence Sessions but have not opted in for the session surveys. Tap on the toggle below to opt in and view the session insights.';
+const JOURNEY_PARTIAL_SURVEY_COPY =
+  'You have prior survey data and continued sessions. But right now it looks like you have opted out of the surveys. Opt in for the surveys once again and answer them regularly to unlock your progress insights.';
 
-function NoteSwipeRow({ children, onEdit, onDelete, onOpenChange }) {
-  const ACTION_WIDTH = 116;
+function NoteViewIcon({ size = 26, color = '#E18B31' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 26 26" fill="none">
+      <Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M8.9375 13C8.9375 10.7563 10.7563 8.9375 13 8.9375C15.2437 8.9375 17.0625 10.7563 17.0625 13C17.0625 15.2437 15.2437 17.0625 13 17.0625C10.7563 17.0625 8.9375 15.2437 8.9375 13ZM13 10.5625C11.6538 10.5625 10.5625 11.6538 10.5625 13C10.5625 14.3462 11.6538 15.4375 13 15.4375C14.3462 15.4375 15.4375 14.3462 15.4375 13C15.4375 11.6538 14.3462 10.5625 13 10.5625Z"
+        fill={color}
+      />
+      <Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M4.68371 11.5336C4.22967 12.1878 4.0625 12.6996 4.0625 13C4.0625 13.3004 4.22967 13.8122 4.68371 14.4664C5.12262 15.0989 5.77501 15.7845 6.60039 16.418C8.25477 17.6877 10.5229 18.6875 13 18.6875C15.4771 18.6875 17.7452 17.6877 19.3996 16.418C20.225 15.7845 20.8774 15.0989 21.3163 14.4664C21.7703 13.8122 21.9375 13.3004 21.9375 13C21.9375 12.6996 21.7703 12.1878 21.3163 11.5336C20.8774 10.9011 20.225 10.2155 19.3996 9.58205C17.7452 8.31233 15.4771 7.3125 13 7.3125C10.5229 7.3125 8.25477 8.31233 6.60039 9.58205C5.77501 10.2155 5.12262 10.9011 4.68371 11.5336ZM5.61102 8.29295C7.48546 6.85434 10.0923 5.6875 13 5.6875C15.9077 5.6875 18.5145 6.85434 20.389 8.29295C21.328 9.01364 22.1035 9.81765 22.6513 10.6071C23.184 11.3747 23.5625 12.2171 23.5625 13C23.5625 13.7829 23.184 14.6253 22.6513 15.3929C22.1035 16.1824 21.328 16.9864 20.389 17.707C18.5145 19.1457 15.9077 20.3125 13 20.3125C10.0923 20.3125 7.48546 19.1457 5.61102 17.707C4.67201 16.9864 3.89654 16.1824 3.3487 15.3929C2.81599 14.6253 2.4375 13.7829 2.4375 13C2.4375 12.2171 2.81599 11.3747 3.3487 10.6071C3.89654 9.81765 4.67201 9.01364 5.61102 8.29295Z"
+        fill={color}
+      />
+    </Svg>
+  );
+}
+
+function NoteSwipeRow({ children, onView, onEdit, onDelete, onOpenChange }) {
+  const ACTION_WIDTH = 174;
   const translateX = React.useRef(new Animated.Value(0)).current;
   const currentX = React.useRef(0);
 
@@ -179,28 +246,16 @@ function NoteSwipeRow({ children, onEdit, onDelete, onOpenChange }) {
     }).start();
   };
 
-  const panResponder = React.useMemo(
-    () =>
-      PanResponder.create({
-        onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dx) > 8 && Math.abs(gesture.dx) > Math.abs(gesture.dy),
-        onPanResponderMove: (_, gesture) => {
-          const next = clamp(currentX.current + gesture.dx, -ACTION_WIDTH, 0);
-          translateX.setValue(next);
-        },
-        onPanResponderRelease: (_, gesture) => {
-          const movedFarLeft = gesture.dx < -40;
-          const movedFarRight = gesture.dx > 24;
-          if (movedFarLeft) animateTo(-ACTION_WIDTH);
-          else if (movedFarRight) animateTo(0);
-          else animateTo(currentX.current < -ACTION_WIDTH / 2 ? -ACTION_WIDTH : 0);
-        },
-      }),
-    [translateX]
-  );
+  const toggleActions = () => {
+    animateTo(currentX.current === 0 ? -ACTION_WIDTH : 0);
+  };
 
   return (
     <View style={styles.swipeRowWrap}>
       <View style={styles.swipeActions}>
+        <TouchableOpacity style={[styles.swipeActionBtn, styles.swipeViewBtn]} onPress={onView} activeOpacity={0.86}>
+          <NoteViewIcon size={18} color="#E18B31" />
+        </TouchableOpacity>
         <TouchableOpacity style={[styles.swipeActionBtn, styles.swipeEditBtn]} onPress={onEdit} activeOpacity={0.86}>
           <Pencil size={16} color="#E18B31" />
         </TouchableOpacity>
@@ -210,9 +265,10 @@ function NoteSwipeRow({ children, onEdit, onDelete, onOpenChange }) {
       </View>
       <Animated.View
         style={[styles.swipeContent, { transform: [{ translateX }] }]}
-        {...panResponder.panHandlers}
       >
-        {children}
+        <TouchableOpacity activeOpacity={1} onPress={toggleActions}>
+          {children}
+        </TouchableOpacity>
       </Animated.View>
     </View>
   );
@@ -243,14 +299,14 @@ export default function ProgressMainScreen() {
   const [progressOptInChoice, setProgressOptInChoice] = useState('yes');
   const [inactiveSurveyOptInChoice, setInactiveSurveyOptInChoice] = useState('no');
   const [hasOpenNoteSwipeActions, setHasOpenNoteSwipeActions] = useState(false);
-  const [isJourneyExpanded, setIsJourneyExpanded] = useState(false);
   const [isSnapshotExpanded, setIsSnapshotExpanded] = useState(false);
-  const [isMilestoneExpanded, setIsMilestoneExpanded] = useState(false);
   const [isCommunityExpanded, setIsCommunityExpanded] = useState(false);
   const [isSessionInsightsExpanded, setIsSessionInsightsExpanded] = useState(true);
   const [surveyPreferenceUpdatedVisible, setSurveyPreferenceUpdatedVisible] = useState(false);
   const surveyPreferenceFadeAnim = useRef(new Animated.Value(0)).current;
   const surveyPreferenceTimeoutRef = useRef(null);
+  const progressScrollRef = useRef(null);
+  const currentScrollYRef = useRef(0);
   const isInactiveSurveyPreview = sciencePreviewType === 'inactiveSurvey';
   const isPartialSurveyOptOutPreview = sciencePreviewType === 'partialSurveyOptOut';
   const progressTabOrder = React.useMemo(() => ['trend', 'checkins', 'insights'], []);
@@ -346,17 +402,82 @@ export default function ProgressMainScreen() {
     if (t === 'inactiveSurvey') return 12;
     if (t === 'partialSurveyOptOut') return 18;
     if (t === 'pro') return 100;
-    if (t === 'advanced') return 17;
+    if (t === 'deepPractice') return 35;
+    if (t === 'habit') return 18;
+    if (t === 'seed') return 8;
+    if (t === 'foundation') return 3;
+    if (t === 'advanced') return 18;
     if (t === 'building') return 5;
     if (t === 'firstTime') return 1;
     return 0;
   }, [sciencePreviewType, totalSessions]);
-  const shouldShowStartFirstSessionCta = trendSessionCount === 0;
-  const shouldShowKeepGoingCta = trendSessionCount >= 1 && trendSessionCount <= 5;
-  const shouldShowKeepRhythmCta = trendSessionCount >= 6 && trendSessionCount <= 15;
-  const hasEnoughSessionsForProgressTabs = trendSessionCount >= 6;
+  const hasEnoughSessionsForProgressTabs = trendSessionCount >= 30;
   const hasAtLeastThirtySessions = trendSessionCount >= 30;
   const activePhaseIdx = getProgressPhaseIndex(trendSessionCount);
+  const journeyPhaseDetail = React.useMemo(() => getJourneyPhaseDetail(trendSessionCount), [trendSessionCount]);
+  const journeySummaryMessage = React.useMemo(() => {
+    const d = journeyPhaseDetail;
+    if (d.levelKey === 'foundation') {
+      if (d.phaseState === 'start') {
+        return 'Start your journey by completing a Coherence Session!';
+      }
+      if (d.phaseState === 'end') {
+        return 'Great work. Did you know deep breathing improves your sleep, mood & physiology? Keep going to receive your Foundation badge!';
+      }
+      const remaining = Math.max(1, 5 - trendSessionCount);
+      return `You are only ${remaining} session${remaining === 1 ? '' : 's'} away from completing this level and earning your Foundation badge! Continue your journey!`;
+    }
+    if (d.levelKey === 'seed') {
+      if (d.phaseState === 'start') {
+        return "You have entered Seed level! Keep your momentum going to earn your Seed badge.";
+      }
+      if (d.phaseState === 'end') {
+        return "Great work. You've completed Seed! Keep going to strengthen your rhythm and unlock Habit.";
+      }
+      const remaining = Math.max(1, 10 - trendSessionCount);
+      return `You are only ${remaining} session${remaining === 1 ? '' : 's'} away from completing this level and earning your Seed badge! Continue your journey!`;
+    }
+    if (d.levelKey === 'habit') {
+      if (d.phaseState === 'start') {
+        return "You have entered Habit level! Your consistency is becoming your strength. Keep going to earn your Habit badge.";
+      }
+      if (d.phaseState === 'end') {
+        return "Excellent progress. You've completed Habit! Keep your rhythm strong as you step into Deep Practice.";
+      }
+      const remaining = Math.max(1, 30 - trendSessionCount);
+      return `You are only ${remaining} session${remaining === 1 ? '' : 's'} away from completing this level and earning your Habit badge! Continue your journey!`;
+    }
+    if (d.levelKey === 'deepPractice') {
+      if (d.phaseState === 'start') {
+        return "Welcome to Deep Practice! You are now in the highest level of consistency and calm.";
+      }
+      return "You're in Deep Practice. Every session now deepens your resilience, focus, and emotional balance.";
+    }
+    return "You're among the most dedicated practitioners — thank you for showing up.";
+  }, [journeyPhaseDetail, trendSessionCount]);
+  const journeyCtaLabel = React.useMemo(() => {
+    const d = journeyPhaseDetail;
+    if (d.levelKey === 'foundation') {
+      return d.phaseState === 'end' ? 'Set Reminder' : 'Start Session';
+    }
+    if (d.levelKey === 'seed') {
+      return d.phaseState === 'end' ? 'Set Reminder' : 'Start Session';
+    }
+    if (d.levelKey === 'habit') {
+      return d.phaseState === 'end' ? 'Set Reminder' : 'Start Session';
+    }
+    if (d.levelKey === 'deepPractice') {
+      return d.phaseState === 'start' ? 'Start Session' : 'Set Reminder';
+    }
+    return null;
+  }, [journeyPhaseDetail]);
+  const onPressJourneyCta = () => {
+    if (journeyCtaLabel === 'Set Reminder') {
+      Alert.alert('Reminder setup', 'Reminder setup will be available here soon.');
+      return;
+    }
+    navigation.navigate('Measure');
+  };
   const surveyResultsCount = Array.isArray(surveyResults) ? surveyResults.length : 0;
   const hasIncompleteOrInactiveSurveyData =
     isInactiveSurveyPreview || (!sciencePreviewType && totalSessions > 0 && surveyResultsCount === 0);
@@ -417,22 +538,26 @@ export default function ProgressMainScreen() {
       setActiveProgressTab('checkins');
     }
   }, [shouldFullyLockInsights, activeProgressTab]);
-  const editorialQuotePool =
-    hasSurveyInsightsOptOutState
-      ? EDITORIAL_QUOTES.inactive
-      : trendSessionCount >= 16
-        ? EDITORIAL_QUOTES.deep
-        : trendSessionCount >= 6
-          ? EDITORIAL_QUOTES.building
-          : EDITORIAL_QUOTES.early;
+  const editorialQuotePoolKey = getEditorialQuotePoolKey(journeyPhaseDetail, hasSurveyInsightsOptOutState);
+  const editorialQuotePool = EDITORIAL_QUOTES[editorialQuotePoolKey];
   const editorialQuote = editorialQuotePool[Math.max(0, trendSessionCount) % editorialQuotePool.length];
   const editorialQuoteStageLabel = hasSurveyInsightsOptOutState
     ? 'shown for incomplete practice days'
-    : trendSessionCount >= 16
-      ? 'shown for deep practice milestones'
-      : trendSessionCount >= 6
-        ? 'shown for building milestones'
-        : 'shown for first-step milestones';
+    : journeyPhaseDetail.levelKey === 'pro'
+      ? 'shown at 100+ sessions'
+      : journeyPhaseDetail.levelKey === 'deepPractice'
+        ? 'shown for Deep Practice (31+)'
+        : journeyPhaseDetail.levelKey === 'habit'
+          ? journeyPhaseDetail.phaseState === 'end'
+            ? 'shown at Habit completion (30)'
+            : 'shown for Habit (11–30)'
+          : journeyPhaseDetail.levelKey === 'seed'
+            ? 'shown for Seed (6–10)'
+            : journeyPhaseDetail.levelKey === 'foundation' && journeyPhaseDetail.phaseState === 'start'
+              ? 'shown at Foundation start (0)'
+              : journeyPhaseDetail.phaseState === 'end'
+                ? 'shown at Foundation completion (5)'
+                : 'shown for Foundation (1–4)';
 
   const effectiveScienceType = sciencePreviewType || getScienceTypeFromSessions(totalSessions);
   const hasNoProgressData = totalSessions <= 0;
@@ -550,43 +675,47 @@ export default function ProgressMainScreen() {
         },
       ];
     }
-    if (effectiveScienceType === 'building' || effectiveScienceType === 'advanced') {
-      const advancedExtra =
-        effectiveScienceType === 'advanced'
-          ? [
-              {
-                id: 'sample-note-3',
-                body: 'Noticed less reactivity today. Recovery after stress felt faster than last week.',
-                createdAt: new Date(now - 1000 * 60 * 60 * 24 * 4).toISOString(),
-                updatedAt: new Date(now - 1000 * 60 * 60 * 24 * 4).toISOString(),
-                isSample: true,
-              },
-              {
-                id: 'sample-note-4',
-                body: 'More focused after session. I want to keep this as part of my morning routine.',
-                createdAt: new Date(now - 1000 * 60 * 60 * 24 * 9).toISOString(),
-                updatedAt: new Date(now - 1000 * 60 * 60 * 24 * 9).toISOString(),
-                isSample: true,
-              },
-            ]
-          : [];
-      return [
-        {
-          id: 'sample-note-1',
-          body: 'Felt less chest tightness after 5 minutes. Breath felt smoother by the end.',
-          createdAt: new Date(now - 1000 * 60 * 90).toISOString(),
-          updatedAt: new Date(now - 1000 * 60 * 90).toISOString(),
-          isSample: true,
-        },
-        {
-          id: 'sample-note-2',
-          body: 'Started distracted, finished calmer. Energy lifted from low to steady.',
-          createdAt: new Date(now - 1000 * 60 * 60 * 24).toISOString(),
-          updatedAt: new Date(now - 1000 * 60 * 60 * 24).toISOString(),
-          isSample: true,
-        },
-        ...advancedExtra,
-      ];
+    const sampleBuildingPair = [
+      {
+        id: 'sample-note-1',
+        body: 'Felt less chest tightness after 5 minutes. Breath felt smoother by the end.',
+        createdAt: new Date(now - 1000 * 60 * 90).toISOString(),
+        updatedAt: new Date(now - 1000 * 60 * 90).toISOString(),
+        isSample: true,
+      },
+      {
+        id: 'sample-note-2',
+        body: 'Started distracted, finished calmer. Energy lifted from low to steady.',
+        createdAt: new Date(now - 1000 * 60 * 60 * 24).toISOString(),
+        updatedAt: new Date(now - 1000 * 60 * 60 * 24).toISOString(),
+        isSample: true,
+      },
+    ];
+    const sampleHabitExtra = [
+      {
+        id: 'sample-note-3',
+        body: 'Noticed less reactivity today. Recovery after stress felt faster than last week.',
+        createdAt: new Date(now - 1000 * 60 * 60 * 24 * 4).toISOString(),
+        updatedAt: new Date(now - 1000 * 60 * 60 * 24 * 4).toISOString(),
+        isSample: true,
+      },
+      {
+        id: 'sample-note-4',
+        body: 'More focused after session. I want to keep this as part of my morning routine.',
+        createdAt: new Date(now - 1000 * 60 * 60 * 24 * 9).toISOString(),
+        updatedAt: new Date(now - 1000 * 60 * 60 * 24 * 9).toISOString(),
+        isSample: true,
+      },
+    ];
+    if (
+      effectiveScienceType === 'foundation' ||
+      effectiveScienceType === 'seed' ||
+      effectiveScienceType === 'building'
+    ) {
+      return sampleBuildingPair;
+    }
+    if (effectiveScienceType === 'habit' || effectiveScienceType === 'advanced') {
+      return [...sampleBuildingPair, ...sampleHabitExtra];
     }
     return [
       {
@@ -682,27 +811,6 @@ export default function ProgressMainScreen() {
     trendSessionCount > 0 &&
     !shouldFullyLockInsights &&
     !hasSurveyInsightsOptOutState;
-  const milestoneHeaderText = React.useMemo(() => {
-    if (hasPartialSurveyOptOutData) {
-      return "Great, You've completed 18 sessions, but surveys are temporarily turned off!";
-    }
-    if (hasIncompleteOrInactiveSurveyData) {
-      return "Great, You've completed 12 sessions.";
-    }
-    if (trendSessionCount >= 100) {
-      return "Wow, You've completed 100 sessions!";
-    }
-    if (trendSessionCount >= 17) {
-      return 'You are 17 sessions strong!';
-    }
-    if (trendSessionCount >= 5) {
-      return "Great, You've completed 5 sessions!";
-    }
-    if (trendSessionCount >= 1) {
-      return "You've completed your 1st session!";
-    }
-    return 'Start your first session!';
-  }, [hasIncompleteOrInactiveSurveyData, hasPartialSurveyOptOutData, trendSessionCount]);
   const snapshotCompact = React.useMemo(() => {
     if (sciencePreviewType) {
       const preview = getSnapshotForPreviewType(sciencePreviewType);
@@ -720,7 +828,19 @@ export default function ProgressMainScreen() {
       streak: isZero ? '-' : `${Math.max(0, Math.round(Number(streak) || 0))}d`,
     };
   }, [sciencePreviewType, totalSessions, coherencePoints, streak]);
+  const isZeroSnapshotState =
+    normalizePreviewType(sciencePreviewType) === 'zero' || (!sciencePreviewType && totalSessions <= 0);
   const disabledTabs = shouldFullyLockInsights ? ['trend', 'insights'] : [];
+  const handleDisabledInsightsTabPress = (tabKey) => {
+    const tabLabel = tabKey === 'trend' ? 'Trends' : tabKey === 'insights' ? 'Notes' : 'This tab';
+    Alert.alert(
+      `${tabLabel} is paused`,
+      'Surveys are currently paused. Turn surveys on to unlock Trends and Notes.'
+    );
+  };
+  const focusJourneyToggle = () => {
+    progressScrollRef.current?.scrollTo({ y: 0, animated: true });
+  };
   const tabsSection = hasEnoughSessionsForProgressTabs ? (
     <View style={styles.tabsSharedCard}>
       <TouchableOpacity
@@ -759,9 +879,17 @@ export default function ProgressMainScreen() {
               activeTab={activeProgressTab}
               onChange={setActiveProgressTab}
               disabledTabs={disabledTabs}
+              onDisabledTabPress={handleDisabledInsightsTabPress}
               embedded
             />
           </View>
+          {shouldFullyLockInsights ? (
+            <TouchableOpacity style={styles.disabledTabsHintCard} onPress={focusJourneyToggle} activeOpacity={0.88}>
+              <Text style={styles.disabledTabsHintText}>
+                Surveys are paused. Turn surveys on to unlock Trends and Notes.
+              </Text>
+            </TouchableOpacity>
+          ) : null}
           <View
             style={styles.tabsSharedContent}
             {...(activeProgressTab === 'insights'
@@ -881,6 +1009,13 @@ export default function ProgressMainScreen() {
                   <View key={note.id} style={idx > 0 ? styles.noteRowDivider : null}>
                     <NoteSwipeRow
                       onOpenChange={(isOpen) => setHasOpenNoteSwipeActions(isOpen)}
+                      onView={() =>
+                        Alert.alert(
+                          'Note details',
+                          note.body || 'No note content available.',
+                          [{ text: 'Close', style: 'default' }]
+                        )
+                      }
                       onEdit={() => {
                         if (note.isSample) {
                           Alert.alert('Sample note', 'Sample notes are preview-only. Add a real note to edit.');
@@ -933,15 +1068,7 @@ export default function ProgressMainScreen() {
         </>
       ) : null}
     </View>
-  ) : (
-    <View style={styles.tabsLockedCard}>
-      <Text style={styles.tabsLockedTitle}>Your pattern is still forming</Text>
-      <Text style={styles.tabsLockedBody}>
-        Complete a few more sessions and record your answers to the pre- and post-session surveys to view Trends, Activity, and Notes here.
-      </Text>
-      {renderPartialSurveyToggle()}
-    </View>
-  );
+  ) : null;
 
   return (
     <View style={styles.root}>
@@ -977,107 +1104,109 @@ export default function ProgressMainScreen() {
       </LinearGradient>
 
       <ScrollView
+        ref={progressScrollRef}
+        onScroll={(event) => {
+          currentScrollYRef.current = event.nativeEvent.contentOffset.y || 0;
+        }}
+        scrollEventThrottle={16}
         contentContainerStyle={[
           styles.scroll,
           { paddingBottom: 30 },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <TouchableOpacity
-          style={styles.phaseTimelineCard}
-          onPress={() => setIsJourneyExpanded((prev) => !prev)}
-          activeOpacity={0.92}
-        >
+        <View style={styles.phaseTimelineCard}>
           <View style={styles.phaseTimelineHeaderRow}>
             <Text style={styles.phaseTimelineTitle}>My Journey</Text>
-            <TouchableOpacity
-              onPress={() => setIsJourneyExpanded((prev) => !prev)}
-              activeOpacity={0.84}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={isJourneyExpanded ? 'Collapse My Journey' : 'Expand My Journey'}
-            >
-              {isJourneyExpanded ? (
-                <ChevronUp size={16} color="#E18B31" strokeWidth={2.4} />
-              ) : (
-                <ChevronDown size={16} color="#E18B31" strokeWidth={2.4} />
-              )}
-            </TouchableOpacity>
           </View>
-          <View style={styles.journeySummaryRow}>
-            <Text style={styles.journeySummaryText}>
-              {trendSessionCount === 0
-                ? 'Start your journey by completing a Coherence Session!'
-                : activePhaseIdx >= 3
-                  ? "Great, You're in the Deep Practice level and among the top 1% of our practitioners!"
-                  : activePhaseIdx >= 2
-                    ? "Awesome! You're 30 sessions away from Deep Practice level. Keep practicing!"
-                    : "Wow! You're only 15 sessions away from Habit level."}
-            </Text>
-          </View>
-          {isJourneyExpanded ? (
-            <>
-              <View style={styles.phaseLineWrap}>
-                <View style={styles.phaseBaseLine} />
-                <View style={styles.phaseTimelineTrackRow}>
-                  {['First Step', 'Seed', 'Habit', 'Deep Practice'].map((label, idx) => {
-                  const isCompleted = idx < activePhaseIdx;
-                  const isActive = idx === activePhaseIdx;
-                  const isFuture = idx > activePhaseIdx;
-                  return (
-                    <View key={label} style={styles.phaseItemWrap}>
-                      <View
-                        style={[
-                          styles.phaseNode,
-                          isCompleted && styles.phaseNodeCompleted,
-                          isActive && styles.phaseNodeActive,
-                          isFuture && styles.phaseNodeFuture,
-                        ]}
-                      >
-                        {isCompleted ? (
-                          <Check size={12} color="#FFFFFF" strokeWidth={2.8} />
-                        ) : isActive ? (
-                          <Heart size={11} color="#FFFFFF" fill="#FFFFFF" strokeWidth={2.5} />
-                        ) : (
-                          <Text style={styles.phasePendingDash}>-</Text>
-                        )}
-                      </View>
-                      <Text
-                        style={[
-                          styles.phaseNodeLabel,
-                          isCompleted && styles.phaseNodeLabelCompleted,
-                          isActive && styles.phaseNodeLabelActive,
-                          isFuture && styles.phaseNodeLabelFuture,
-                        ]}
-                      >
-                        {label}
-                      </Text>
+          <View style={styles.phaseLineWrap}>
+            <View style={styles.phaseBaseLine} />
+            <View style={styles.phaseTimelineTrackRow}>
+              {['Foundation', 'Seed', 'Habit', 'Deep Practice'].map((label, idx) => {
+                const isCompleted = idx < activePhaseIdx;
+                const isActive = idx === activePhaseIdx;
+                const isFuture = idx > activePhaseIdx;
+                return (
+                  <View key={label} style={styles.phaseItemWrap}>
+                    <View
+                      style={[
+                        styles.phaseNode,
+                        isCompleted && styles.phaseNodeCompleted,
+                        isActive && styles.phaseNodeActive,
+                        isFuture && styles.phaseNodeFuture,
+                      ]}
+                    >
+                      {isCompleted ? (
+                        <Check size={12} color="#FFFFFF" strokeWidth={2.8} />
+                      ) : isActive ? (
+                        <Heart size={11} color="#FFFFFF" fill="#FFFFFF" strokeWidth={2.5} />
+                      ) : (
+                        <Text style={styles.phasePendingDash}>-</Text>
+                      )}
                     </View>
-                  );
-                })}
-                </View>
-              </View>
-            </>
+                    <Text
+                      numberOfLines={2}
+                      maxFontSizeMultiplier={1.2}
+                      style={[
+                        styles.phaseNodeLabel,
+                        Platform.OS === 'android' && styles.phaseNodeLabelAndroid,
+                        isCompleted && styles.phaseNodeLabelCompleted,
+                        isActive && styles.phaseNodeLabelActive,
+                        isFuture && styles.phaseNodeLabelFuture,
+                      ]}
+                    >
+                      {label}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+          {hasIncompleteOrInactiveSurveyData ? (
+            <View style={styles.journeySummaryRow}>
+              <Text style={styles.journeySummaryText}>{JOURNEY_INACTIVE_SURVEY_COPY}</Text>
+            </View>
+          ) : hasPartialSurveyOptOutData ? (
+            <View style={styles.journeySummaryRow}>
+              <Text style={styles.journeySummaryText}>{JOURNEY_PARTIAL_SURVEY_COPY}</Text>
+            </View>
+          ) : (
+            <View style={styles.journeySummaryRow}>
+              <Text style={styles.journeySummaryText}>{journeySummaryMessage}</Text>
+            </View>
+          )}
+          {hasIncompleteOrInactiveSurveyData ? (
+            <View style={styles.journeySurveyToggleWrap}>{renderInactiveSurveyToggle()}</View>
           ) : null}
-        </TouchableOpacity>
+          {hasPartialSurveyOptOutData ? (
+            <View style={styles.journeySurveyToggleWrap}>{renderPartialSurveyToggle()}</View>
+          ) : null}
+          {!hasSurveyInsightsOptOutState && journeyCtaLabel ? (
+            <TouchableOpacity style={styles.journeyLevelOneCtaBtn} onPress={onPressJourneyCta} activeOpacity={0.88}>
+              <Text style={styles.journeyLevelOneCtaTxt}>{journeyCtaLabel}</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
         <TouchableOpacity
           style={styles.collapsibleCard}
-          onPress={() => setIsSnapshotExpanded((prev) => !prev)}
-          activeOpacity={0.92}
+          onPress={isZeroSnapshotState ? undefined : () => setIsSnapshotExpanded((prev) => !prev)}
+          activeOpacity={isZeroSnapshotState ? 1 : 0.92}
         >
           <TouchableOpacity
             style={styles.collapsibleHeaderRow}
-            onPress={() => setIsSnapshotExpanded((prev) => !prev)}
-            activeOpacity={0.84}
+            onPress={isZeroSnapshotState ? undefined : () => setIsSnapshotExpanded((prev) => !prev)}
+            activeOpacity={isZeroSnapshotState ? 1 : 0.84}
           >
             <Text style={styles.collapsibleHeaderTitle}>Progress Snapshot</Text>
-            {isSnapshotExpanded ? (
-              <ChevronUp size={16} color="#E18B31" strokeWidth={2.4} />
-            ) : (
-              <ChevronDown size={16} color="#E18B31" strokeWidth={2.4} />
-            )}
+            {!isZeroSnapshotState ? (
+              isSnapshotExpanded ? (
+                <ChevronUp size={16} color="#E18B31" strokeWidth={2.4} />
+              ) : (
+                <ChevronDown size={16} color="#E18B31" strokeWidth={2.4} />
+              )
+            ) : null}
           </TouchableOpacity>
-          {isSnapshotExpanded ? (
+          {!isZeroSnapshotState && isSnapshotExpanded ? (
             <View style={styles.snapshotExpandedWrap}>
               <ProgressSnapshotBar
                 totalSessions={totalSessions}
@@ -1115,69 +1244,6 @@ export default function ProgressMainScreen() {
         {trendSessionCount > 1 && !hasSurveyInsightsOptOutState ? (
           <ProgressSurveyDeltaCard averages={trendAverages} />
         ) : null}
-        <View style={styles.milestoneActionCard}>
-          <TouchableOpacity
-            style={styles.milestoneHeaderRow}
-            onPress={() => setIsMilestoneExpanded((prev) => !prev)}
-            activeOpacity={0.84}
-          >
-            <Text style={styles.milestoneHeaderTitle}>{milestoneHeaderText}</Text>
-            {isMilestoneExpanded ? (
-              <ChevronUp size={16} color="#E18B31" strokeWidth={2.4} />
-            ) : (
-              <ChevronDown size={16} color="#E18B31" strokeWidth={2.4} />
-            )}
-          </TouchableOpacity>
-          {isMilestoneExpanded ? (
-            <>
-              <ProgressMilestoneCard
-                totalSessions={totalSessions}
-                previewType={sciencePreviewType}
-                milestoneState={
-                  hasPartialSurveyOptOutData
-                    ? 'partialSurveyOptOut'
-                    : hasIncompleteOrInactiveSurveyData
-                      ? 'inactiveSurvey'
-                      : null
-                }
-                hideLeadingSessionCount
-                onPress={() => setIsMilestoneExpanded((prev) => !prev)}
-                embedded
-              />
-              {hasIncompleteOrInactiveSurveyData && !hasPartialSurveyOptOutData ? (
-                renderInactiveSurveyToggle()
-              ) : null}
-              {hasPartialSurveyOptOutData ? renderPartialSurveyToggle() : null}
-              {!hasSurveyInsightsOptOutState && shouldShowStartFirstSessionCta ? (
-                <TouchableOpacity
-                  style={styles.firstSessionBtn}
-                  onPress={() => navigation.navigate('Measure')}
-                  activeOpacity={0.88}
-                >
-                  <Text style={styles.firstSessionBtnTxt}>Start first session</Text>
-                </TouchableOpacity>
-              ) : null}
-              {!hasSurveyInsightsOptOutState && shouldShowKeepGoingCta ? (
-                <TouchableOpacity
-                  style={styles.firstSessionBtn}
-                  onPress={() => navigation.navigate('Measure')}
-                  activeOpacity={0.88}
-                >
-                  <Text style={styles.firstSessionBtnTxt}>Keep going</Text>
-                </TouchableOpacity>
-              ) : null}
-              {!hasSurveyInsightsOptOutState && shouldShowKeepRhythmCta ? (
-                <TouchableOpacity
-                  style={styles.firstSessionBtn}
-                  onPress={() => navigation.navigate('Measure')}
-                  activeOpacity={0.88}
-                >
-                  <Text style={styles.firstSessionBtnTxt}>Keep your rhythm</Text>
-                </TouchableOpacity>
-              ) : null}
-            </>
-          ) : null}
-        </View>
         {!shouldPrioritizeInsightsCard ? tabsSection : null}
 
         <TouchableOpacity
@@ -1219,8 +1285,24 @@ export default function ProgressMainScreen() {
             ) : null}
         </TouchableOpacity>
 
-        <View style={styles.editorialQuoteCard}>
-          <Text style={styles.editorialQuoteText}>"{editorialQuote}"</Text>
+        <View style={styles.editorialQuoteCardWrap}>
+          <LinearGradient
+            colors={['#FFFDF9', '#FFF3E6', '#FFE8D4', '#FFD9BC']}
+            locations={[0, 0.32, 0.72, 1]}
+            start={{ x: 0.06, y: 0 }}
+            end={{ x: 0.94, y: 1 }}
+            style={styles.editorialQuoteGradient}
+          >
+            <LinearGradient
+              colors={['rgba(255,255,255,0.72)', 'rgba(255,255,255,0.18)', 'rgba(255,246,235,0)']}
+              locations={[0, 0.22, 1]}
+              start={{ x: 0.15, y: 0 }}
+              end={{ x: 0.85, y: 0.55 }}
+              style={styles.editorialQuoteGloss}
+              pointerEvents="none"
+            />
+            <Text style={styles.editorialQuoteText}>"{editorialQuote}"</Text>
+          </LinearGradient>
         </View>
         <TouchableOpacity
           style={styles.sessionHistoryBtn}
@@ -1603,7 +1685,7 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 0,
-    width: 116,
+    width: 174,
     flexDirection: 'row',
     alignItems: 'stretch',
     justifyContent: 'flex-end',
@@ -1622,10 +1704,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   swipeEditBtn: {
-    backgroundColor: '#F6EAF5',
+    backgroundColor: '#FFF4E8',
+  },
+  swipeViewBtn: {
+    backgroundColor: '#FFEEDB',
   },
   swipeDeleteBtn: {
-    backgroundColor: '#FFEFF6',
+    backgroundColor: '#FFE6D6',
   },
   modalBackdrop: {
     flex: 1,
@@ -1697,17 +1782,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-  firstSessionBtn: {
-    marginBottom: 0,
-    marginTop: 4,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(225,139,49,0.42)',
-  },
   phaseTimelineCard: {
     alignSelf: 'stretch',
     marginBottom: spacing.xl,
@@ -1724,13 +1798,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     minHeight: 28,
-    marginBottom: 10,
+    marginBottom: spacing.md,
   },
   journeySummaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: 2,
+    marginTop: spacing.sm,
     marginBottom: 18,
     paddingVertical: 2,
   },
@@ -1741,6 +1815,27 @@ const styles = StyleSheet.create({
     color: '#171717',
     fontWeight: '700',
     flexShrink: 1,
+  },
+  journeySurveyToggleWrap: {
+    marginBottom: 8,
+  },
+  journeyLevelOneCtaBtn: {
+    marginTop: 2,
+    marginBottom: 10,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(225,139,49,0.42)',
+    backgroundColor: '#FFFFFF',
+  },
+  journeyLevelOneCtaTxt: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: '#C26D1A',
+    fontSize: 14,
+    lineHeight: 26,
+    fontWeight: '700',
   },
   collapsibleCard: {
     alignSelf: 'stretch',
@@ -1762,22 +1857,6 @@ const styles = StyleSheet.create({
   },
   sessionInsightsHeaderCollapsed: {
     marginBottom: 0,
-  },
-  milestoneHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    minHeight: 28,
-    marginBottom: 10,
-  },
-  milestoneHeaderTitle: {
-    flex: 1,
-    fontFamily: PROGRESS_FONT_BOLD,
-    fontSize: 14,
-    lineHeight: 26,
-    color: '#2C2C2E',
-    fontWeight: '800',
   },
   collapsibleHeaderTitle: {
     fontFamily: PROGRESS_FONT_BOLD,
@@ -1835,8 +1914,9 @@ const styles = StyleSheet.create({
   },
   phaseLineWrap: {
     position: 'relative',
-    marginBottom: 10,
-    marginTop: 2,
+    alignSelf: 'stretch',
+    marginTop: spacing.lg,
+    marginBottom: spacing.lg + spacing.lg + spacing.xs,
   },
   phaseBaseLine: {
     position: 'absolute',
@@ -1848,12 +1928,13 @@ const styles = StyleSheet.create({
   },
   phaseTimelineTrackRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
   phaseItemWrap: {
-    width: '24%',
+    flex: 1,
+    minWidth: 0,
     alignItems: 'center',
+    paddingHorizontal: 0,
   },
   phaseNode: {
     width: 28,
@@ -1884,27 +1965,42 @@ const styles = StyleSheet.create({
   },
   phasePendingDash: {
     color: '#171717AD',
-    fontFamily: PROGRESS_FONT_BOLD,
+    fontFamily: 'Sailec-Thin',
     fontSize: 13,
     marginTop: -1,
   },
+  phaseNodeLabelAndroid: {
+    includeFontPadding: false,
+  },
   phaseNodeLabel: {
     marginTop: 8,
+    width: '100%',
     fontFamily: PROGRESS_FONT_REGULAR,
-    fontSize: 13,
-    lineHeight: 26,
+    fontSize: 12.5,
+    lineHeight: 15,
     textAlign: 'center',
-    minHeight: 24,
+    fontWeight: 'normal',
   },
   phaseNodeLabelCompleted: {
     color: '#171717AD',
+    fontFamily: PROGRESS_FONT_REGULAR,
+    fontSize: 12.5,
+    lineHeight: 15,
+    fontWeight: 'normal',
   },
   phaseNodeLabelActive: {
     color: '#171717AD',
     fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 12.5,
+    lineHeight: 16,
+    fontWeight: 'normal',
   },
   phaseNodeLabelFuture: {
     color: '#171717AD',
+    fontFamily: PROGRESS_FONT_REGULAR,
+    fontSize: 12.5,
+    lineHeight: 15,
+    fontWeight: 'normal',
   },
   phaseTimelineSub: {
     marginTop: 6,
@@ -1914,15 +2010,6 @@ const styles = StyleSheet.create({
     color: '#171717AD',
     fontSize: 13,
     lineHeight: 26,
-  },
-  milestoneActionCard: {
-    alignSelf: 'stretch',
-    marginBottom: spacing.xl,
-    borderRadius: borderRadius.lg,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.07)',
-    padding: spacing.md + 2,
   },
   tabsSharedCard: {
     alignSelf: 'stretch',
@@ -1941,6 +2028,21 @@ const styles = StyleSheet.create({
   },
   sessionInsightsTabsWrap: {
     marginTop: spacing.sm,
+  },
+  disabledTabsHintCard: {
+    marginTop: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(225,139,49,0.24)',
+    backgroundColor: '#FFF8EE',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  disabledTabsHintText: {
+    fontFamily: PROGRESS_FONT_REGULAR,
+    fontSize: 13,
+    lineHeight: 26,
+    color: '#171717',
   },
   sessionInsightsHeaderLeft: {
     flexDirection: 'row',
@@ -1973,29 +2075,6 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     color: '#171717',
     fontWeight: '600',
-  },
-  tabsLockedCard: {
-    alignSelf: 'stretch',
-    marginBottom: spacing.xl,
-    borderRadius: borderRadius.lg,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.07)',
-    padding: spacing.md + 2,
-  },
-  tabsLockedTitle: {
-    fontFamily: PROGRESS_FONT_BOLD,
-    fontSize: 14,
-    lineHeight: 26,
-    fontWeight: '800',
-    color: '#2C2C2E',
-    marginBottom: 4,
-  },
-  tabsLockedBody: {
-    fontFamily: PROGRESS_FONT_REGULAR,
-    fontSize: 13,
-    lineHeight: 26,
-    color: '#171717',
   },
   toggleMicrocopy: {
     marginTop: 4,
@@ -2150,26 +2229,28 @@ const styles = StyleSheet.create({
     fontFamily: PROGRESS_FONT_BOLD,
     color: '#171717',
   },
-  firstSessionBtnTxt: {
-    fontFamily: PROGRESS_FONT_BOLD,
-    color: '#C26D1A',
-    fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: 0.2,
-  },
-  editorialQuoteCard: {
+  editorialQuoteCardWrap: {
     alignSelf: 'stretch',
     marginBottom: 0,
     borderRadius: 24,
-    backgroundColor: '#FFFFFF',
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.08)',
+    borderColor: 'rgba(241,138,31,0.35)',
+  },
+  editorialQuoteGradient: {
     paddingHorizontal: spacing.xl + 2,
     paddingVertical: spacing.xl + 6,
   },
+  editorialQuoteGloss: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: '52%',
+  },
   editorialQuoteText: {
     fontFamily: 'Sailec-RegularItalic',
-    color: '#171717',
+    color: '#3D2918',
     fontSize: 13,
     lineHeight: 26,
     fontWeight: '400',
