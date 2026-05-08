@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { borderRadius, spacing } from '../theme';
 import { getJourneyPhaseDetail } from '../utils/journeyPhase';

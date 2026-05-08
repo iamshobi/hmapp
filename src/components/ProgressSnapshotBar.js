@@ -1,11 +1,10 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { Zap, Flame, Heart, Timer } from 'lucide-react-native';
 import { spacing, palette } from '../theme';
 
-const PROGRESS_FONT_REGULAR = 'Sailec-Medium';
 const PROGRESS_FONT_MEDIUM = 'Sailec-Medium';
 const PROGRESS_FONT_BOLD = 'Sailec-Bold';
 const SNAPSHOT_ACCENT = '#C26D1A';
@@ -183,7 +182,6 @@ export default function ProgressSnapshotBar({
     ? previewCoherencePointsForType(normalizeType(activeType))
     : Math.max(0, Math.round(coherencePoints));
   const isZeroState = activeType === 'zero' || (!previewType && totalSessions <= 0);
-  const sessionsDisplay = isZeroState ? '-' : sessionsValue;
   const streakDisplay = isZeroState ? '-' : streakValue;
   const coherenceDisplay = isZeroState ? '-' : coherence;
   const sessionsCompletedDisplay = isZeroState ? '-' : sessionsValue;

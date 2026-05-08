@@ -1,10 +1,9 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { borderRadius, spacing, shadows } from '../theme';
 
-const PROGRESS_FONT_REGULAR = 'Sailec-Medium';
 const PROGRESS_FONT_MEDIUM = 'Sailec-Medium';
 const PROGRESS_FONT_BOLD = 'Sailec-Bold';
 
@@ -85,7 +84,6 @@ export default function ProgressCheckinsCalendar({
   embedded = false,
   sessionCount = 0,
   loggedVariant = 'gradient',
-  showLegend = false,
 }) {
   const boot = new Date();
   const [year, setYear] = useState(boot.getFullYear());

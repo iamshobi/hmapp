@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { borderRadius, spacing } from '../theme';
 
@@ -16,17 +16,6 @@ function getTypeFromSessions(totalSessions) {
   if (n >= 2) return 'building';
   if (n >= 1) return 'firstTime';
   return 'zero';
-}
-
-function pad2(v) {
-  return String(v).padStart(2, '0');
-}
-
-function formatDuration(totalSeconds) {
-  const safe = Math.max(0, Math.round(totalSeconds || 0));
-  const m = Math.floor(safe / 60);
-  const s = safe % 60;
-  return `${pad2(m)}:${pad2(s)}`;
 }
 
 function previewByType(type) {
