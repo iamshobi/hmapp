@@ -8,15 +8,15 @@ import { spacing, borderRadius } from '../theme';
 const PROGRESS_FONT_REGULAR = 'Sailec-Medium';
 const PROGRESS_FONT_BOLD = 'Sailec-Bold';
 
-/** Matches My Journey phases on ProgressMainScreen — preview counts are representative mid-band values. */
+/** Preview states grouped like the Temporary Preview States layout (This release / Future release). */
 const STATE_OPTIONS = [
   { label: 'Zero sessions', previewType: 'zero' },
-  { label: 'Foundation (0–5 sessions)', previewType: 'foundation' },
-  { label: 'Seed (6–10 sessions)', previewType: 'seed' },
-  { label: 'Habit (11–30 sessions)', previewType: 'habit' },
-  { label: 'Deep Practice (31+ sessions)', previewType: 'deepPractice' },
+  { label: 'Settle (2–5 unique practice days)', previewType: 'foundation' },
+  { label: 'Flow (6–12 unique practice days)', previewType: 'seed' },
+  { label: 'Deep (13–19 unique practice days)', previewType: 'habit' },
   { label: 'Inactive Survey', previewType: 'inactiveSurvey' },
   { label: 'Partial Survey', previewType: 'partialSurveyOptOut' },
+  { label: 'Still (20+ unique practice days)', previewType: 'deepPractice' },
   { label: '100+ sessions', previewType: 'pro' },
 ];
 
@@ -27,24 +27,25 @@ export default function ProgressStatePickerScreen() {
   return (
     <View style={styles.root}>
       <LinearGradient
-        colors={['#F6A400', '#F18A1F', '#EB6A33']}
-        start={{ x: 0.15, y: 0 }}
-        end={{ x: 0.85, y: 1 }}
-        style={[styles.header, { paddingTop: insets.top + 8 }]}
+        colors={['#FFC629', '#F6A400', '#F18A1F', '#EB6A33']}
+        locations={[0, 0.28, 0.62, 1]}
+        start={{ x: 0.08, y: 0 }}
+        end={{ x: 0.94, y: 1 }}
+        style={[styles.header, { paddingTop: insets.top + 10 }]}
       >
         <Text style={styles.headerTitle}>My Progress</Text>
       </LinearGradient>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Temporary Preview States</Text>
-        <Text style={styles.subtitle}>Tap a button to open the corresponding My Progress screen state.</Text>
+        <Text style={styles.subtitle}>Tap a button to open the corresponding My Progress preview by Journey logic.</Text>
 
         {STATE_OPTIONS.map((item) => (
           <React.Fragment key={item.previewType}>
             {item.previewType === 'zero' ? (
-              <Text style={styles.scopeHeader}>Scope: This release</Text>
+              <Text style={[styles.scopeHeader, styles.scopeHeaderFirst]}>Scope: This release</Text>
             ) : null}
-            {item.previewType === 'deepPractice' ? <View style={styles.deepPracticeDivider} /> : null}
+            {item.previewType === 'deepPractice' ? <View style={styles.scopeDivider} /> : null}
             {item.previewType === 'deepPractice' ? (
               <Text style={styles.scopeHeader}>Scope: Future release</Text>
             ) : null}
@@ -63,74 +64,88 @@ export default function ProgressStatePickerScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#F3F3F5' },
+  root: { flex: 1, backgroundColor: '#EFEFF2' },
   header: {
-    paddingBottom: 20,
+    paddingBottom: 22,
     borderBottomLeftRadius: borderRadius.sheet,
     borderBottomRightRadius: borderRadius.sheet,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
     justifyContent: 'center',
-    minHeight: 88,
+    alignItems: 'center',
+    minHeight: 92,
   },
   headerTitle: {
     fontFamily: PROGRESS_FONT_BOLD,
     color: '#FFFFFF',
-    fontSize: 28,
-    lineHeight: 26,
+    fontSize: 22,
+    lineHeight: 28,
     fontWeight: '700',
     textAlign: 'center',
+    letterSpacing: 0.2,
   },
   scroll: {
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg + 2,
+    paddingBottom: spacing.xl + spacing.sm,
   },
   title: {
     fontFamily: PROGRESS_FONT_BOLD,
-    color: '#2D1B3A',
-    fontSize: 18,
-    lineHeight: 26,
-    marginBottom: 6,
+    color: '#1C1424',
+    fontSize: 17,
+    lineHeight: 24,
+    marginBottom: 8,
+    letterSpacing: 0.15,
   },
   subtitle: {
     fontFamily: PROGRESS_FONT_REGULAR,
-    color: 'rgba(52,37,61,0.82)',
+    color: 'rgba(52,37,61,0.78)',
     fontSize: 13,
-    lineHeight: 26,
-    marginBottom: spacing.md,
+    lineHeight: 20,
+    marginBottom: spacing.lg,
   },
   optionBtn: {
-    minHeight: 48,
-    borderRadius: 24,
+    minHeight: 46,
+    borderRadius: borderRadius.full,
     borderWidth: 1,
-    borderColor: 'rgba(225,139,49,0.42)',
+    borderColor: 'rgba(225, 139, 49, 0.55)',
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
-    paddingHorizontal: spacing.md,
+    marginBottom: 12,
+    paddingHorizontal: spacing.md + 4,
+    paddingVertical: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
-  deepPracticeDivider: {
-    height: 1,
-    backgroundColor: 'rgba(44,44,46,0.14)',
-    marginHorizontal: 2,
-    marginTop: 12,
-    marginBottom: 14,
+  scopeDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: 'rgba(44, 44, 46, 0.18)',
+    marginHorizontal: 4,
+    marginTop: 14,
+    marginBottom: 16,
   },
   scopeHeader: {
     fontFamily: PROGRESS_FONT_BOLD,
-    color: 'rgba(52,37,61,0.68)',
-    fontSize: 12,
+    color: 'rgba(52, 37, 61, 0.62)',
+    fontSize: 12.5,
     lineHeight: 18,
-    marginBottom: 8,
-    marginTop: 2,
+    marginBottom: 10,
+    marginTop: 4,
+    letterSpacing: 0.2,
+  },
+  scopeHeaderFirst: {
+    marginTop: 0,
   },
   optionBtnTxt: {
     fontFamily: PROGRESS_FONT_BOLD,
     color: '#C26D1A',
-    fontSize: 16,
-    lineHeight: 26,
+    fontSize: 12.5,
+    lineHeight: 18,
     fontWeight: '700',
     textAlign: 'center',
+    letterSpacing: 0.15,
   },
 });

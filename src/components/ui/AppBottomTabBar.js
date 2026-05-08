@@ -11,9 +11,12 @@ export function AppBottomTabBar(props) {
       {...props}
       style={[
         {
-          backgroundColor: colors.white,
-          borderTopColor: 'rgba(0,0,0,0.08)',
+          backgroundColor: '#FAFAFA',
+          borderTopColor: 'rgba(107,45,139,0.14)',
           borderTopWidth: 1,
+          paddingTop: 4,
+          paddingBottom: 2,
+          minHeight: 66,
         },
         props.style,
       ]}

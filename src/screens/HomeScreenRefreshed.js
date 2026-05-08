@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ScrollView, Image, StyleSheet, useWindowDimensions } from 'react-native';
 
-const homePlaceholder = require('../../assets/home-placeholder-latest.png');
+const homePlaceholder = require('../../assets/home-landing-target.png');
 const homePlaceholderMeta = Image.resolveAssetSource(homePlaceholder);
 
 export default function HomeScreenRefreshed() {
