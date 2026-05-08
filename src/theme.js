@@ -280,6 +280,42 @@ export const typography = {
  * Reusable component recipes (plain objects — spread into StyleSheet or merge).
  * Ghost pill: white border, transparent fill (Done on congrats modals).
  */
+/**
+ * Badges (gallery + detail) — minimal scale on dark gradients: few sizes, calm contrast, 8pt rhythm.
+ * Pair with app fonts (e.g. Sailec-Bold / Sailec-Medium) in screen StyleSheets.
+ */
+export const badgesUi = {
+  /** Screen title */
+  titleSize: 20,
+  titleSpacing: -0.25,
+  /** Section headings, badge names in grid */
+  headlineSize: 16,
+  /** Body copy, card values */
+  bodySize: 15,
+  bodyLine: 22,
+  /** Labels, chips, nav */
+  labelSize: 12,
+  labelLine: 16,
+  /** Secondary lines, filters */
+  metaSize: 11,
+  /** Uppercase / tiny */
+  captionSize: 10,
+  captionTracking: 0.6,
+  text: {
+    primary: 'rgba(255,255,255,0.92)',
+    secondary: 'rgba(255,255,255,0.64)',
+    muted: 'rgba(255,255,255,0.48)',
+    faint: 'rgba(255,255,255,0.34)',
+  },
+  surface: 'rgba(255,255,255,0.07)',
+  surfaceRaised: 'rgba(255,255,255,0.10)',
+  border: 'rgba(255,255,255,0.11)',
+  borderStrong: 'rgba(255,255,255,0.16)',
+  track: 'rgba(255,255,255,0.10)',
+  /** Progress / accent — one restrained ramp */
+  progressFill: ['rgba(255,255,255,0.45)', 'rgba(255,255,255,0.72)'],
+};
+
 export const components = {
   ghostButton: {
     borderWidth: 2,

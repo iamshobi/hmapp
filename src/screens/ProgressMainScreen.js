@@ -19,14 +19,15 @@ import {
   PanResponder,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Defs, LinearGradient as SvgLinearGradient, Path, Stop } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { Plus, Heart, Sparkles, Settings, MessageCircle, Pencil, Trash2, Check, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { Heart, MessageCircle, Pencil, Trash2, Check, ChevronDown, ChevronUp, X } from 'lucide-react-native';
 import ProgressSnapshotBar from '../components/ProgressSnapshotBar';
 import ProgressSurveyDeltaCard from '../components/ProgressSurveyDeltaCard';
 import ProgressViewTabs from '../components/ProgressViewTabs';
 import ProgressCheckinsCalendar from '../components/ProgressCheckinsCalendar';
+import HelpInfoIcon from '../components/icons/HelpInfoIcon';
 import { TrendLayerComparisonCard } from '../components/sessionInsights/SessionInsightsUI';
 import { useMysession } from '../context/mysessionContext';
 import { colors, spacing, borderRadius, typography } from '../theme';
@@ -175,11 +176,11 @@ function clamp(val, min, max) {
   return Math.max(min, Math.min(max, val));
 }
 
-/** My Journey active phase by sessions completed: Foundation 0–5, Seed 6–10, Habit 11–30, Deep Practice 31+. */
-function getProgressPhaseIndex(sessionCount) {
-  const n = Math.max(0, Math.floor(Number(sessionCount) || 0));
-  if (n >= 31) return 3;
-  if (n >= 11) return 2;
+/** My Journey active phase by unique practice days: Settle 2–5, Flow 6–12, Deep 13–19, Still 20+. */
+function getProgressPhaseIndex(practiceDayCount) {
+  const n = Math.max(0, Math.floor(Number(practiceDayCount) || 0));
+  if (n >= 20) return 3;
+  if (n >= 13) return 2;
   if (n >= 6) return 1;
   return 0;
 }
@@ -206,10 +207,24 @@ const EDITORIAL_QUOTES = {
     'It does not matter how slowly you go as long as you do not stop.',
   ],
 };
+const EDITORIAL_QUOTE_AUTHORS = {
+  'The longest journey begins with a single breath.': 'Lao Tzu',
+  'A journey of a thousand miles begins with a single step.': 'Lao Tzu',
+  'No matter how long your journey appears to be, there is never more than this: one step, one breath, one moment... Now.': 'Eckhart Tolle',
+  'Great things are not done by impulse, but by a series of small things brought together.': 'Vincent van Gogh',
+  'Success is the sum of small efforts, repeated day in and day out.': 'Robert Collier',
+  'The man who removes a mountain begins by carrying away small stones.': 'Confucius',
+  'You have become the calm within the storm.': 'Unknown',
+  'You have become the lighthouse that does not seek out boats but stays steady to guide them.': 'Unknown',
+  'The deeper the roots, the less the branches shake.': 'Confucius',
+  'Slow progress is still progress.': 'Unknown',
+  'Be not afraid of growing slowly, be afraid only of standing still.': 'Chinese Proverb',
+  'It does not matter how slowly you go as long as you do not stop.': 'Confucius',
+};
 const JOURNEY_INACTIVE_SURVEY_COPY =
-  'Looks like you have completed Coherence Sessions but have not opted in for the session surveys. Tap on the toggle below to opt in and view the session insights.';
+  'Unlock deeper insights.\nAnswer quick session check-ins to understand your stress patterns better.';
 const JOURNEY_PARTIAL_SURVEY_COPY =
-  'You have prior survey data and continued sessions. But right now it looks like you have opted out of the surveys. Opt in for the surveys once again and answer them regularly to unlock your progress insights.';
+  'Unlock deeper insights.\nAnswer quick session check-ins to understand your stress patterns better.';
 
 function NoteViewIcon({ size = 26, color = '#E18B31' }) {
   return (
@@ -228,6 +243,88 @@ function NoteViewIcon({ size = 26, color = '#E18B31' }) {
       />
     </Svg>
   );
+}
+
+function TopBarSettingsIcon({ size = 24, color = '#FFFFFF' }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+      <Path
+        d="M8.75012 12C8.75012 10.2051 10.2052 8.75 12.0001 8.75C13.795 8.75 15.2501 10.2051 15.2501 12C15.2501 13.7949 13.795 15.25 12.0001 15.25C10.2052 15.25 8.75012 13.7949 8.75012 12Z"
+        fill={color}
+      />
+      <Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M11.4608 1.83851C11.7557 1.53347 12.2446 1.53347 12.5394 1.83851L15.1117 4.5H18.7501C19.1643 4.5 19.5001 4.83579 19.5001 5.25V8.8884L22.1616 11.4607C22.4667 11.7555 22.4667 12.2445 22.1616 12.5393L19.5001 15.1116V18.75C19.5001 19.1642 19.1643 19.5 18.7501 19.5H15.1117L12.5394 22.1615C12.2446 22.4665 11.7557 22.4665 11.4608 22.1615L8.88852 19.5H5.25013C4.83592 19.5 4.50013 19.1642 4.50013 18.75V15.1116L1.83864 12.5393C1.5336 12.2445 1.5336 11.7555 1.83864 11.4607L4.50013 8.88839V5.25C4.50013 4.83579 4.83592 4.5 5.25013 4.5H8.88852L11.4608 1.83851ZM12.0001 7.25C9.37677 7.25 7.25012 9.37665 7.25012 12C7.25012 14.6234 9.37677 16.75 12.0001 16.75C14.6235 16.75 16.7501 14.6234 16.7501 12C16.7501 9.37665 14.6235 7.25 12.0001 7.25Z"
+        fill={color}
+      />
+    </Svg>
+  );
+}
+
+function TopBarAddHeartIcon({ width = 26, height = 14, color = '#FFFFFF' }) {
+  return (
+    <Svg width={width} height={height} viewBox="0 0 26 14" fill="none">
+      <Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M18.4117 12.9781L18.3744 12.9999L18.337 12.9781C17.6048 12.547 11.7361 8.96392 11.6975 4.86151C11.6588 0.752021 16.598 -0.185209 18.3744 2.57018C20.1508 -0.185209 25.0899 0.752021 25.0513 4.86151C25.0126 8.96392 19.1439 12.547 18.4117 12.9781Z"
+        fill={color}
+      />
+      <Path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M10.3739 6.4491H6.37955V2.43665H4.99434V6.4491H1V7.8406H4.99434V11.8531H6.37955V7.8406H10.3739V6.4491Z"
+        fill={color}
+      />
+    </Svg>
+  );
+}
+
+function TrendSpike({ width = 36, height = 84, style }) {
+  const d = `M0 ${height} C${(width * 0.08).toFixed(2)} ${(height * 0.62).toFixed(2)}, ${(width * 0.24).toFixed(2)} ${(height * 0.2).toFixed(2)}, ${(width / 2).toFixed(2)} 0 C${(width * 0.76).toFixed(2)} ${(height * 0.2).toFixed(2)}, ${(width * 0.92).toFixed(2)} ${(height * 0.62).toFixed(2)}, ${width} ${height} Z`;
+  return (
+    <View style={[style, { width, height }]}>
+      <Svg width={width} height={height}>
+        <Defs>
+          <SvgLinearGradient id="my-progress-trend-spike" x1="0%" y1="100%" x2="100%" y2="0%">
+            <Stop offset="0%" stopColor="#6B2D8B" />
+            <Stop offset="100%" stopColor="#C31F64" />
+          </SvgLinearGradient>
+        </Defs>
+        <Path d={d} fill="url(#my-progress-trend-spike)" />
+      </Svg>
+    </View>
+  );
+}
+
+function toLocalDateKey(value) {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return null;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function runCountAnimation(fromValue, toValue, onUpdate, duration = 520) {
+  const start = Number.isFinite(fromValue) ? fromValue : 0;
+  const end = Number.isFinite(toValue) ? toValue : 0;
+  const startedAt = Date.now();
+  let rafId = null;
+  const tick = () => {
+    const elapsed = Date.now() - startedAt;
+    const t = Math.max(0, Math.min(1, elapsed / duration));
+    const eased = 1 - Math.pow(1 - t, 3);
+    onUpdate(start + (end - start) * eased);
+    if (t < 1) {
+      rafId = requestAnimationFrame(tick);
+    }
+  };
+  rafId = requestAnimationFrame(tick);
+  return () => {
+    if (rafId != null) cancelAnimationFrame(rafId);
+  };
 }
 
 function NoteSwipeRow({ children, onView, onEdit, onDelete, onOpenChange }) {
@@ -301,12 +398,27 @@ export default function ProgressMainScreen() {
   const [hasOpenNoteSwipeActions, setHasOpenNoteSwipeActions] = useState(false);
   const [isSnapshotExpanded, setIsSnapshotExpanded] = useState(false);
   const [isCommunityExpanded, setIsCommunityExpanded] = useState(false);
+  const [isTrendsExpanded, setIsTrendsExpanded] = useState(true);
+  const [isJourneyHelpVisible, setIsJourneyHelpVisible] = useState(false);
+  const [isCommunityHelpVisible, setIsCommunityHelpVisible] = useState(false);
   const [isSessionInsightsExpanded, setIsSessionInsightsExpanded] = useState(true);
+  const [showEditorialAuthor, setShowEditorialAuthor] = useState(false);
   const [surveyPreferenceUpdatedVisible, setSurveyPreferenceUpdatedVisible] = useState(false);
   const surveyPreferenceFadeAnim = useRef(new Animated.Value(0)).current;
+  const editorialQuoteFadeAnim = useRef(new Animated.Value(1)).current;
+  const quoteEntryAnim = useRef(new Animated.Value(0)).current;
+  const activeHeartScaleAnim = useRef(new Animated.Value(1)).current;
+  const activeNodeGlowAnim = useRef(new Animated.Value(0.42)).current;
+  const phaseCompletionAnim = useRef(new Animated.Value(0)).current;
+  const [showPhaseCompletionBurst, setShowPhaseCompletionBurst] = useState(false);
+  const lastCompletedStageRef = useRef(null);
+  const phaseNodeAnimRefs = useRef([0, 1, 2, 3].map(() => new Animated.Value(1))).current;
   const surveyPreferenceTimeoutRef = useRef(null);
   const progressScrollRef = useRef(null);
   const currentScrollYRef = useRef(0);
+  const [journeyProgressPct, setJourneyProgressPct] = useState(0);
+  const [snapshotCount, setSnapshotCount] = useState({ coherence: 0, points: 0, streak: 0 });
+  const [communityCount, setCommunityCount] = useState({ today: 0, total: 0 });
   const isInactiveSurveyPreview = sciencePreviewType === 'inactiveSurvey';
   const isPartialSurveyOptOutPreview = sciencePreviewType === 'partialSurveyOptOut';
   const progressTabOrder = React.useMemo(() => ['trend', 'checkins', 'insights'], []);
@@ -411,50 +523,87 @@ export default function ProgressMainScreen() {
     if (t === 'firstTime') return 1;
     return 0;
   }, [sciencePreviewType, totalSessions]);
+  const previewPracticeDays = React.useMemo(() => {
+    const t = normalizePreviewType(sciencePreviewType);
+    if (!t) return null;
+    if (t === 'zero') return 0;
+    if (t === 'foundation') return 3;
+    if (t === 'seed') return 8;
+    if (t === 'habit') return 15;
+    if (t === 'deepPractice') return 22;
+    if (t === 'pro') return 30;
+    if (t === 'inactiveSurvey') return 7;
+    if (t === 'partialSurveyOptOut') return 10;
+    return null;
+  }, [sciencePreviewType]);
+  const uniquePracticeDays = React.useMemo(() => {
+    if (previewPracticeDays != null) return previewPracticeDays;
+    const days = new Set();
+
+    if (moodEntries && typeof moodEntries === 'object') {
+      Object.entries(moodEntries).forEach(([dateKey, dayValue]) => {
+        const sessions = Array.isArray(dayValue?.sessions) ? dayValue.sessions : [];
+        if (sessions.length > 0) days.add(dateKey);
+      });
+    }
+
+    if (Array.isArray(surveyResults)) {
+      surveyResults.forEach((entry) => {
+        const key = toLocalDateKey(entry?.at);
+        if (key) days.add(key);
+      });
+    }
+
+    if (days.size === 0 && totalSessions > 0) {
+      return 1;
+    }
+
+    return days.size;
+  }, [previewPracticeDays, moodEntries, surveyResults, totalSessions]);
   const hasEnoughSessionsForProgressTabs = trendSessionCount >= 30;
   const hasAtLeastThirtySessions = trendSessionCount >= 30;
-  const activePhaseIdx = getProgressPhaseIndex(trendSessionCount);
-  const journeyPhaseDetail = React.useMemo(() => getJourneyPhaseDetail(trendSessionCount), [trendSessionCount]);
+  const activePhaseIdx = getProgressPhaseIndex(uniquePracticeDays);
+  const journeyPhaseDetail = React.useMemo(() => getJourneyPhaseDetail(uniquePracticeDays), [uniquePracticeDays]);
   const journeySummaryMessage = React.useMemo(() => {
     const d = journeyPhaseDetail;
     if (d.levelKey === 'foundation') {
       if (d.phaseState === 'start') {
-        return 'Start your journey by completing a Coherence Session!';
+        return 'Start your journey by practicing on 2 unique days to enter Settle.';
       }
       if (d.phaseState === 'end') {
-        return 'Great work. Did you know deep breathing improves your sleep, mood & physiology? Keep going to receive your Foundation badge!';
+        return 'Great work. You have completed Settle with consistent practice across unique days.';
       }
-      const remaining = Math.max(1, 5 - trendSessionCount);
-      return `You are only ${remaining} session${remaining === 1 ? '' : 's'} away from completing this level and earning your Foundation badge! Continue your journey!`;
+      const remaining = Math.max(1, 5 - uniquePracticeDays);
+      return `You are only ${remaining} practice day${remaining === 1 ? '' : 's'} away from completing Settle.`;
     }
     if (d.levelKey === 'seed') {
       if (d.phaseState === 'start') {
-        return "You have entered Seed level! Keep your momentum going to earn your Seed badge.";
+        return 'You have entered Flow level! Keep your daily consistency going.';
       }
       if (d.phaseState === 'end') {
-        return "Great work. You've completed Seed! Keep going to strengthen your rhythm and unlock Habit.";
+        return "Great work. You've completed Flow! Keep going to unlock Deep.";
       }
-      const remaining = Math.max(1, 10 - trendSessionCount);
-      return `You are only ${remaining} session${remaining === 1 ? '' : 's'} away from completing this level and earning your Seed badge! Continue your journey!`;
+      const remaining = Math.max(1, 12 - uniquePracticeDays);
+      return `You are only ${remaining} practice day${remaining === 1 ? '' : 's'} away from completing Flow.`;
     }
     if (d.levelKey === 'habit') {
       if (d.phaseState === 'start') {
-        return "You have entered Habit level! Your consistency is becoming your strength. Keep going to earn your Habit badge.";
+        return 'You have entered Deep level! Your consistency is becoming your strength.';
       }
       if (d.phaseState === 'end') {
-        return "Excellent progress. You've completed Habit! Keep your rhythm strong as you step into Deep Practice.";
+        return "Excellent progress. You've completed Deep! Keep going to step into Still.";
       }
-      const remaining = Math.max(1, 30 - trendSessionCount);
-      return `You are only ${remaining} session${remaining === 1 ? '' : 's'} away from completing this level and earning your Habit badge! Continue your journey!`;
+      const remaining = Math.max(1, 19 - uniquePracticeDays);
+      return `You are only ${remaining} practice day${remaining === 1 ? '' : 's'} away from completing Deep.`;
     }
     if (d.levelKey === 'deepPractice') {
       if (d.phaseState === 'start') {
-        return "Welcome to Deep Practice! You are now in the highest level of consistency and calm.";
+        return "Welcome to Still! You are now in the highest level of consistency and calm.";
       }
-      return "You're in Deep Practice. Every session now deepens your resilience, focus, and emotional balance.";
+      return "You're in Still. Every session now deepens your resilience, focus, and emotional balance.";
     }
-    return "You're among the most dedicated practitioners — thank you for showing up.";
-  }, [journeyPhaseDetail, trendSessionCount]);
+    return "You're in Still. Keep nurturing your daily rhythm.";
+  }, [journeyPhaseDetail, uniquePracticeDays]);
   const journeyCtaLabel = React.useMemo(() => {
     const d = journeyPhaseDetail;
     if (d.levelKey === 'foundation') {
@@ -471,6 +620,18 @@ export default function ProgressMainScreen() {
     }
     return null;
   }, [journeyPhaseDetail]);
+  const journeyHelpStageCopy = React.useMemo(() => {
+    if (journeyPhaseDetail.levelKey === 'deepPractice') {
+      return 'You have reached Still stage now. Here, presence becomes more natural. What started as a practice begins to feel like a way of being.';
+    }
+    if (journeyPhaseDetail.levelKey === 'habit') {
+      return 'You have reached Deep stage now. At this stage, the patterns you’re building begin to stick, supporting more stable focus and emotional balance.';
+    }
+    if (journeyPhaseDetail.levelKey === 'seed') {
+      return 'You have reached Flow stage now. With repetition, your system starts to find a rhythm—making it easier to shift into a calm, coherent state.';
+    }
+    return 'You have reached Settle stage now. This is where your nervous system begins to learn what it feels like to slow down and come into balance.';
+  }, [journeyPhaseDetail.levelKey]);
   const onPressJourneyCta = () => {
     if (journeyCtaLabel === 'Set Reminder') {
       Alert.alert('Reminder setup', 'Reminder setup will be available here soon.');
@@ -485,6 +646,9 @@ export default function ProgressMainScreen() {
     isPartialSurveyOptOutPreview ||
     (!sciencePreviewType && totalSessions > 0 && surveyResultsCount > 0 && surveyResultsCount < totalSessions);
   const hasSurveyInsightsOptOutState = hasIncompleteOrInactiveSurveyData || hasPartialSurveyOptOutData;
+  const shouldHideTrendsCard =
+    hasSurveyInsightsOptOutState ||
+    Math.max(0, Math.floor(Number(trendSessionCount) || 0)) < 5;
   const isSurveyFullyPaused = hasIncompleteOrInactiveSurveyData;
   const isSurveyHistoricalOnly = hasPartialSurveyOptOutData;
   const sessionInsightsStateBadgeText = isSurveyFullyPaused
@@ -541,23 +705,22 @@ export default function ProgressMainScreen() {
   const editorialQuotePoolKey = getEditorialQuotePoolKey(journeyPhaseDetail, hasSurveyInsightsOptOutState);
   const editorialQuotePool = EDITORIAL_QUOTES[editorialQuotePoolKey];
   const editorialQuote = editorialQuotePool[Math.max(0, trendSessionCount) % editorialQuotePool.length];
+  const editorialQuoteAuthor = EDITORIAL_QUOTE_AUTHORS[editorialQuote] || 'Unknown';
   const editorialQuoteStageLabel = hasSurveyInsightsOptOutState
     ? 'shown for incomplete practice days'
-    : journeyPhaseDetail.levelKey === 'pro'
-      ? 'shown at 100+ sessions'
-      : journeyPhaseDetail.levelKey === 'deepPractice'
-        ? 'shown for Deep Practice (31+)'
+    : journeyPhaseDetail.levelKey === 'deepPractice'
+        ? 'shown for Still (20+)'
         : journeyPhaseDetail.levelKey === 'habit'
           ? journeyPhaseDetail.phaseState === 'end'
-            ? 'shown at Habit completion (30)'
-            : 'shown for Habit (11–30)'
+            ? 'shown at Deep completion (19)'
+            : 'shown for Deep (13–19)'
           : journeyPhaseDetail.levelKey === 'seed'
-            ? 'shown for Seed (6–10)'
+            ? 'shown for Flow (6–12)'
             : journeyPhaseDetail.levelKey === 'foundation' && journeyPhaseDetail.phaseState === 'start'
-              ? 'shown at Foundation start (0)'
+              ? 'shown at Settle start (0–1)'
               : journeyPhaseDetail.phaseState === 'end'
-                ? 'shown at Foundation completion (5)'
-                : 'shown for Foundation (1–4)';
+                ? 'shown at Settle completion (5)'
+                : 'shown for Settle (2–5)';
 
   const effectiveScienceType = sciencePreviewType || getScienceTypeFromSessions(totalSessions);
   const hasNoProgressData = totalSessions <= 0;
@@ -592,7 +755,7 @@ export default function ProgressMainScreen() {
             inactiveSurveyOptInChoice === 'yes' && styles.tabsLockedToggleSwitchTextActive,
           ]}
         >
-          {inactiveSurveyOptInChoice === 'yes' ? 'Yes, keep surveys on' : 'No, pause surveys for now'}
+          Enable insights
         </Text>
       </TouchableOpacity>
       <Text style={styles.toggleMicrocopy}>
@@ -635,7 +798,7 @@ export default function ProgressMainScreen() {
             progressOptInChoice === 'yes' && styles.tabsLockedToggleSwitchTextActive,
           ]}
         >
-          {progressOptInChoice === 'yes' ? 'Yes, keep surveys on' : 'No, pause surveys for now'}
+          Enable insights
         </Text>
       </TouchableOpacity>
       <Text style={styles.toggleMicrocopy}>
@@ -654,6 +817,25 @@ export default function ProgressMainScreen() {
     const moodPct = calcShiftPct('mood', trendAverages.moodBefore, trendAverages.moodAfter);
     return `Stress down by ${stressPct}%, Energy up by ${energyPct}% and Mood up by ${moodPct}%`;
   }, [trendAverages, effectiveScienceType]);
+  useEffect(() => {
+    setShowEditorialAuthor(false);
+    editorialQuoteFadeAnim.setValue(1);
+  }, [editorialQuote, editorialQuoteFadeAnim]);
+
+  const onPressEditorialQuoteCard = () => {
+    Animated.timing(editorialQuoteFadeAnim, {
+      toValue: 0,
+      duration: 140,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowEditorialAuthor((prev) => !prev);
+      Animated.timing(editorialQuoteFadeAnim, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }).start();
+    });
+  };
 
   const notesList = React.useMemo(
     () => (Array.isArray(sessionNotes) ? sessionNotes : []),
@@ -828,8 +1010,174 @@ export default function ProgressMainScreen() {
       streak: isZero ? '-' : `${Math.max(0, Math.round(Number(streak) || 0))}d`,
     };
   }, [sciencePreviewType, totalSessions, coherencePoints, streak]);
+  const trendsPreview = React.useMemo(() => {
+    const sessions = Math.max(0, Math.floor(Number(trendSessionCount) || 0));
+    const levelBoost =
+      journeyPhaseDetail.levelKey === 'pro'
+        ? 0.7
+        : journeyPhaseDetail.levelKey === 'deepPractice'
+          ? 0.5
+          : journeyPhaseDetail.levelKey === 'habit'
+            ? 0.32
+            : journeyPhaseDetail.levelKey === 'seed'
+              ? 0.18
+              : 0.05;
+    const baseAvg = sessions > 0 ? getCoherenceFromSessions(sessions) : 0;
+    const avgValue = Math.min(6.1, Math.max(0, baseAvg + levelBoost));
+    const levelShape =
+      journeyPhaseDetail.levelKey === 'pro'
+        ? [0.9, 0.96, 0.94, 0.98, 1.0, 1.02, 1.04]
+        : journeyPhaseDetail.levelKey === 'deepPractice'
+          ? [0.8, 0.86, 0.9, 0.94, 0.97, 1.0, 1.02]
+          : journeyPhaseDetail.levelKey === 'habit'
+            ? [0.68, 0.74, 0.8, 0.86, 0.9, 0.94, 0.98]
+            : journeyPhaseDetail.levelKey === 'seed'
+              ? [0.52, 0.58, 0.64, 0.7, 0.76, 0.84, 0.9]
+              : [0.38, 0.42, 0.48, 0.54, 0.6, 0.68, 0.76];
+    const activeDays = sessions <= 0 ? 0 : Math.min(7, Math.max(1, Math.round(sessions / 2)));
+    const activeStartIdx = Math.max(0, 7 - activeDays);
+    const bars = levelShape.map((shape, idx) => {
+      if (idx < activeStartIdx) return 0;
+      const normalized = Math.max(0, Math.min(1, (avgValue * shape) / 6.1));
+      return Math.max(16, Math.round(normalized * 100));
+    });
+    const highestValue = sessions <= 0 ? 0 : Math.min(6.1, avgValue * levelShape[levelShape.length - 1]);
+    const spikeHeightPct = Math.max(30, Math.min(88, Math.round((Math.max(0.1, highestValue) / 12) * 100)));
+
+    return {
+      highest: highestValue.toFixed(1),
+      avg: avgValue.toFixed(1),
+      yTicks: ['2'],
+      xLabels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      bars,
+      spikeHeightPct,
+    };
+  }, [trendSessionCount, journeyPhaseDetail.levelKey]);
   const isZeroSnapshotState =
     normalizePreviewType(sciencePreviewType) === 'zero' || (!sciencePreviewType && totalSessions <= 0);
+  useEffect(() => {
+    quoteEntryAnim.setValue(0);
+    Animated.timing(quoteEntryAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, [quoteEntryAnim]);
+  useEffect(() => {
+    activeHeartScaleAnim.setValue(0.9);
+    Animated.spring(activeHeartScaleAnim, {
+      toValue: 1,
+      speed: 18,
+      bounciness: 7,
+      useNativeDriver: true,
+    }).start();
+    phaseNodeAnimRefs.forEach((anim, idx) => {
+      anim.setValue(idx <= activePhaseIdx ? 0.82 : 1);
+    });
+    Animated.stagger(
+      70,
+      phaseNodeAnimRefs.map((anim, idx) =>
+        Animated.timing(anim, {
+          toValue: idx <= activePhaseIdx ? 1 : 1,
+          duration: 220,
+          useNativeDriver: true,
+        })
+      )
+    ).start();
+  }, [activePhaseIdx, activeHeartScaleAnim, phaseNodeAnimRefs]);
+  useEffect(() => {
+    const targetByIdx = [0.125, 0.42, 0.715, 1];
+    if (isZeroSnapshotState) {
+      setJourneyProgressPct(0);
+      return undefined;
+    }
+    setJourneyProgressPct(0);
+    const timer = setTimeout(() => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      setJourneyProgressPct(targetByIdx[activePhaseIdx] ?? 0);
+    }, 40);
+    return () => clearTimeout(timer);
+  }, [activePhaseIdx, isZeroSnapshotState]);
+  useEffect(() => {
+    const glowLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(activeNodeGlowAnim, {
+          toValue: 0.74,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(activeNodeGlowAnim, {
+          toValue: 0.4,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+    glowLoop.start();
+    return () => glowLoop.stop();
+  }, [activeNodeGlowAnim]);
+  useEffect(() => {
+    if (isZeroSnapshotState) {
+      setShowPhaseCompletionBurst(false);
+      return;
+    }
+    const isCompletedStage =
+      (journeyPhaseDetail.levelKey === 'foundation' ||
+        journeyPhaseDetail.levelKey === 'seed' ||
+        journeyPhaseDetail.levelKey === 'habit') &&
+      journeyPhaseDetail.phaseState === 'end';
+    if (!isCompletedStage) return;
+
+    const completedKey = `${journeyPhaseDetail.levelKey}-end`;
+    if (lastCompletedStageRef.current === completedKey) return;
+    lastCompletedStageRef.current = completedKey;
+
+    setShowPhaseCompletionBurst(true);
+    phaseCompletionAnim.setValue(0);
+    Animated.timing(phaseCompletionAnim, {
+      toValue: 1,
+      duration: 820,
+      useNativeDriver: true,
+    }).start(() => {
+      setShowPhaseCompletionBurst(false);
+    });
+  }, [journeyPhaseDetail.levelKey, journeyPhaseDetail.phaseState, phaseCompletionAnim, isZeroSnapshotState]);
+  useEffect(() => {
+    if (isZeroSnapshotState) {
+      setSnapshotCount({ coherence: 0, points: 0, streak: 0 });
+      return undefined;
+    }
+    const nextCoherence = Number.parseFloat(String(snapshotCompact.coherence)) || 0;
+    const nextPoints = Number.parseInt(String(snapshotCompact.points), 10) || 0;
+    const nextStreak = Number.parseInt(String(snapshotCompact.streak), 10) || 0;
+    setSnapshotCount({ coherence: 0, points: 0, streak: 0 });
+    const cleanups = [
+      runCountAnimation(0, nextCoherence, (v) =>
+        setSnapshotCount((prev) => ({ ...prev, coherence: v }))
+      ),
+      runCountAnimation(0, nextPoints, (v) =>
+        setSnapshotCount((prev) => ({ ...prev, points: v }))
+      ),
+      runCountAnimation(0, nextStreak, (v) =>
+        setSnapshotCount((prev) => ({ ...prev, streak: v }))
+      ),
+    ];
+    return () => {
+      cleanups.forEach((fn) => fn?.());
+    };
+  }, [isZeroSnapshotState, snapshotCompact]);
+  useEffect(() => {
+    const cleanToday = runCountAnimation(0, 120, (v) =>
+      setCommunityCount((prev) => ({ ...prev, today: Math.round(v) }))
+    );
+    const cleanTotal = runCountAnimation(0, 3400000, (v) =>
+      setCommunityCount((prev) => ({ ...prev, total: Math.round(v) }))
+    );
+    return () => {
+      cleanToday?.();
+      cleanTotal?.();
+    };
+  }, []);
   const disabledTabs = shouldFullyLockInsights ? ['trend', 'insights'] : [];
   const handleDisabledInsightsTabPress = (tabKey) => {
     const tabLabel = tabKey === 'trend' ? 'Trends' : tabKey === 'insights' ? 'Notes' : 'This tab';
@@ -1080,15 +1428,10 @@ export default function ProgressMainScreen() {
       >
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.headerIconBtn} accessibilityLabel="Add favorite">
-            <Plus size={22} color={colors.white} />
-            <Heart size={20} color={colors.white} style={{ marginLeft: 2 }} />
+            <TopBarAddHeartIcon width={30} height={16} color={colors.white} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>My Progress</Text>
           <View style={styles.headerRight}>
-            <TouchableOpacity style={styles.headerIconBtn} accessibilityLabel="Highlights">
-              <Sparkles size={20} color={colors.white} />
-              <Heart size={20} color={colors.white} style={{ marginLeft: 2 }} />
-            </TouchableOpacity>
             <TouchableOpacity
               style={styles.headerIconBtn}
               onPress={undefined}
@@ -1097,7 +1440,7 @@ export default function ProgressMainScreen() {
               <MessageCircle size={22} color={colors.white} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.headerIconBtn} accessibilityLabel="Settings">
-              <Settings size={22} color={colors.white} />
+              <TopBarSettingsIcon size={24} color={colors.white} />
             </TouchableOpacity>
           </View>
         </View>
@@ -1117,33 +1460,100 @@ export default function ProgressMainScreen() {
       >
         <View style={styles.phaseTimelineCard}>
           <View style={styles.phaseTimelineHeaderRow}>
-            <Text style={styles.phaseTimelineTitle}>My Journey</Text>
+            <View style={styles.phaseTimelineTitleWrap}>
+              <Text style={styles.phaseTimelineTitle}>My Journey</Text>
+              <TouchableOpacity
+                style={styles.journeyHelpBtn}
+                onPress={() => setIsJourneyHelpVisible(true)}
+                activeOpacity={0.84}
+                accessibilityRole="button"
+                accessibilityLabel="About My Journey progress"
+              >
+                <HelpInfoIcon size={32} />
+              </TouchableOpacity>
+            </View>
           </View>
           <View style={styles.phaseLineWrap}>
             <View style={styles.phaseBaseLine} />
+            <View style={[styles.phaseProgressLine, { width: `${Math.max(0, Math.min(100, journeyProgressPct * 100))}%` }]} />
             <View style={styles.phaseTimelineTrackRow}>
-              {['Foundation', 'Seed', 'Habit', 'Deep Practice'].map((label, idx) => {
+              {['Settle', 'Flow', 'Deep', 'Still'].map((label, idx) => {
                 const isCompleted = idx < activePhaseIdx;
-                const isActive = idx === activePhaseIdx;
+                const isActive = idx === activePhaseIdx && !isZeroSnapshotState;
                 const isFuture = idx > activePhaseIdx;
+                const isZeroStart = isZeroSnapshotState && idx === 0;
                 return (
                   <View key={label} style={styles.phaseItemWrap}>
-                    <View
+                    <Animated.View
                       style={[
                         styles.phaseNode,
                         isCompleted && styles.phaseNodeCompleted,
                         isActive && styles.phaseNodeActive,
                         isFuture && styles.phaseNodeFuture,
+                        isZeroStart && styles.phaseNodeZeroStart,
+                        {
+                          opacity: phaseNodeAnimRefs[idx],
+                          transform: [
+                            {
+                              scale: isActive
+                                ? Animated.multiply(activeHeartScaleAnim, phaseNodeAnimRefs[idx])
+                                : phaseNodeAnimRefs[idx],
+                            },
+                          ],
+                        },
                       ]}
                     >
+                      {isActive ? (
+                        <Animated.View
+                          pointerEvents="none"
+                          style={[
+                            styles.phaseNodeGlow,
+                            {
+                              opacity: activeNodeGlowAnim,
+                              transform: [{ scale: activeHeartScaleAnim }],
+                            },
+                          ]}
+                        />
+                      ) : null}
+                      {isActive && showPhaseCompletionBurst ? (
+                        <Animated.View
+                          pointerEvents="none"
+                          style={[
+                            styles.phaseCompletionBurst,
+                            {
+                              opacity: phaseCompletionAnim.interpolate({
+                                inputRange: [0, 0.2, 1],
+                                outputRange: [0, 0.95, 0],
+                              }),
+                              transform: [
+                                {
+                                  scale: phaseCompletionAnim.interpolate({
+                                    inputRange: [0, 1],
+                                    outputRange: [0.7, 1.22],
+                                  }),
+                                },
+                              ],
+                            },
+                          ]}
+                        >
+                          <View style={[styles.phaseCompletionDot, styles.phaseCompletionDotTop]} />
+                          <View style={[styles.phaseCompletionDot, styles.phaseCompletionDotTopRight]} />
+                          <View style={[styles.phaseCompletionDot, styles.phaseCompletionDotRight]} />
+                          <View style={[styles.phaseCompletionDot, styles.phaseCompletionDotBottom]} />
+                          <View style={[styles.phaseCompletionDot, styles.phaseCompletionDotLeft]} />
+                          <View style={[styles.phaseCompletionDot, styles.phaseCompletionDotTopLeft]} />
+                        </Animated.View>
+                      ) : null}
                       {isCompleted ? (
                         <Check size={12} color="#FFFFFF" strokeWidth={2.8} />
+                      ) : isZeroStart ? (
+                        <Heart size={11} color="#A9A9B1" fill="#A9A9B1" strokeWidth={2.5} />
                       ) : isActive ? (
                         <Heart size={11} color="#FFFFFF" fill="#FFFFFF" strokeWidth={2.5} />
                       ) : (
                         <Text style={styles.phasePendingDash}>-</Text>
                       )}
-                    </View>
+                    </Animated.View>
                     <Text
                       numberOfLines={2}
                       maxFontSizeMultiplier={1.2}
@@ -1162,6 +1572,10 @@ export default function ProgressMainScreen() {
               })}
             </View>
           </View>
+        </View>
+
+        <View style={styles.journeyNextStepsCard}>
+          <Text style={styles.journeyNextStepsTitle}>Next Steps!</Text>
           {hasIncompleteOrInactiveSurveyData ? (
             <View style={styles.journeySummaryRow}>
               <Text style={styles.journeySummaryText}>{JOURNEY_INACTIVE_SURVEY_COPY}</Text>
@@ -1176,13 +1590,13 @@ export default function ProgressMainScreen() {
             </View>
           )}
           {hasIncompleteOrInactiveSurveyData ? (
-            <View style={styles.journeySurveyToggleWrap}>{renderInactiveSurveyToggle()}</View>
+            <View style={styles.journeyNextStepsToggleWrap}>{renderInactiveSurveyToggle()}</View>
           ) : null}
           {hasPartialSurveyOptOutData ? (
-            <View style={styles.journeySurveyToggleWrap}>{renderPartialSurveyToggle()}</View>
+            <View style={styles.journeyNextStepsToggleWrap}>{renderPartialSurveyToggle()}</View>
           ) : null}
           {!hasSurveyInsightsOptOutState && journeyCtaLabel ? (
-            <TouchableOpacity style={styles.journeyLevelOneCtaBtn} onPress={onPressJourneyCta} activeOpacity={0.88}>
+            <TouchableOpacity style={styles.journeyNextStepsCtaBtn} onPress={onPressJourneyCta} activeOpacity={0.88}>
               <Text style={styles.journeyLevelOneCtaTxt}>{journeyCtaLabel}</Text>
             </TouchableOpacity>
           ) : null}
@@ -1224,22 +1638,117 @@ export default function ProgressMainScreen() {
               style={styles.snapshotCompactRow}
             >
               <View style={styles.snapshotCompactItem}>
-                <Text style={styles.snapshotCompactValue}>{snapshotCompact.coherence}</Text>
+                <Text style={styles.snapshotCompactValue}>
+                  {isZeroSnapshotState ? '-' : snapshotCount.coherence.toFixed(1)}
+                </Text>
                 <Text style={styles.snapshotCompactLabel}>Coherence</Text>
               </View>
               <View style={styles.snapshotCompactDivider} />
               <View style={styles.snapshotCompactItem}>
-                <Text style={styles.snapshotCompactValue}>{snapshotCompact.points}</Text>
+                <Text style={styles.snapshotCompactValue}>
+                  {isZeroSnapshotState ? '-' : Math.round(snapshotCount.points)}
+                </Text>
                 <Text style={styles.snapshotCompactLabel}>Points</Text>
               </View>
               <View style={styles.snapshotCompactDivider} />
               <View style={styles.snapshotCompactItem}>
-                <Text style={styles.snapshotCompactValue}>{snapshotCompact.streak}</Text>
+                <Text style={styles.snapshotCompactValue}>
+                  {isZeroSnapshotState ? '-' : `${Math.round(snapshotCount.streak)}d`}
+                </Text>
                 <Text style={styles.snapshotCompactLabel}>Streak</Text>
               </View>
             </LinearGradient>
           )}
         </TouchableOpacity>
+
+        {!shouldHideTrendsCard ? (
+          <TouchableOpacity
+            style={styles.trendsCard}
+            onPress={() => setIsTrendsExpanded((prev) => !prev)}
+            activeOpacity={0.92}
+          >
+            <TouchableOpacity
+              style={styles.collapsibleHeaderRow}
+              onPress={() => setIsTrendsExpanded((prev) => !prev)}
+              activeOpacity={0.84}
+            >
+              <Text style={styles.trendsSectionTitle}>Weekly Trends</Text>
+              {isTrendsExpanded ? (
+                <ChevronUp size={16} color="#E18B31" strokeWidth={2.4} />
+              ) : (
+                <ChevronDown size={16} color="#E18B31" strokeWidth={2.4} />
+              )}
+            </TouchableOpacity>
+            <View style={styles.trendsMetaRow}>
+              <View style={styles.trendsMetaLeftWrap}>
+                <Text style={styles.trendsMetaLeft}>Highest Day: {trendsPreview.highest}</Text>
+              </View>
+              <Text style={styles.trendsMetaRight}>Avg: {trendsPreview.avg}</Text>
+            </View>
+            {isTrendsExpanded ? (
+              <>
+                <View style={styles.trendsChartWrap}>
+                  <View style={styles.trendsGrid}>
+                    {trendsPreview.yTicks.map((tick, idx) => (
+                      <View key={`trend-grid-${idx}`} style={styles.trendsGridRow}>
+                        <Text style={styles.trendsYTick}>{tick}</Text>
+                        <View style={styles.trendsGridLine} />
+                      </View>
+                    ))}
+                  </View>
+                  <View style={styles.trendsSpikeTrack} />
+                  <TrendSpike style={styles.trendsSpikeFill} />
+                  <LinearGradient
+                    colors={['#FCD303', '#ED8B00', '#D50056']}
+                    start={{ x: 0.2, y: 0 }}
+                    end={{ x: 0.85, y: 1 }}
+                    style={[
+                      styles.trendsPeakDot,
+                      {
+                      bottom: 98,
+                      },
+                    ]}
+                  />
+                  <View style={styles.trendsAvgBubble}>
+                    <Text style={styles.trendsAvgBubbleTxt}>Avg: {trendsPreview.avg}</Text>
+                    <LinearGradient
+                      colors={['#FCD303', '#ED8B00', '#D50056']}
+                      start={{ x: 0.2, y: 0 }}
+                      end={{ x: 0.85, y: 1 }}
+                      style={styles.trendsAvgBubbleStar}
+                    />
+                  </View>
+                  <View style={styles.trendsXAxisRow}>
+                    {trendsPreview.xLabels.map((label, idx) => {
+                      return (
+                        <React.Fragment key={`trend-day-${label}`}>
+                          <Text style={styles.trendsXTick}>{label}</Text>
+                          {idx < trendsPreview.xLabels.length - 1 ? <Text style={styles.trendsXBullet}>●</Text> : null}
+                        </React.Fragment>
+                      );
+                    })}
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.trendsCtaBtn}
+                  onPress={(event) => {
+                    event.stopPropagation?.();
+                    navigation.navigate('SessionHistory', {
+                      initialView: 'graph',
+                      previewType: sciencePreviewType ?? null,
+                    });
+                  }}
+                  activeOpacity={0.82}
+                  accessibilityRole="button"
+                  accessibilityLabel="View detailed trends"
+                >
+                  <Text style={styles.trendsCtaTxt}>Detailed Trends</Text>
+                </TouchableOpacity>
+              </>
+            ) : null}
+          </TouchableOpacity>
+        ) : null}
         {shouldPrioritizeInsightsCard ? tabsSection : null}
         {trendSessionCount > 1 && !hasSurveyInsightsOptOutState ? (
           <ProgressSurveyDeltaCard averages={trendAverages} />
@@ -1254,7 +1763,21 @@ export default function ProgressMainScreen() {
           <View
             style={styles.communityHeaderRow}
           >
-            <Text style={styles.communityTitle}>Community Coherence Points</Text>
+            <View style={styles.communityTitleWrap}>
+              <Text style={styles.communityTitle}>Community Coherence Points</Text>
+              <TouchableOpacity
+                style={styles.communityHelpBtn}
+                onPress={(event) => {
+                  event.stopPropagation?.();
+                  setIsCommunityHelpVisible(true);
+                }}
+                activeOpacity={0.84}
+                accessibilityRole="button"
+                accessibilityLabel="How community points are calculated"
+              >
+                <HelpInfoIcon size={32} />
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity
               style={styles.communityToggleBtn}
               onPress={() => setIsCommunityExpanded((prev) => !prev)}
@@ -1263,9 +1786,9 @@ export default function ProgressMainScreen() {
               accessibilityLabel={isCommunityExpanded ? 'Collapse community card' : 'Expand community card'}
             >
               {isCommunityExpanded ? (
-                <ChevronUp size={16} color="#E18B31" strokeWidth={2.4} />
+                <ChevronUp size={14} color="#E18B31" strokeWidth={2.6} />
               ) : (
-                <ChevronDown size={16} color="#E18B31" strokeWidth={2.4} />
+                <ChevronDown size={14} color="#E18B31" strokeWidth={2.6} />
               )}
             </TouchableOpacity>
           </View>
@@ -1276,49 +1799,76 @@ export default function ProgressMainScreen() {
                 end={{ x: 1, y: 1 }}
                 style={styles.communityStatsRect}
               >
-                <Text style={styles.communityToday}>Today</Text>
-                <Text style={styles.communityBig}>2,623,382</Text>
-                <View style={styles.commRule} />
-                <Text style={styles.communitySub}>Highest Day Ever</Text>
-                <Text style={styles.communityBig}>3,400,657</Text>
+                {!isZeroSnapshotState ? (
+                  <Text style={styles.communityToday}>Today, you have contributed</Text>
+                ) : null}
+                {!isZeroSnapshotState ? (
+                  <Text style={styles.communityBig}>{communityCount.today} points!</Text>
+                ) : null}
+                {!isZeroSnapshotState ? <View style={styles.commRule} /> : null}
+                <Text style={styles.communitySub}>Our community has reached</Text>
+                <Text style={styles.communityBig}>{`${(communityCount.total / 1000000).toFixed(1)}M`} points!</Text>
               </LinearGradient>
             ) : null}
         </TouchableOpacity>
 
-        <View style={styles.editorialQuoteCardWrap}>
-          <LinearGradient
-            colors={['#FFFDF9', '#FFF3E6', '#FFE8D4', '#FFD9BC']}
-            locations={[0, 0.32, 0.72, 1]}
-            start={{ x: 0.06, y: 0 }}
-            end={{ x: 0.94, y: 1 }}
-            style={styles.editorialQuoteGradient}
+        <Animated.View
+          style={{
+            opacity: quoteEntryAnim,
+            transform: [{ scale: quoteEntryAnim.interpolate({ inputRange: [0, 1], outputRange: [0.98, 1] }) }],
+          }}
+        >
+          <TouchableOpacity
+            style={styles.editorialQuoteCardWrap}
+            onPress={onPressEditorialQuoteCard}
+            activeOpacity={0.92}
+            accessibilityRole="button"
+            accessibilityLabel={showEditorialAuthor ? 'Show quote text' : 'Show quote author'}
           >
             <LinearGradient
-              colors={['rgba(255,255,255,0.72)', 'rgba(255,255,255,0.18)', 'rgba(255,246,235,0)']}
-              locations={[0, 0.22, 1]}
-              start={{ x: 0.15, y: 0 }}
-              end={{ x: 0.85, y: 0.55 }}
-              style={styles.editorialQuoteGloss}
-              pointerEvents="none"
-            />
-            <Text style={styles.editorialQuoteText}>"{editorialQuote}"</Text>
-          </LinearGradient>
-        </View>
-        <TouchableOpacity
-          style={styles.sessionHistoryBtn}
-          activeOpacity={0.88}
-          onPress={() => {
-            try {
-              navigation.navigate('SessionHistory');
-            } catch (error) {
-              Alert.alert('Coming soon', 'Session history will be available here soon.');
-            }
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="My Session History"
-        >
-          <Text style={styles.sessionHistoryBtnTxt}>My Session History</Text>
-        </TouchableOpacity>
+              colors={['#FFFDF9', '#FFF3E6', '#FFE8D4', '#FFD9BC']}
+              locations={[0, 0.32, 0.72, 1]}
+              start={{ x: 0.06, y: 0 }}
+              end={{ x: 0.94, y: 1 }}
+              style={styles.editorialQuoteGradient}
+            >
+              <LinearGradient
+                colors={['rgba(255,255,255,0.72)', 'rgba(255,255,255,0.18)', 'rgba(255,246,235,0)']}
+                locations={[0, 0.22, 1]}
+                start={{ x: 0.15, y: 0 }}
+                end={{ x: 0.85, y: 0.55 }}
+                style={styles.editorialQuoteGloss}
+                pointerEvents="none"
+              />
+              {showEditorialAuthor ? (
+                <Animated.Text style={[styles.editorialQuoteSource, { opacity: editorialQuoteFadeAnim }]}>
+                  — {editorialQuoteAuthor}
+                </Animated.Text>
+              ) : (
+                <Animated.Text style={[styles.editorialQuoteText, { opacity: editorialQuoteFadeAnim }]}>
+                  "{editorialQuote}"
+                </Animated.Text>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+        </Animated.View>
+        {!isZeroSnapshotState ? (
+          <TouchableOpacity
+            style={styles.sessionHistoryBtn}
+            activeOpacity={0.88}
+            onPress={() => {
+              try {
+                navigation.navigate('SessionHistory', { previewType: sciencePreviewType ?? null });
+              } catch (error) {
+                Alert.alert('Coming soon', 'Session history will be available here soon.');
+              }
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="View History"
+          >
+            <Text style={styles.sessionHistoryBtnTxt}>View History</Text>
+          </TouchableOpacity>
+        ) : null}
       </ScrollView>
 
       <Modal visible={Boolean(editingNote)} transparent animationType="fade" onRequestClose={() => setEditingNote(null)}>
@@ -1344,6 +1894,86 @@ export default function ProgressMainScreen() {
           </View>
         </View>
       </Modal>
+      <Modal
+        visible={isJourneyHelpVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsJourneyHelpVisible(false)}
+      >
+        <View style={styles.communityHelpBackdrop}>
+          <View style={styles.communityHelpPopover}>
+            <View style={styles.communityHelpHeaderRow}>
+              <View style={styles.communityHelpTitleWrap}>
+                <Text style={styles.communityHelpModalTitle}>My Journey</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.communityHelpCloseBtn}
+                onPress={() => setIsJourneyHelpVisible(false)}
+                activeOpacity={0.84}
+                accessibilityRole="button"
+                accessibilityLabel="Close journey help"
+              >
+                <X size={20} color="#6B2D8B" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.communityHelpBody}>
+              Progress is based on the number of days you practice, with extra momentum for staying consistent.
+              {'\n\n'}
+              {journeyHelpStageCopy}
+            </Text>
+            <View style={styles.communityHelpActionRow}>
+              <TouchableOpacity
+                style={styles.communityHelpActionBtn}
+                onPress={() => setIsJourneyHelpVisible(false)}
+                activeOpacity={0.88}
+              >
+                <Text style={styles.communityHelpActionBtnTxt}>Got it!</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      <Modal
+        visible={isCommunityHelpVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setIsCommunityHelpVisible(false)}
+      >
+        <View style={styles.communityHelpBackdrop}>
+          <View style={styles.communityHelpPopover}>
+            <View style={styles.communityHelpHeaderRow}>
+              <View style={styles.communityHelpTitleWrap}>
+                <Text style={styles.communityHelpModalTitle}>How Community Points Work</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.communityHelpCloseBtn}
+                onPress={() => setIsCommunityHelpVisible(false)}
+                activeOpacity={0.84}
+                accessibilityRole="button"
+                accessibilityLabel="Close help"
+              >
+                <X size={22} color="#6B2D8B" />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.communityHelpBody}>
+              Community points reflect your contribution from completed sessions and coherence quality.
+              {'\n\n'}
+              Each session adds points based on consistency, post-session quality, and streak momentum.
+              {'\n\n'}
+              Your points are added to the global community total shown on this card.
+            </Text>
+            <View style={styles.communityHelpActionRow}>
+              <TouchableOpacity
+                style={styles.communityHelpActionBtn}
+                onPress={() => setIsCommunityHelpVisible(false)}
+                activeOpacity={0.88}
+              >
+                <Text style={styles.communityHelpActionBtnTxt}>Got it!</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -1351,7 +1981,7 @@ export default function ProgressMainScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#F3F3F5' },
   headerBg: {
-    paddingBottom: 22,
+    paddingBottom: 34,
     borderBottomLeftRadius: borderRadius.sheet,
     borderBottomRightRadius: borderRadius.sheet,
   },
@@ -1387,7 +2017,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md + 2,
     paddingTop: spacing.md + 2,
     paddingBottom: spacing.md + 2,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.md,
   },
   communityHeaderRow: {
     width: '100%',
@@ -1396,6 +2026,63 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     minHeight: 28,
     marginBottom: 10,
+  },
+  communityTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  communityHelpBtn: {
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 0,
+    marginTop: 2,
+  },
+  communityHelpIconImage: {
+    width: 18,
+    height: 18,
+  },
+  communityHelpBackdrop: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    justifyContent: 'flex-end',
+  },
+  communityHelpPopover: {
+    width: '100%',
+    height: '75%',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 44,
+    paddingTop: 32,
+    paddingBottom: 38,
+  },
+  communityHelpHeaderRow: {
+    minHeight: 34,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  communityHelpTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingRight: 24,
+    paddingLeft: 0,
+  },
+  communityHelpCloseBtn: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
   communityToggleBtn: {
     width: 28,
@@ -1415,12 +2102,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.xl,
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
-  communityToday: { fontFamily: PROGRESS_FONT_REGULAR, fontSize: 13, lineHeight: 26, color: '#FFFFFF' },
+  communityToday: { fontFamily: PROGRESS_FONT_REGULAR, fontSize: 13, lineHeight: 22, color: '#FFFFFF' },
   communityBig: {
     fontFamily: PROGRESS_FONT_BOLD,
-    fontSize: 28,
+    fontSize: 22,
+    lineHeight: 28,
     fontWeight: '800',
     color: colors.white,
     marginVertical: 4,
@@ -1473,6 +2161,210 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     fontWeight: '700',
     letterSpacing: 0.2,
+  },
+  trendsCard: {
+    marginTop: 0,
+    marginBottom: spacing.md,
+    borderRadius: borderRadius.lg,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.07)',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md + 2,
+    paddingBottom: spacing.md,
+  },
+  trendsSectionTitle: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 14,
+    lineHeight: 26,
+    color: '#2C2C2E',
+    fontWeight: '800',
+    marginBottom: 0,
+  },
+  trendsMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    paddingHorizontal: 2,
+  },
+  trendsMetaLeftWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  trendsStarDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+  },
+  trendsMetaLeft: {
+    fontFamily: PROGRESS_FONT_MEDIUM,
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#000000',
+  },
+  trendsMetaRight: {
+    fontFamily: PROGRESS_FONT_MEDIUM,
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#000000',
+  },
+  trendsChartWrap: {
+    height: 222,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(107,45,139,0.18)',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  trendsGrid: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'space-between',
+    paddingTop: 88,
+    paddingBottom: 118,
+  },
+  trendsGridRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    gap: 8,
+  },
+  trendsYTick: {
+    width: 32,
+    textAlign: 'left',
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 14,
+    lineHeight: 18,
+    color: '#171717',
+    includeFontPadding: true,
+    paddingRight: 0,
+    zIndex: 3,
+  },
+  trendsGridLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#D1D1D1',
+  },
+  trendsBarsRow: {
+    display: 'none',
+  },
+  trendsBarCol: { display: 'none' },
+  trendsBarTrack: { display: 'none' },
+  trendsBarTrackActive: { display: 'none' },
+  trendsBarFill: { display: 'none' },
+  trendsSpikeTrack: {
+    position: 'absolute',
+    left: '34%',
+    top: 124,
+    bottom: 44,
+    width: 40,
+    borderRadius: 8,
+    backgroundColor: 'rgba(23,23,23,0.14)',
+  },
+  trendsSpikeFill: {
+    position: 'absolute',
+    left: '34%',
+    marginLeft: 2,
+    bottom: 44,
+    width: 36,
+    borderTopLeftRadius: 42,
+    borderTopRightRadius: 42,
+  },
+  trendsPeakDot: {
+    position: 'absolute',
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    left: '34%',
+    marginLeft: 12,
+    borderWidth: 2.5,
+    borderColor: '#FFFFFF',
+  },
+  trendsXAxisRow: {
+    position: 'absolute',
+    left: 52,
+    right: 14,
+    bottom: 10,
+    height: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  trendsXTick: {
+    fontFamily: PROGRESS_FONT_REGULAR,
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#000000',
+  },
+  trendsXBullet: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 11,
+    color: '#000000',
+  },
+  trendsXTickPill: {
+    width: 22,
+    height: 22,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trendsXTickOnPill: {
+    color: '#FFFFFF',
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 13,
+  },
+  trendsAvgBubble: {
+    position: 'absolute',
+    left: '26%',
+    top: 44,
+    width: 74,
+    height: 54,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.1)',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#8AB2FF',
+    shadowOpacity: 0.12,
+    shadowRadius: 7,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+  },
+  trendsAvgBubbleTxt: {
+    fontFamily: PROGRESS_FONT_REGULAR,
+    color: '#6B2D8B',
+    fontSize: 12,
+    lineHeight: 18,
+  },
+  trendsAvgBubbleStar: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+  },
+  trendsLink: {
+    display: 'none',
+  },
+  trendsCtaBtn: {
+    marginTop: 10,
+    marginBottom: 0,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(225,139,49,0.42)',
+    backgroundColor: '#FFFFFF',
+  },
+  trendsCtaTxt: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: '#C26D1A',
+    fontSize: 14,
+    lineHeight: 26,
+    fontWeight: '700',
   },
   insightsSummaryCard: {
     marginBottom: spacing.md,
@@ -1784,7 +2676,7 @@ const styles = StyleSheet.create({
   },
   phaseTimelineCard: {
     alignSelf: 'stretch',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.md,
     borderRadius: borderRadius.lg,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -1793,6 +2685,25 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md + 2,
     paddingBottom: spacing.md,
   },
+  journeyNextStepsCard: {
+    alignSelf: 'stretch',
+    marginBottom: spacing.md,
+    borderRadius: borderRadius.lg,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.07)',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
+  },
+  journeyNextStepsTitle: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 14,
+    lineHeight: 26,
+    color: '#2C2C2E',
+    fontWeight: '800',
+    marginBottom: 6,
+  },
   phaseTimelineHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1800,28 +2711,83 @@ const styles = StyleSheet.create({
     minHeight: 28,
     marginBottom: spacing.md,
   },
+  phaseTimelineTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  journeyHelpBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 0,
+    marginTop: 2,
+  },
+  communityHelpBody: {
+    fontFamily: PROGRESS_FONT_REGULAR,
+    fontWeight: '400',
+    color: '#171717',
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: 'left',
+    paddingHorizontal: 0,
+    marginBottom: 12,
+  },
+  communityHelpModalTitle: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: '#C26D1A',
+    fontSize: 20,
+    lineHeight: 26,
+    fontWeight: '700',
+    textAlign: 'left',
+  },
+  communityHelpActionRow: {
+    marginTop: 'auto',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  communityHelpActionBtn: {
+    width: 292,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(225,139,49,0.42)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  communityHelpActionBtnTxt: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    color: '#C26D1A',
+    fontSize: 16,
+    lineHeight: 26,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
   journeySummaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: spacing.sm,
-    marginBottom: 18,
+    marginTop: 4,
+    marginBottom: 2,
     paddingVertical: 2,
   },
   journeySummaryText: {
-    fontFamily: PROGRESS_FONT_BOLD,
+    fontFamily: PROGRESS_FONT_REGULAR,
     fontSize: 13,
     lineHeight: 26,
     color: '#171717',
-    fontWeight: '700',
+    fontWeight: '400',
     flexShrink: 1,
   },
   journeySurveyToggleWrap: {
     marginBottom: 8,
   },
-  journeyLevelOneCtaBtn: {
-    marginTop: 2,
-    marginBottom: 10,
+  journeyNextStepsToggleWrap: {
+    marginTop: 8,
+  },
+  journeyNextStepsCtaBtn: {
+    marginTop: 10,
+    marginBottom: 0,
     height: 44,
     borderRadius: 22,
     alignItems: 'center',
@@ -1839,7 +2805,7 @@ const styles = StyleSheet.create({
   },
   collapsibleCard: {
     alignSelf: 'stretch',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.md,
     borderRadius: borderRadius.lg,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -1926,6 +2892,14 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'rgba(52,37,61,0.18)',
   },
+  phaseProgressLine: {
+    position: 'absolute',
+    left: 2,
+    top: 13,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: 'rgba(225,139,49,0.75)',
+  },
   phaseTimelineTrackRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -1946,6 +2920,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 6,
+    overflow: 'visible',
   },
   phaseNodeCompleted: {
     backgroundColor: '#E18B31',
@@ -1963,6 +2938,43 @@ const styles = StyleSheet.create({
   phaseNodeFuture: {
     backgroundColor: '#F8F8FA',
   },
+  phaseNodeZeroStart: {
+    backgroundColor: '#F2F2F5',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
+  },
+  phaseNodeGlow: {
+    position: 'absolute',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(225,139,49,0.28)',
+    shadowColor: '#E18B31',
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 5,
+  },
+  phaseCompletionBurst: {
+    position: 'absolute',
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  phaseCompletionDot: {
+    position: 'absolute',
+    width: 4,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 202, 117, 0.95)',
+  },
+  phaseCompletionDotTop: { top: 2, left: 20 },
+  phaseCompletionDotTopRight: { top: 9, right: 5 },
+  phaseCompletionDotRight: { top: 20, right: 1 },
+  phaseCompletionDotBottom: { bottom: 2, left: 20 },
+  phaseCompletionDotLeft: { top: 20, left: 1 },
+  phaseCompletionDotTopLeft: { top: 9, left: 5 },
   phasePendingDash: {
     color: '#171717AD',
     fontFamily: 'Sailec-Thin',
@@ -2013,7 +3025,7 @@ const styles = StyleSheet.create({
   },
   tabsSharedCard: {
     alignSelf: 'stretch',
-    marginBottom: spacing.xl,
+    marginBottom: spacing.md,
     borderRadius: borderRadius.lg,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -2231,7 +3243,7 @@ const styles = StyleSheet.create({
   },
   editorialQuoteCardWrap: {
     alignSelf: 'stretch',
-    marginBottom: 0,
+    marginBottom: spacing.md,
     borderRadius: 24,
     overflow: 'hidden',
     borderWidth: 1,
@@ -2262,5 +3274,10 @@ const styles = StyleSheet.create({
     color: '#171717',
     fontSize: 15,
     lineHeight: 26,
+    fontWeight: '700',
+    textAlign: 'center',
+    width: '100%',
+    alignSelf: 'center',
+    marginBottom: spacing.md,
   },
 });

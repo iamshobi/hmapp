@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { X, ArrowDown, ArrowUp } from 'lucide-react-native';
+import HelpInfoIcon from './icons/HelpInfoIcon';
 
 const DELTA_GREEN = '#2C9A5F';
 const DELTA_GREEN_BG = 'rgba(44, 154, 95, 0.14)';
@@ -15,8 +16,29 @@ function deltaFor(metric, before, after) {
   return Math.round((d / before) * 100);
 }
 
+function runCountAnimation(fromValue, toValue, onUpdate, duration = 460) {
+  const start = Number.isFinite(fromValue) ? fromValue : 0;
+  const end = Number.isFinite(toValue) ? toValue : 0;
+  const startedAt = Date.now();
+  let rafId = null;
+  const tick = () => {
+    const elapsed = Date.now() - startedAt;
+    const t = Math.max(0, Math.min(1, elapsed / duration));
+    const eased = 1 - Math.pow(1 - t, 3);
+    onUpdate(start + (end - start) * eased);
+    if (t < 1) {
+      rafId = requestAnimationFrame(tick);
+    }
+  };
+  rafId = requestAnimationFrame(tick);
+  return () => {
+    if (rafId != null) cancelAnimationFrame(rafId);
+  };
+}
+
 export default function ProgressSurveyDeltaCard({ averages }) {
   const [isHelpOpen, setIsHelpOpen] = useState(false);
+  const [deltaDisplay, setDeltaDisplay] = useState({ stress: 0, energy: 0, mood: 0 });
   const stressBefore = averages?.stressBefore;
   const stressAfter = averages?.stressAfter;
   const energyBefore = averages?.energyBefore;
@@ -26,6 +48,22 @@ export default function ProgressSurveyDeltaCard({ averages }) {
   const stressDelta = deltaFor('stress', stressBefore, stressAfter);
   const energyDelta = deltaFor('energy', energyBefore, energyAfter);
   const moodDelta = deltaFor('mood', moodBefore, moodAfter);
+  useEffect(() => {
+    const cleanStress = runCountAnimation(0, stressDelta, (v) =>
+      setDeltaDisplay((prev) => ({ ...prev, stress: Math.round(v) }))
+    );
+    const cleanEnergy = runCountAnimation(0, energyDelta, (v) =>
+      setDeltaDisplay((prev) => ({ ...prev, energy: Math.round(v) }))
+    );
+    const cleanMood = runCountAnimation(0, moodDelta, (v) =>
+      setDeltaDisplay((prev) => ({ ...prev, mood: Math.round(v) }))
+    );
+    return () => {
+      cleanStress?.();
+      cleanEnergy?.();
+      cleanMood?.();
+    };
+  }, [stressDelta, energyDelta, moodDelta]);
 
   return (
     <>
@@ -40,11 +78,7 @@ export default function ProgressSurveyDeltaCard({ averages }) {
               accessibilityRole="button"
               accessibilityLabel="Learn how survey scores are interpreted"
             >
-              <Image
-                source={require('../../assets/help-icon-my-progress.png')}
-                style={styles.helpIconImage}
-                resizeMode="contain"
-              />
+              <HelpInfoIcon size={32} />
             </TouchableOpacity>
           </View>
         </View>
@@ -53,21 +87,21 @@ export default function ProgressSurveyDeltaCard({ averages }) {
             <Text style={styles.compactLabel}>Stress</Text>
             <View style={styles.compactPctRow} accessibilityRole="text">
               <ArrowDown size={14} color={DELTA_GREEN} strokeWidth={2.8} />
-              <Text style={styles.compactPct}>{`${stressDelta}%`}</Text>
+              <Text style={styles.compactPct}>{`${deltaDisplay.stress}%`}</Text>
             </View>
           </View>
           <View style={styles.compactItem}>
             <Text style={styles.compactLabel}>Energy</Text>
             <View style={styles.compactPctRow} accessibilityRole="text">
               <ArrowUp size={14} color={DELTA_GREEN} strokeWidth={2.8} />
-              <Text style={styles.compactPct}>{`${energyDelta}%`}</Text>
+              <Text style={styles.compactPct}>{`${deltaDisplay.energy}%`}</Text>
             </View>
           </View>
           <View style={styles.compactItem}>
             <Text style={styles.compactLabel}>Mood</Text>
             <View style={styles.compactPctRow} accessibilityRole="text">
               <ArrowUp size={14} color={DELTA_GREEN} strokeWidth={2.8} />
-              <Text style={styles.compactPct}>{`${moodDelta}%`}</Text>
+              <Text style={styles.compactPct}>{`${deltaDisplay.mood}%`}</Text>
             </View>
           </View>
         </View>
@@ -132,16 +166,17 @@ const styles = StyleSheet.create({
   titleLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 10,
   },
   helpBtn: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 0,
+    marginTop: 2,
   },
   helpIconImage: {
-    width: 22,
-    height: 22,
+    width: 18,
+    height: 18,
   },
   compactRow: {
     marginTop: 0,
@@ -236,9 +271,10 @@ const styles = StyleSheet.create({
   },
   modalBody: {
     fontFamily: PROGRESS_FONT_REGULAR,
+    fontWeight: '400',
     color: '#171717',
-    fontSize: 17,
-    lineHeight: 26,
+    fontSize: 14,
+    lineHeight: 20,
     textAlign: 'left',
     paddingHorizontal: 0,
     marginBottom: 12,

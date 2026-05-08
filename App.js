@@ -155,9 +155,22 @@ export default function App() {
               tabBar={(props) => <AppBottomTabBar {...props} />}
               screenOptions={{
                 headerShown: false,
-                tabBarActiveTintColor: styleGuide.borderBrand,
-                tabBarInactiveTintColor: colors.textMuted,
-                tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+                tabBarActiveTintColor: '#6B2D8B',
+                tabBarInactiveTintColor: '#B79BCF',
+                tabBarAllowFontScaling: false,
+                tabBarLabelStyle: {
+                  fontFamily: 'Sailec-Medium',
+                  fontSize: 12,
+                  lineHeight: 16,
+                  fontWeight: '500',
+                  textAlign: 'center',
+                },
+                tabBarItemStyle: {
+                  paddingHorizontal: 0,
+                  paddingTop: 4,
+                  paddingBottom: 2,
+                },
+                tabBarIconStyle: { marginTop: 2 },
               }}
             >
               <Tab.Screen
@@ -165,7 +178,7 @@ export default function App() {
                 component={HomeStack}
                 options={{
                   title: 'Home',
-                  tabBarIcon: ({ color, size }) => <Home size={size ?? 24} color={color} />,
+                  tabBarIcon: ({ color, size }) => <Home size={size ?? 22} color={color} />,
                 }}
               />
               <Tab.Screen
@@ -173,7 +186,7 @@ export default function App() {
                 component={LearnTabScreen}
                 options={{
                   title: 'Learn',
-                  tabBarIcon: ({ color, size }) => <BookOpen size={size ?? 24} color={color} />,
+                  tabBarIcon: ({ color, size }) => <BookOpen size={size ?? 22} color={color} />,
                 }}
               />
               <Tab.Screen
@@ -181,7 +194,7 @@ export default function App() {
                 component={MeasureStack}
                 options={({ route }) => ({
                   title: 'Measure',
-                  tabBarIcon: ({ color, size }) => <HeartPulse size={size ?? 24} color={color} />,
+                  tabBarIcon: ({ color, size }) => <HeartPulse size={size ?? 22} color={color} />,
                   tabBarStyle: tabBarStyleForMeasure(route),
                 })}
               />
@@ -191,7 +204,7 @@ export default function App() {
                 options={({ route }) => ({
                   title: 'Play',
                   tabBarLabel: 'Play',
-                  tabBarIcon: ({ color, size }) => <Gamepad2 size={size ?? 24} color={color} />,
+                  tabBarIcon: ({ color, size }) => <Gamepad2 size={size ?? 22} color={color} />,
                   tabBarStyle: tabBarStyleForPlay(route),
                 })}
               />
@@ -200,7 +213,7 @@ export default function App() {
                 component={ProgressStack}
                 options={{
                   title: 'My Progress',
-                  tabBarIcon: ({ color, size }) => <BarChart3 size={size ?? 24} color={color} />,
+                  tabBarIcon: ({ color, size }) => <BarChart3 size={size ?? 22} color={color} />,
                 }}
               />
             </Tab.Navigator>

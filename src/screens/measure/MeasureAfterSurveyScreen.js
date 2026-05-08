@@ -28,7 +28,7 @@ function avg(rows = [], key) {
 export default function MeasureAfterSurveyScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
-  const { recordSessionSurveyAfter, surveyResults } = useMysession();
+  const { recordSessionSurveyAfter, surveyResults, addSessionNote } = useMysession();
   const [scores, setScores] = useState({ stress: null, energy: null, mood: null });
   const [notes, setNotes] = useState('');
   const [showNotesInput, setShowNotesInput] = useState(false);
@@ -41,6 +41,10 @@ export default function MeasureAfterSurveyScreen() {
   const saveAndViewInsights = () => {
     if (!allSelected) return;
     const created = recordSessionSurveyAfter(scores);
+    const trimmedNote = typeof notes === 'string' ? notes.trim() : '';
+    if (trimmedNote) {
+      addSessionNote(trimmedNote);
+    }
     const nextCount = (Array.isArray(surveyResults) ? surveyResults.length : 0) + 1;
     if (!created) return;
 

@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,6 +36,8 @@ import { styleGuide } from '../theme/styleGuide';
 import { useMysession } from '../context/mysessionContext';
 
 const USER_NAME = 'Shobi';
+const USE_STATIC_LANDING_IMAGE = true;
+const HOME_LANDING_IMAGE = require('../../assets/home-placeholder-latest.png');
 
 function getGreeting() {
   const h = new Date().getHours();
@@ -48,6 +51,14 @@ export default function HomeScreen() {
   const { gentleMode, totalSessions } = useMysession();
   const greeting = useMemo(() => getGreeting(), []);
   const [moodMeterExpanded, setMoodMeterExpanded] = useState(false);
+
+  if (USE_STATIC_LANDING_IMAGE) {
+    return (
+      <View style={styles.root}>
+        <Image source={HOME_LANDING_IMAGE} style={styles.landingImage} resizeMode="cover" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>
@@ -214,11 +225,15 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: styleGuide.shellBackground },
+  landingImage: {
+    width: '100%',
+    height: '100%',
+  },
   scrollContent: { paddingBottom: spacing.xxl },
 
   /* header */
   headerBg: {
-    paddingBottom: spacing.xxxl + spacing.xl,
+    paddingBottom: spacing.xxxl + spacing.xxl,
   },
   safeTop: { paddingHorizontal: spacing.lg },
   topRow: {
