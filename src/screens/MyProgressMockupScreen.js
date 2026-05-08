@@ -1,14 +1,13 @@
 /**
  * Phone-style frame around a compact MoodMeter + mini header strip (library / showcase).
  */
-import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { ChevronLeft } from 'lucide-react-native';
 import MoodMeter from '../components/MoodMeter';
-import { colors, spacing, borderRadius, shadows } from '../theme';
+import { colors, spacing, shadows } from '../theme';
 
 export default function MyProgressMockupScreen() {
   const insets = useSafeAreaInsets();

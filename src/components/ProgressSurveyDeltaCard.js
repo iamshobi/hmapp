@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { X, ArrowDown, ArrowUp } from 'lucide-react-native';
 import HelpInfoIcon from './icons/HelpInfoIcon';
