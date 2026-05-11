@@ -35,13 +35,13 @@ export default function ProgressHubScreen() {
 
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate('MyProgressMockup')}
+          onPress={() => navigation.navigate('ProgressMockup')}
           activeOpacity={0.85}
         >
           <Smartphone size={28} color={palette.hmBrandPurple} />
           <View style={styles.cardText}>
             <Text style={styles.cardTitle}>Phone mockup</Text>
-            <Text style={styles.cardSub}>Framed preview of the My Progress layout</Text>
+            <Text style={styles.cardSub}>Framed preview of the Progress layout</Text>
           </View>
           <Text style={styles.chev}>›</Text>
         </TouchableOpacity>

@@ -2,11 +2,13 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import { Plus, Heart, Sparkles, Settings } from 'lucide-react-native';
 import { Logo } from '../components/ui';
 import { spacing, gradients, borderRadius, palette } from '../theme';
 
 export default function LearnTabScreen() {
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const topPad = useMemo(() => insets.top + 10, [insets.top]);
 
@@ -29,9 +31,15 @@ export default function LearnTabScreen() {
               <Sparkles size={14} color="#FFFFFF" strokeWidth={2.2} />
               <Heart size={16} color="#FFFFFF" fill="#FFFFFF" strokeWidth={2.2} />
             </View>
-            <View style={styles.settingsBtn}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('HomeTab', { screen: 'Settings' })}
+              style={styles.settingsBtn}
+              hitSlop={10}
+              accessibilityRole="button"
+              accessibilityLabel="Settings"
+            >
               <Settings size={20} color="#FFFFFF" strokeWidth={2.3} />
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
 

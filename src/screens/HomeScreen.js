@@ -100,7 +100,7 @@ export default function HomeScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity
                   hitSlop={12}
-                  onPress={() => Alert.alert('Settings', 'Settings coming soon.')}
+                  onPress={() => nav.navigate('Settings')}
                   style={[styles.iconBtn, styles.settingsBadge]}
                 >
                   <Settings size={20} color="#FFFFFF" strokeWidth={2} />
@@ -208,7 +208,7 @@ export default function HomeScreen() {
             <Text style={styles.unlockText}> Unlock App</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={() => nav.navigate('MyProgress')}
+            onPress={() => nav.navigate('Progress')}
             style={styles.historyLink}
             hitSlop={8}
           >

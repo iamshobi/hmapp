@@ -8,17 +8,26 @@ import { spacing, palette } from '../theme';
 const PROGRESS_FONT_MEDIUM = 'Sailec-Medium';
 const PROGRESS_FONT_BOLD = 'Sailec-Bold';
 const SNAPSHOT_ACCENT = '#C26D1A';
-const SNAPSHOT_TEXT = '#1E1E24';
-const SNAPSHOT_SUBTEXT = '#6D5B49';
+const SNAPSHOT_TEXT = '#FFFFFF';
+const SNAPSHOT_SUBTEXT = '#FFFFFF';
+const SNAPSHOT_TEXT_MUTED = 'rgba(255,255,255,0.62)';
+/** Matches Progress Snapshot collapsed row (`ProgressMainScreen` snapshotCompactRow). */
+const SNAPSHOT_PANEL_GRADIENT = ['#F6A400', '#F18A1F', '#EB6A33'];
+const SNAPSHOT_PANEL_GRADIENT_START = { x: 0.05, y: 0.1 };
+const SNAPSHOT_PANEL_GRADIENT_END = { x: 0.95, y: 0.95 };
+/** Frosted glass fill + border shared by coherence column + metric tiles */
+const SNAPSHOT_GLASS_SURFACE_BG = 'rgba(255,255,255,0.2)';
+const SNAPSHOT_GLASS_SURFACE_BORDER = 'rgba(255,255,255,0.46)';
+const SNAPSHOT_GLASS_SURFACE_SHADOW = {
+  shadowColor: '#E18B31',
+  shadowOpacity: 0.08,
+  shadowOffset: { width: 0, height: 3 },
+  shadowRadius: 10,
+  elevation: 1,
+};
 
-function getDonutTone(value) {
-  const numeric =
-    value === '-' || value === undefined || value === null ? NaN : Number(String(value).replace(/,/g, ''));
-  if (!Number.isFinite(numeric)) return 'rgba(255,255,255,0.46)';
-  if (numeric >= 3) return 'rgba(42,184,223,0.58)';
-  if (numeric >= 2) return 'rgba(195,31,100,0.58)';
-  return 'rgba(107,45,139,0.58)';
-}
+/** Decorative dots around the coherence donut — white; opacity varies per dot */
+const COHERENCE_GLOW_DOT_COLOR = '#FFFFFF';
 
 function normalizeType(type) {
   if (type === 'growing') return 'building';
@@ -187,7 +196,7 @@ export default function ProgressSnapshotBar({
   const sessionsCompletedDisplay = isZeroState ? '-' : sessionsValue;
   const avgSessionDisplay = isZeroState ? '-' : formatDuration(avgSessionSeconds);
   const coherencePointsDisplay = isZeroState ? '-' : coherencePointsValue;
-  const glowDotColor = getDonutTone(coherenceDisplay);
+  const glowDotColor = COHERENCE_GLOW_DOT_COLOR;
   const glowDots = useMemo(() => {
     const sessionsFactor = Math.min(1, sessionsValue / 120);
     const coherenceFactor = Math.min(1, (Number(coherenceDisplay) || 0) / 5);
@@ -228,15 +237,15 @@ export default function ProgressSnapshotBar({
 
   return (
     <LinearGradient
-      colors={['#F6A400', '#F18A1F', '#EB6A33']}
-      start={{ x: 0.05, y: 0.1 }}
-      end={{ x: 0.95, y: 0.95 }}
+      colors={SNAPSHOT_PANEL_GRADIENT}
+      start={SNAPSHOT_PANEL_GRADIENT_START}
+      end={SNAPSHOT_PANEL_GRADIENT_END}
       style={styles.wrapBorder}
     >
       <LinearGradient
-        colors={['#F6A400', '#F18A1F', '#EB6A33']}
-        start={{ x: 0.1, y: 0 }}
-        end={{ x: 0.9, y: 1 }}
+        colors={SNAPSHOT_PANEL_GRADIENT}
+        start={SNAPSHOT_PANEL_GRADIENT_START}
+        end={SNAPSHOT_PANEL_GRADIENT_END}
         style={styles.wrapInner}
       >
         <View style={styles.columnsRow}>
@@ -260,66 +269,46 @@ export default function ProgressSnapshotBar({
                   />
                 ))}
               </View>
-              <View style={styles.coherenceCircleWrap}>
+              <Text style={styles.coherenceColumnLabel}>{'Current\nCoherence'}</Text>
+              <View style={styles.coherenceCircleWrap} pointerEvents="box-none">
                 <CoherenceCircle value={coherenceDisplay} />
               </View>
-              <Text style={styles.coherenceColumnLabel}>{'Current\nCoherence'}</Text>
             </View>
           </View>
 
           <View style={styles.rightColumn}>
             <View style={[styles.metricsGridRow, styles.metricsGridRowTop]}>
-              <LinearGradient
-                colors={['#F6A400', '#F18A1F', '#EB6A33']}
-                start={{ x: 0.08, y: 0 }}
-                end={{ x: 0.92, y: 1 }}
-                style={[styles.metricTile, styles.gridMetricTile]}
-              >
+              <View style={[styles.metricTile, styles.gridMetricTile]}>
                 <View style={styles.metricIconWrap}>
                   <Zap size={13} color={SNAPSHOT_ACCENT} strokeWidth={2.2} />
                 </View>
                 <Text style={styles.tileValue}>{coherencePointsDisplay}</Text>
                 <Text style={styles.tileLabel}>{'coherence\npoints'}</Text>
-              </LinearGradient>
-              <LinearGradient
-                colors={['#F6A400', '#F18A1F', '#EB6A33']}
-                start={{ x: 0.08, y: 0 }}
-                end={{ x: 0.92, y: 1 }}
-                style={[styles.metricTile, styles.gridMetricTile]}
-              >
+              </View>
+              <View style={[styles.metricTile, styles.gridMetricTile]}>
                 <View style={styles.metricIconWrap}>
                   <Flame size={13} color={SNAPSHOT_ACCENT} strokeWidth={2.2} />
                 </View>
                 <Text style={styles.tileValue}>{streakDisplay}</Text>
                 <Text style={styles.tileLabel}>{'day\nstreak'}</Text>
-              </LinearGradient>
+              </View>
             </View>
 
             <View style={styles.metricsGridRow}>
-              <LinearGradient
-                colors={['#F6A400', '#F18A1F', '#EB6A33']}
-                start={{ x: 0.08, y: 0 }}
-                end={{ x: 0.92, y: 1 }}
-                style={[styles.metricTile, styles.gridMetricTile]}
-              >
+              <View style={[styles.metricTile, styles.gridMetricTile]}>
                 <View style={styles.metricIconWrap}>
                   <Timer size={13} color={SNAPSHOT_ACCENT} strokeWidth={2.2} />
                 </View>
                 <Text style={styles.tileValue}>{avgSessionDisplay}</Text>
                 <Text style={styles.tileLabel}>{'session\nlength'}</Text>
-              </LinearGradient>
-              <LinearGradient
-                colors={['#F6A400', '#F18A1F', '#EB6A33']}
-                start={{ x: 0.08, y: 0 }}
-                end={{ x: 0.92, y: 1 }}
-                style={[styles.metricTile, styles.gridMetricTile]}
-              >
+              </View>
+              <View style={[styles.metricTile, styles.gridMetricTile]}>
                 <View style={styles.metricIconWrap}>
                   <Heart size={13} color={SNAPSHOT_ACCENT} strokeWidth={2.2} />
                 </View>
                 <Text style={styles.tileValue}>{sessionsCompletedDisplay}</Text>
                 <Text style={styles.tileLabel}>{'total\nsessions'}</Text>
-              </LinearGradient>
+              </View>
             </View>
           </View>
         </View>
@@ -333,13 +322,13 @@ const styles = StyleSheet.create({
     marginHorizontal: 0,
     marginTop: 0,
     marginBottom: spacing.md,
-    borderRadius: 22,
+    borderRadius: 24,
     padding: 1,
   },
   wrapInner: {
-    borderRadius: 21,
+    borderRadius: 23,
     backgroundColor: 'transparent',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 10,
     alignItems: 'stretch',
   },
@@ -359,22 +348,19 @@ const styles = StyleSheet.create({
   },
   coherenceTile: {
     flex: 1,
+    flexDirection: 'column',
     alignItems: 'stretch',
-    justifyContent: 'center',
-    borderRadius: 14,
+    justifyContent: 'flex-start',
+    borderRadius: 18,
     paddingHorizontal: 10,
     paddingVertical: 12,
     minHeight: 190,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: SNAPSHOT_GLASS_SURFACE_BG,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.58)',
+    borderColor: SNAPSHOT_GLASS_SURFACE_BORDER,
     position: 'relative',
     overflow: 'hidden',
-    shadowColor: '#E18B31',
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 10,
-    elevation: 1,
+    ...SNAPSHOT_GLASS_SURFACE_SHADOW,
   },
   glowDotsLayer: {
     ...StyleSheet.absoluteFillObject,
@@ -384,6 +370,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     borderRadius: 999,
   },
+  /** Fills tile; centers donut in the block (title is separate, absolute top). */
   coherenceCircleWrap: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',
@@ -408,7 +395,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 0,
   },
   coherenceCircleValueMuted: {
-    color: SNAPSHOT_SUBTEXT,
+    color: SNAPSHOT_TEXT_MUTED,
     textShadowColor: 'transparent',
     textShadowRadius: 0,
     textShadowOffset: { width: 0, height: 0 },
@@ -421,35 +408,33 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     position: 'absolute',
-    top: 10,
+    top: 12,
     left: 6,
     right: 6,
-    zIndex: 3,
+    zIndex: 4,
   },
   metricsGridRow: {
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 4,
+    gap: 6,
   },
   metricsGridRowTop: {
     marginBottom: 6,
   },
   metricTile: {
     minHeight: 74,
-    borderRadius: 14,
-    paddingHorizontal: 6,
-    paddingVertical: 8,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 0,
-    borderColor: 'transparent',
+    borderRadius: 18,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    backgroundColor: SNAPSHOT_GLASS_SURFACE_BG,
+    borderWidth: 1,
+    borderColor: SNAPSHOT_GLASS_SURFACE_BORDER,
     justifyContent: 'center',
     alignItems: 'flex-start',
-    shadowColor: '#E18B31',
-    shadowOpacity: 0.07,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 8,
-    elevation: 1,
+    position: 'relative',
+    overflow: 'hidden',
+    ...SNAPSHOT_GLASS_SURFACE_SHADOW,
   },
   gridMetricTile: {
     flex: 1,
@@ -460,7 +445,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFF5E9',
+    backgroundColor: 'rgba(255,255,255,0.82)',
     borderWidth: 1,
     borderColor: 'rgba(225,139,49,0.25)',
   },

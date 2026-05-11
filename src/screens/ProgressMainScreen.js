@@ -1,5 +1,5 @@
 /**
- * My Progress — HeartMath-style: warm header, Practice Stats, streaks, community banner, MoodMeter.
+ * Progress — HeartMath-style: warm header, Practice Stats, streaks, community banner, MoodMeter.
  */
 import React, { useEffect, useRef, useState } from 'react';
 import {
@@ -16,17 +16,19 @@ import {
   Alert,
   Animated,
   PanResponder,
+  Linking,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Path, Stop } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { Heart, MessageCircle, Pencil, Trash2, Check, ChevronDown, ChevronUp, X } from 'lucide-react-native';
+import { MessageCircle, Pencil, Trash2, ChevronDown, ChevronUp, X } from 'lucide-react-native';
 import ProgressSnapshotBar from '../components/ProgressSnapshotBar';
 import ProgressSurveyDeltaCard from '../components/ProgressSurveyDeltaCard';
 import ProgressViewTabs from '../components/ProgressViewTabs';
 import ProgressCheckinsCalendar from '../components/ProgressCheckinsCalendar';
 import HelpInfoIcon from '../components/icons/HelpInfoIcon';
+import { JourneyPhaseIcon } from '../components/icons/JourneyPhaseIcons';
 import { TrendLayerComparisonCard } from '../components/sessionInsights/SessionInsightsUI';
 import {
   PREVIEW_SNAPSHOT_BY_TYPE,
@@ -135,8 +137,13 @@ const EDITORIAL_QUOTE_AUTHORS = {
   'Be not afraid of growing slowly, be afraid only of standing still.': 'Chinese Proverb',
   'It does not matter how slowly you go as long as you do not stop.': 'Confucius',
 };
-const JOURNEY_INACTIVE_SURVEY_COPY =
-  'Unlock deeper insights.\nAnswer quick session check-ins to understand your stress patterns better.';
+/** Next Steps body when surveys are inactive / no completed check-ins yet (Trends & Notes paused for new data). */
+const JOURNEY_NEXT_STEPS_INACTIVE_SURVEY_COPY =
+  'Keep up your practice. When you’re ready, turn on the "Enable Survey" in Survey Settings above—after that, new session\'s insights will be updated in the Progress screen.';
+
+/** Next Steps body when only some sessions include surveys (historical / partial insights). */
+const JOURNEY_NEXT_STEPS_PARTIAL_SURVEY_COPY =
+  'Right now, the Progress screen only reflects sessions where surveys were finished earlier. Turn on the "Enable Survey" in Survey Settings above—after that, new session\'s insights will be integrated in the Progress screen.';
 
 function NoteViewIcon({ size = 26, color = '#E18B31' }) {
   return (
@@ -199,12 +206,12 @@ function TrendSpike({ width = 36, height = 84, style }) {
     <View style={[style, { width, height }]}>
       <Svg width={width} height={height}>
         <Defs>
-          <SvgLinearGradient id="my-progress-trend-spike" x1="0%" y1="100%" x2="100%" y2="0%">
+          <SvgLinearGradient id="progress-trend-spike" x1="0%" y1="100%" x2="100%" y2="0%">
             <Stop offset="0%" stopColor="#6B2D8B" />
             <Stop offset="100%" stopColor="#C31F64" />
           </SvgLinearGradient>
         </Defs>
-        <Path d={d} fill="url(#my-progress-trend-spike)" />
+        <Path d={d} fill="url(#progress-trend-spike)" />
       </Svg>
     </View>
   );
@@ -376,17 +383,39 @@ function JourneySection({
   activeNodeGlowAnim,
   showPhaseCompletionBurst,
   phaseCompletionAnim,
+  showSurveySettingsCard,
+  surveySettingsCardAnimatedStyle,
+  onSurveySettingsCardLayout,
   hasIncompleteOrInactiveSurveyData,
   hasPartialSurveyOptOutData,
   journeySummaryMessage,
   renderInactiveSurveyToggle,
   renderPartialSurveyToggle,
-  hasSurveyInsightsOptOutState,
+  showInactiveSurveyNextStepsCopy,
+  showPartialSurveyNextStepsCopy,
   journeyCtaLabel,
   onPressJourneyCta,
 }) {
   return (
     <>
+      {showSurveySettingsCard ? (
+        <Animated.View style={[styles.journeySurveyCardWrap, surveySettingsCardAnimatedStyle]}>
+          <View
+            style={styles.journeySurveyCard}
+            onLayout={(e) => {
+              const h = Math.ceil(e.nativeEvent.layout.height);
+              if (h > 0) onSurveySettingsCardLayout(h);
+            }}
+          >
+            <Text style={styles.journeySurveyTitle}>Survey Settings</Text>
+            <View style={styles.journeySurveyToggleWrap}>
+              {hasIncompleteOrInactiveSurveyData ? renderInactiveSurveyToggle() : null}
+              {hasPartialSurveyOptOutData ? renderPartialSurveyToggle() : null}
+            </View>
+          </View>
+        </Animated.View>
+      ) : null}
+
       <View style={styles.phaseTimelineCard}>
         <View style={styles.phaseTimelineHeaderRow}>
           <View style={styles.phaseTimelineTitleWrap}>
@@ -473,15 +502,13 @@ function JourneySection({
                         <View style={[styles.phaseCompletionDot, styles.phaseCompletionDotTopLeft]} />
                       </Animated.View>
                     ) : null}
-                    {isCompleted ? (
-                      <Check size={12} color="#FFFFFF" strokeWidth={2.8} />
-                    ) : isZeroStart ? (
-                      <Heart size={11} color="#A9A9B1" fill="#A9A9B1" strokeWidth={2.5} />
-                    ) : isActive ? (
-                      <Heart size={11} color="#FFFFFF" fill="#FFFFFF" strokeWidth={2.5} />
-                    ) : (
-                      <Text style={styles.phasePendingDash}>-</Text>
-                    )}
+                    <JourneyPhaseIcon
+                      phase={label}
+                      variant={
+                        isCompleted ? 'completed' : isZeroStart ? 'zero' : isActive ? 'active' : 'future'
+                      }
+                      size={18}
+                    />
                   </Animated.View>
                   <Text
                     numberOfLines={2}
@@ -505,26 +532,20 @@ function JourneySection({
 
       <View style={styles.journeyNextStepsCard}>
         <Text style={styles.journeyNextStepsTitle}>Next Steps!</Text>
-        {hasIncompleteOrInactiveSurveyData ? (
+        {showInactiveSurveyNextStepsCopy || showPartialSurveyNextStepsCopy ? (
           <View style={styles.journeySummaryRow}>
-            <Text style={styles.journeySummaryText}>{JOURNEY_INACTIVE_SURVEY_COPY}</Text>
-          </View>
-        ) : hasPartialSurveyOptOutData ? (
-          <View style={styles.journeySummaryRow}>
-            <Text style={styles.journeySummaryText}>{JOURNEY_INACTIVE_SURVEY_COPY}</Text>
+            <Text style={styles.journeySummaryText}>
+              {showInactiveSurveyNextStepsCopy
+                ? JOURNEY_NEXT_STEPS_INACTIVE_SURVEY_COPY
+                : JOURNEY_NEXT_STEPS_PARTIAL_SURVEY_COPY}
+            </Text>
           </View>
         ) : (
           <View style={styles.journeySummaryRow}>
             <Text style={styles.journeySummaryText}>{journeySummaryMessage}</Text>
           </View>
         )}
-        {hasIncompleteOrInactiveSurveyData ? (
-          <View style={styles.journeyNextStepsToggleWrap}>{renderInactiveSurveyToggle()}</View>
-        ) : null}
-        {hasPartialSurveyOptOutData ? (
-          <View style={styles.journeyNextStepsToggleWrap}>{renderPartialSurveyToggle()}</View>
-        ) : null}
-        {!hasSurveyInsightsOptOutState && journeyCtaLabel ? (
+        {!showInactiveSurveyNextStepsCopy && !showPartialSurveyNextStepsCopy && journeyCtaLabel ? (
           <TouchableOpacity style={styles.journeyNextStepsCtaBtn} onPress={onPressJourneyCta} activeOpacity={0.88}>
             <Text style={styles.journeyLevelOneCtaTxt}>{journeyCtaLabel}</Text>
           </TouchableOpacity>
@@ -722,9 +743,6 @@ function NotesSection({
   isZeroSnapshotState,
   communityCount,
   quoteEntryAnim,
-  showEditorialAuthor,
-  onPressEditorialQuoteCard,
-  editorialQuoteFadeAnim,
   editorialQuoteAuthor,
   editorialQuote,
   navigation,
@@ -795,13 +813,7 @@ function NotesSection({
           transform: [{ scale: quoteEntryAnim.interpolate({ inputRange: [0, 1], outputRange: [0.98, 1] }) }],
         }}
       >
-        <TouchableOpacity
-          style={styles.editorialQuoteCardWrap}
-          onPress={onPressEditorialQuoteCard}
-          activeOpacity={0.92}
-          accessibilityRole="button"
-          accessibilityLabel={showEditorialAuthor ? 'Show quote text' : 'Show quote author'}
-        >
+        <View style={styles.editorialQuoteCardWrap}>
           <LinearGradient
             colors={['#FFFDF9', '#FFF3E6', '#FFE8D4', '#FFD9BC']}
             locations={[0, 0.32, 0.72, 1]}
@@ -817,17 +829,12 @@ function NotesSection({
               style={styles.editorialQuoteGloss}
               pointerEvents="none"
             />
-            {showEditorialAuthor ? (
-              <Animated.Text style={[styles.editorialQuoteSource, { opacity: editorialQuoteFadeAnim }]}>
-                — {editorialQuoteAuthor}
-              </Animated.Text>
-            ) : (
-              <Animated.Text style={[styles.editorialQuoteText, { opacity: editorialQuoteFadeAnim }]}>
-                "{editorialQuote}"
-              </Animated.Text>
-            )}
+            <Text style={styles.editorialQuoteBlock}>
+              <Text style={styles.editorialQuoteText}>"{editorialQuote}"</Text>
+              <Text style={styles.editorialQuoteSource}> - {editorialQuoteAuthor}</Text>
+            </Text>
           </LinearGradient>
-        </TouchableOpacity>
+        </View>
       </Animated.View>
       {!isZeroSnapshotState ? (
         <TouchableOpacity
@@ -881,10 +888,13 @@ export default function ProgressMainScreen() {
   const [isJourneyHelpVisible, setIsJourneyHelpVisible] = useState(false);
   const [isCommunityHelpVisible, setIsCommunityHelpVisible] = useState(false);
   const [isSessionInsightsExpanded, setIsSessionInsightsExpanded] = useState(true);
-  const [showEditorialAuthor, setShowEditorialAuthor] = useState(false);
   const [surveyPreferenceUpdatedVisible, setSurveyPreferenceUpdatedVisible] = useState(false);
+  const [surveySettingsDismissed, setSurveySettingsDismissed] = useState(false);
+  const [surveySettingsCardHeight, setSurveySettingsCardHeight] = useState(0);
   const surveyPreferenceFadeAnim = useRef(new Animated.Value(0)).current;
-  const editorialQuoteFadeAnim = useRef(new Animated.Value(1)).current;
+  const surveySettingsExitAnim = useRef(new Animated.Value(1)).current;
+  const showSurveySettingsCardRef = useRef(false);
+  const surveySettingsExitDelayTimerRef = useRef(null);
   const quoteEntryAnim = useRef(new Animated.Value(0)).current;
   const activeHeartScaleAnim = useRef(new Animated.Value(1)).current;
   const activeNodeGlowAnim = useRef(new Animated.Value(0.42)).current;
@@ -892,7 +902,6 @@ export default function ProgressMainScreen() {
   const [showPhaseCompletionBurst, setShowPhaseCompletionBurst] = useState(false);
   const lastCompletedStageRef = useRef(null);
   const phaseNodeAnimRefs = useRef([0, 1, 2, 3].map(() => new Animated.Value(1))).current;
-  const surveyPreferenceTimeoutRef = useRef(null);
   const progressScrollRef = useRef(null);
   const currentScrollYRef = useRef(0);
   const [journeyProgressPct, setJourneyProgressPct] = useState(0);
@@ -906,6 +915,20 @@ export default function ProgressMainScreen() {
     const nextPreviewType = normalizePreviewType(route?.params?.previewType ?? null);
     setSciencePreviewType(nextPreviewType);
   }, [route?.params?.previewType]);
+
+  useEffect(() => {
+    if (surveySettingsExitDelayTimerRef.current) {
+      clearTimeout(surveySettingsExitDelayTimerRef.current);
+      surveySettingsExitDelayTimerRef.current = null;
+    }
+    surveySettingsExitAnim.stopAnimation();
+    surveySettingsExitAnim.setValue(1);
+    surveyPreferenceFadeAnim.stopAnimation();
+    surveyPreferenceFadeAnim.setValue(0);
+    setSurveyPreferenceUpdatedVisible(false);
+    setSurveySettingsDismissed(false);
+    setSurveySettingsCardHeight(0);
+  }, [sciencePreviewType, surveyPreferenceFadeAnim, surveySettingsExitAnim]);
 
   useEffect(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -1091,7 +1114,7 @@ export default function ProgressMainScreen() {
       Alert.alert('Reminder setup', 'Reminder setup will be available here soon.');
       return;
     }
-    // Intentionally keep Start Session CTA non-navigating on My Progress.
+    // Intentionally keep Start Session CTA non-navigating on Progress.
   };
   const surveyResultsCount = Array.isArray(surveyResults) ? surveyResults.length : 0;
   const hasIncompleteOrInactiveSurveyData =
@@ -1100,8 +1123,67 @@ export default function ProgressMainScreen() {
     isPartialSurveyOptOutPreview ||
     (!sciencePreviewType && totalSessions > 0 && surveyResultsCount > 0 && surveyResultsCount < totalSessions);
   const hasSurveyInsightsOptOutState = hasIncompleteOrInactiveSurveyData || hasPartialSurveyOptOutData;
+  const showSurveySettingsCard =
+    (hasIncompleteOrInactiveSurveyData || hasPartialSurveyOptOutData) && !surveySettingsDismissed;
+
+  const showInactiveSurveyNextStepsCopy =
+    hasIncompleteOrInactiveSurveyData && inactiveSurveyOptInChoice !== 'yes';
+  const showPartialSurveyNextStepsCopy =
+    hasPartialSurveyOptOutData && progressOptInChoice !== 'yes';
+
+  useEffect(() => {
+    showSurveySettingsCardRef.current = showSurveySettingsCard;
+  }, [showSurveySettingsCard]);
+
+  const surveySettingsCardAnimatedStyle = React.useMemo(() => {
+    const h = surveySettingsCardHeight;
+    const marginBottom = surveySettingsExitAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, spacing.md],
+    });
+    if (h > 0) {
+      return {
+        opacity: surveySettingsExitAnim,
+        marginBottom,
+        maxHeight: surveySettingsExitAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, h],
+        }),
+        transform: [
+          {
+            translateY: surveySettingsExitAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [-32, 0],
+            }),
+          },
+        ],
+        overflow: 'hidden',
+      };
+    }
+    return {
+      opacity: surveySettingsExitAnim,
+      marginBottom,
+      transform: [
+        {
+          translateY: surveySettingsExitAnim.interpolate({
+            inputRange: [0, 1],
+            outputRange: [-32, 0],
+          }),
+        },
+      ],
+      overflow: 'hidden',
+    };
+  }, [surveySettingsCardHeight, surveySettingsExitAnim]);
+
+  const onSurveySettingsCardLayout = React.useCallback((measuredHeight) => {
+    setSurveySettingsCardHeight((prev) =>
+      measuredHeight > 0 && Math.abs(prev - measuredHeight) > 2 ? measuredHeight : prev
+    );
+  }, []);
+
+  /** Hide weekly trends only when surveys are fully off / no data — partial survey still shows historical trends. */
   const shouldHideTrendsCard =
-    hasSurveyInsightsOptOutState ||
+    hasIncompleteOrInactiveSurveyData ||
     Math.max(0, Math.floor(Number(trendSessionCount) || 0)) < 5;
   const isSurveyFullyPaused = hasIncompleteOrInactiveSurveyData;
   const isSurveyHistoricalOnly = hasPartialSurveyOptOutData;
@@ -1117,39 +1199,89 @@ export default function ProgressMainScreen() {
     ? 'Trends and Notes are unavailable until surveys are turned on.'
     : 'Earlier survey entries remain visible. New Trends and Notes are paused until surveys are turned on.';
   const shouldFullyLockInsights = hasIncompleteOrInactiveSurveyData;
-  const showSurveyPreferenceUpdated = () => {
-    if (surveyPreferenceTimeoutRef.current) {
-      clearTimeout(surveyPreferenceTimeoutRef.current);
+  const cancelSurveyPreferenceSavedSequence = React.useCallback(() => {
+    if (surveySettingsExitDelayTimerRef.current) {
+      clearTimeout(surveySettingsExitDelayTimerRef.current);
+      surveySettingsExitDelayTimerRef.current = null;
     }
-    setSurveyPreferenceUpdatedVisible(true);
+    surveySettingsExitAnim.stopAnimation();
+    surveySettingsExitAnim.setValue(1);
     surveyPreferenceFadeAnim.stopAnimation();
+    surveyPreferenceFadeAnim.setValue(0);
+    setSurveyPreferenceUpdatedVisible(false);
+  }, [surveyPreferenceFadeAnim, surveySettingsExitAnim]);
+
+  const finishSurveySettingsHide = React.useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setSurveySettingsDismissed(true);
+    surveySettingsExitAnim.setValue(1);
+    setSurveyPreferenceUpdatedVisible(false);
+    surveyPreferenceFadeAnim.setValue(0);
+  }, [surveyPreferenceFadeAnim, surveySettingsExitAnim]);
+
+  const runSurveySettingsExitAnimation = React.useCallback(() => {
+    surveyPreferenceFadeAnim.stopAnimation();
+    surveySettingsExitAnim.stopAnimation();
+    surveySettingsExitAnim.setValue(1);
+    Animated.timing(surveySettingsExitAnim, {
+      toValue: 0,
+      duration: 420,
+      useNativeDriver: false,
+    }).start(({ finished }) => {
+      if (finished) {
+        finishSurveySettingsHide();
+      }
+    });
+  }, [finishSurveySettingsHide, surveyPreferenceFadeAnim, surveySettingsExitAnim]);
+
+  const beginSurveyPreferenceSavedSequence = React.useCallback(() => {
+    cancelSurveyPreferenceSavedSequence();
+    setSurveyPreferenceUpdatedVisible(true);
     surveyPreferenceFadeAnim.setValue(0);
     Animated.timing(surveyPreferenceFadeAnim, {
       toValue: 1,
       duration: 220,
       useNativeDriver: true,
     }).start();
-    surveyPreferenceTimeoutRef.current = setTimeout(() => {
+    surveySettingsExitDelayTimerRef.current = setTimeout(() => {
+      surveySettingsExitDelayTimerRef.current = null;
+      if (showSurveySettingsCardRef.current) {
+        runSurveySettingsExitAnimation();
+        return;
+      }
       Animated.timing(surveyPreferenceFadeAnim, {
         toValue: 0,
-        duration: 220,
+        duration: 280,
         useNativeDriver: true,
       }).start(({ finished }) => {
         if (finished) {
           setSurveyPreferenceUpdatedVisible(false);
         }
-        surveyPreferenceTimeoutRef.current = null;
       });
-    }, 2500);
-  };
+    }, 3000);
+  }, [
+    cancelSurveyPreferenceSavedSequence,
+    runSurveySettingsExitAnimation,
+    surveyPreferenceFadeAnim,
+  ]);
+  const onPressCommunityHelpReadMore = React.useCallback(async () => {
+    const url = 'https://cdn.heartmath.com/manuals/IB_Coherence_Achevment_rev1a.pdf';
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (!supported) {
+        Alert.alert('Unable to open link', 'This device cannot open the requested link.');
+        return;
+      }
+      await Linking.openURL(url);
+    } catch (_err) {
+      Alert.alert('Unable to open link', 'Please try again later.');
+    }
+  }, []);
   useEffect(
     () => () => {
-      if (surveyPreferenceTimeoutRef.current) {
-        clearTimeout(surveyPreferenceTimeoutRef.current);
-      }
-      surveyPreferenceFadeAnim.stopAnimation();
+      cancelSurveyPreferenceSavedSequence();
     },
-    [surveyPreferenceFadeAnim]
+    [cancelSurveyPreferenceSavedSequence]
   );
   useEffect(() => {
     if (shouldFullyLockInsights && activeProgressTab !== 'checkins') {
@@ -1190,7 +1322,7 @@ export default function ProgressMainScreen() {
             enabled && styles.tabsLockedToggleSwitchTextActive,
           ]}
         >
-          Enable insights
+          Enable Survey
         </Text>
       </TouchableOpacity>
       <Text style={styles.toggleMicrocopy}>
@@ -1198,7 +1330,7 @@ export default function ProgressMainScreen() {
       </Text>
       {surveyPreferenceUpdatedVisible ? (
         <Animated.Text style={[styles.toggleConfirmationText, { opacity: surveyPreferenceFadeAnim }]}>
-          Survey preference updated
+          Your survey preference saved
         </Animated.Text>
       ) : null}
     </View>
@@ -1207,34 +1339,24 @@ export default function ProgressMainScreen() {
     renderSurveyPreferenceToggle(inactiveSurveyOptInChoice === 'yes', () => {
       const nextChoice = inactiveSurveyOptInChoice === 'yes' ? 'no' : 'yes';
       setInactiveSurveyOptInChoice(nextChoice);
-      showSurveyPreferenceUpdated();
+      if (nextChoice === 'yes') {
+        beginSurveyPreferenceSavedSequence();
+      } else {
+        cancelSurveyPreferenceSavedSequence();
+        setSurveySettingsDismissed(false);
+      }
     });
   const renderPartialSurveyToggle = () =>
     renderSurveyPreferenceToggle(progressOptInChoice === 'yes', () => {
       const nextChoice = progressOptInChoice === 'yes' ? 'no' : 'yes';
       setProgressOptInChoice(nextChoice);
-      showSurveyPreferenceUpdated();
+      if (nextChoice === 'yes') {
+        beginSurveyPreferenceSavedSequence();
+      } else {
+        cancelSurveyPreferenceSavedSequence();
+        setSurveySettingsDismissed(false);
+      }
     });
-  useEffect(() => {
-    setShowEditorialAuthor(false);
-    editorialQuoteFadeAnim.setValue(1);
-  }, [editorialQuote, editorialQuoteFadeAnim]);
-
-  const onPressEditorialQuoteCard = () => {
-    Animated.timing(editorialQuoteFadeAnim, {
-      toValue: 0,
-      duration: 140,
-      useNativeDriver: true,
-    }).start(() => {
-      setShowEditorialAuthor((prev) => !prev);
-      Animated.timing(editorialQuoteFadeAnim, {
-        toValue: 1,
-        duration: 180,
-        useNativeDriver: true,
-      }).start();
-    });
-  };
-
   const notesList = React.useMemo(
     () => (Array.isArray(sessionNotes) ? sessionNotes : []),
     [sessionNotes]
@@ -1719,7 +1841,7 @@ export default function ProgressMainScreen() {
           <TouchableOpacity style={styles.headerIconBtn} accessibilityLabel="Add favorite">
             <TopBarAddHeartIcon width={30} height={16} color={colors.white} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>My Progress</Text>
+          <Text style={styles.headerTitle}>Progress</Text>
           <View style={styles.headerRight}>
             <TouchableOpacity
               style={styles.headerIconBtn}
@@ -1728,7 +1850,11 @@ export default function ProgressMainScreen() {
             >
               <MessageCircle size={22} color={colors.white} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.headerIconBtn} accessibilityLabel="Settings">
+            <TouchableOpacity
+              style={styles.headerIconBtn}
+              accessibilityLabel="Settings"
+              onPress={() => navigation.navigate('HomeTab', { screen: 'Settings' })}
+            >
               <TopBarSettingsIcon size={24} color={colors.white} />
             </TouchableOpacity>
           </View>
@@ -1757,12 +1883,16 @@ export default function ProgressMainScreen() {
           activeNodeGlowAnim={activeNodeGlowAnim}
           showPhaseCompletionBurst={showPhaseCompletionBurst}
           phaseCompletionAnim={phaseCompletionAnim}
+          showSurveySettingsCard={showSurveySettingsCard}
+          surveySettingsCardAnimatedStyle={surveySettingsCardAnimatedStyle}
+          onSurveySettingsCardLayout={onSurveySettingsCardLayout}
           hasIncompleteOrInactiveSurveyData={hasIncompleteOrInactiveSurveyData}
           hasPartialSurveyOptOutData={hasPartialSurveyOptOutData}
           journeySummaryMessage={journeySummaryMessage}
           renderInactiveSurveyToggle={renderInactiveSurveyToggle}
           renderPartialSurveyToggle={renderPartialSurveyToggle}
-          hasSurveyInsightsOptOutState={hasSurveyInsightsOptOutState}
+          showInactiveSurveyNextStepsCopy={showInactiveSurveyNextStepsCopy}
+          showPartialSurveyNextStepsCopy={showPartialSurveyNextStepsCopy}
           journeyCtaLabel={journeyCtaLabel}
           onPressJourneyCta={onPressJourneyCta}
         />
@@ -1796,9 +1926,6 @@ export default function ProgressMainScreen() {
           isZeroSnapshotState={isZeroSnapshotState}
           communityCount={communityCount}
           quoteEntryAnim={quoteEntryAnim}
-          showEditorialAuthor={showEditorialAuthor}
-          onPressEditorialQuoteCard={onPressEditorialQuoteCard}
-          editorialQuoteFadeAnim={editorialQuoteFadeAnim}
           editorialQuoteAuthor={editorialQuoteAuthor}
           editorialQuote={editorialQuote}
           navigation={navigation}
@@ -1806,7 +1933,14 @@ export default function ProgressMainScreen() {
         />
       </ScrollView>
 
-      <Modal visible={Boolean(editingNote)} transparent animationType="fade" onRequestClose={() => setEditingNote(null)}>
+      <Modal
+        visible={Boolean(editingNote)}
+        transparent
+        animationType="fade"
+        presentationStyle="overFullScreen"
+        statusBarTranslucent
+        onRequestClose={() => setEditingNote(null)}
+      >
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Edit Note</Text>
@@ -1833,9 +1967,12 @@ export default function ProgressMainScreen() {
         visible={isJourneyHelpVisible}
         transparent
         animationType="slide"
+        presentationStyle="overFullScreen"
+        statusBarTranslucent
         onRequestClose={() => setIsJourneyHelpVisible(false)}
       >
         <View style={styles.communityHelpBackdrop}>
+          <View style={styles.communityHelpDim} />
           <View style={styles.communityHelpPopover}>
             <View style={styles.communityHelpHeaderRow}>
               <View style={styles.communityHelpTitleWrap}>
@@ -1872,13 +2009,16 @@ export default function ProgressMainScreen() {
         visible={isCommunityHelpVisible}
         transparent
         animationType="slide"
+        presentationStyle="overFullScreen"
+        statusBarTranslucent
         onRequestClose={() => setIsCommunityHelpVisible(false)}
       >
         <View style={styles.communityHelpBackdrop}>
+          <View style={styles.communityHelpDim} />
           <View style={styles.communityHelpPopover}>
             <View style={styles.communityHelpHeaderRow}>
               <View style={styles.communityHelpTitleWrap}>
-                <Text style={styles.communityHelpModalTitle}>How Community Points Work</Text>
+                <Text style={styles.communityHelpModalTitle}>How Points Work</Text>
               </View>
               <TouchableOpacity
                 style={styles.communityHelpCloseBtn}
@@ -1891,11 +2031,12 @@ export default function ProgressMainScreen() {
               </TouchableOpacity>
             </View>
             <Text style={styles.communityHelpBody}>
-              Community points reflect your contribution from completed sessions and coherence quality.
+              Points are earned through coherence - a measurable state where your breathing, heart rhythm, and
+              nervous system become more synchronized. Longer periods of steady coherence generate more points.
               {'\n\n'}
-              Each session adds points based on consistency, post-session quality, and streak momentum.
-              {'\n\n'}
-              Your points are added to the global community total shown on this card.
+              <Text style={styles.communityHelpLink} onPress={onPressCommunityHelpReadMore}>
+                Read more.
+              </Text>
             </Text>
             <View style={styles.communityHelpActionRow}>
               <TouchableOpacity
@@ -1976,43 +2117,51 @@ const styles = StyleSheet.create({
   },
   communityHelpBackdrop: {
     flex: 1,
-    backgroundColor: 'transparent',
-    justifyContent: 'flex-end',
+    width: '100%',
+  },
+  communityHelpDim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(23,23,23,0.7)',
   },
   communityHelpPopover: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     width: '100%',
     height: '75%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 44,
-    paddingTop: 32,
-    paddingBottom: 38,
+    paddingHorizontal: 36,
+    paddingTop: 50,
+    paddingBottom: 34,
   },
   communityHelpHeaderRow: {
-    minHeight: 34,
+    minHeight: 30,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 22,
   },
   communityHelpTitleWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingRight: 24,
+    paddingRight: 36,
     paddingLeft: 0,
   },
   communityHelpCloseBtn: {
     position: 'absolute',
-    right: 0,
-    top: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    right: -2,
+    top: -2,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: 'transparent',
   },
   communityToggleBtn: {
@@ -2075,7 +2224,7 @@ const styles = StyleSheet.create({
     marginTop: 0,
     marginBottom: spacing.md,
     borderRadius: borderRadius.lg,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFF4E8',
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.07)',
     paddingHorizontal: spacing.md,
@@ -2122,7 +2271,7 @@ const styles = StyleSheet.create({
   trendsChartWrap: {
     height: 222,
     borderRadius: 14,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FFF8EF',
     borderWidth: 1,
     borderColor: 'rgba(107,45,139,0.18)',
     overflow: 'hidden',
@@ -2493,6 +2642,7 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     flex: 1,
+    width: '100%',
     backgroundColor: 'rgba(0,0,0,0.35)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -2583,6 +2733,27 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.md,
   },
+  journeySurveyCardWrap: {
+    alignSelf: 'stretch',
+  },
+  journeySurveyCard: {
+    alignSelf: 'stretch',
+    borderRadius: borderRadius.lg,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.07)',
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
+  },
+  journeySurveyTitle: {
+    fontFamily: PROGRESS_FONT_BOLD,
+    fontSize: 14,
+    lineHeight: 26,
+    color: '#2C2C2E',
+    fontWeight: '800',
+    marginBottom: 6,
+  },
   journeyNextStepsTitle: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 14,
@@ -2610,14 +2781,20 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   communityHelpBody: {
-    fontFamily: PROGRESS_FONT_REGULAR,
+    fontFamily: 'Sailec-Light',
     fontWeight: '400',
+    fontStyle: 'normal',
     color: '#171717',
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 26,
+    letterSpacing: 0,
     textAlign: 'left',
     paddingHorizontal: 0,
-    marginBottom: 12,
+    marginBottom: 20,
+  },
+  communityHelpLink: {
+    color: '#6B2D8B',
+    textDecorationLine: 'underline',
   },
   communityHelpModalTitle: {
     fontFamily: PROGRESS_FONT_BOLD,
@@ -2629,11 +2806,12 @@ const styles = StyleSheet.create({
   },
   communityHelpActionRow: {
     marginTop: 'auto',
-    alignItems: 'center',
+    paddingTop: 8,
+    alignItems: 'stretch',
     justifyContent: 'center',
   },
   communityHelpActionBtn: {
-    width: 292,
+    width: '100%',
     height: 48,
     borderRadius: 24,
     backgroundColor: '#FFFFFF',
@@ -2667,10 +2845,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   journeySurveyToggleWrap: {
-    marginBottom: 8,
-  },
-  journeyNextStepsToggleWrap: {
-    marginTop: 8,
+    marginBottom: 2,
   },
   journeyNextStepsCtaBtn: {
     marginTop: 10,
@@ -2775,14 +2950,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 2,
     right: 2,
-    top: 14,
+    top: 17,
     height: 1,
     backgroundColor: 'rgba(52,37,61,0.18)',
   },
   phaseProgressLine: {
     position: 'absolute',
     left: 2,
-    top: 13,
+    top: 16,
     height: 3,
     borderRadius: 2,
     backgroundColor: 'rgba(225,139,49,0.75)',
@@ -2798,9 +2973,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   phaseNode: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     borderWidth: 0,
     borderColor: 'transparent',
     backgroundColor: '#F1ECF6',
@@ -2832,9 +3007,9 @@ const styles = StyleSheet.create({
   },
   phaseNodeGlow: {
     position: 'absolute',
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: 'rgba(225,139,49,0.28)',
     shadowColor: '#E18B31',
     shadowOpacity: 0.5,
@@ -2862,12 +3037,6 @@ const styles = StyleSheet.create({
   phaseCompletionDotBottom: { bottom: 2, left: 20 },
   phaseCompletionDotLeft: { top: 20, left: 1 },
   phaseCompletionDotTopLeft: { top: 9, left: 5 },
-  phasePendingDash: {
-    color: '#171717AD',
-    fontFamily: 'Sailec-Thin',
-    fontSize: 13,
-    marginTop: -1,
-  },
   phaseNodeLabelAndroid: {
     includeFontPadding: false,
   },
@@ -3147,24 +3316,24 @@ const styles = StyleSheet.create({
     top: 0,
     height: '52%',
   },
+  editorialQuoteBlock: {
+    width: '100%',
+    alignSelf: 'center',
+    textAlign: 'center',
+    marginBottom: spacing.md,
+  },
   editorialQuoteText: {
     fontFamily: 'Sailec-RegularItalic',
     color: '#3D2918',
     fontSize: 13,
-    lineHeight: 26,
+    lineHeight: 22,
     fontWeight: '400',
-    textAlign: 'center',
-    marginBottom: spacing.md,
   },
   editorialQuoteSource: {
-    fontFamily: PROGRESS_FONT_BOLD,
+    fontFamily: 'Sailec-Thin',
     color: '#171717',
-    fontSize: 15,
-    lineHeight: 26,
-    fontWeight: '700',
-    textAlign: 'center',
-    width: '100%',
-    alignSelf: 'center',
-    marginBottom: spacing.md,
+    fontSize: 12,
+    lineHeight: 22,
+    fontWeight: '400',
   },
 });
