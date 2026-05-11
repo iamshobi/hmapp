@@ -33,12 +33,12 @@ export default function ProgressStatePickerScreen() {
         end={{ x: 0.94, y: 1 }}
         style={[styles.header, { paddingTop: insets.top + 10 }]}
       >
-        <Text style={styles.headerTitle}>My Progress</Text>
+        <Text style={styles.headerTitle}>Progress</Text>
       </LinearGradient>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Temporary Preview States</Text>
-        <Text style={styles.subtitle}>Tap a button to open the corresponding My Progress preview by Journey logic.</Text>
+        <Text style={styles.subtitle}>Tap a button to open the corresponding Progress preview by Journey logic.</Text>
 
         {STATE_OPTIONS.map((item) => (
           <React.Fragment key={item.previewType}>

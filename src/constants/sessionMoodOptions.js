@@ -1,5 +1,5 @@
 /**
- * `trackColor` — mood wheel palette for My Progress mood tracker **week / month / year** grids only
+ * `trackColor` — mood wheel palette for Progress mood tracker **week / month / year** grids only
  * (Trend · Insights and session mood modal stay separate).
  */
 export const SESSION_MOOD_OPTIONS = [

@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import Svg, { Circle, Defs, LinearGradient, RadialGradient, Stop, Path } from 'react-native-svg';
 
 /**
- * Branded help icon used across My Progress cards.
+ * Branded help icon used across Progress cards.
  * Replaces static PNG to keep vector crispness at all scales.
  */
 export default function HelpInfoIcon({ size = 18 }) {

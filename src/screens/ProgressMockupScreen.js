@@ -9,7 +9,7 @@ import { ChevronLeft } from 'lucide-react-native';
 import MoodMeter from '../components/MoodMeter';
 import { colors, spacing, shadows } from '../theme';
 
-export default function MyProgressMockupScreen() {
+export default function ProgressMockupScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 
@@ -19,7 +19,7 @@ export default function MyProgressMockupScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
           <ChevronLeft size={26} color={colors.textDark} />
         </TouchableOpacity>
-        <Text style={styles.navTitle}>My Progress (mockup)</Text>
+        <Text style={styles.navTitle}>Progress (mockup)</Text>
         <View style={{ width: 26 }} />
       </View>
 
@@ -27,7 +27,7 @@ export default function MyProgressMockupScreen() {
         <View style={styles.phoneOuter}>
           <View style={styles.phoneBezel}>
             <LinearGradient colors={['#FF7043', '#FFA726']} style={styles.mockHeader}>
-              <Text style={styles.mockTitle}>My Progress</Text>
+              <Text style={styles.mockTitle}>Progress</Text>
             </LinearGradient>
             <View style={styles.mockBody}>
               <MoodMeter compact demoApril2026={true} />
@@ -35,7 +35,7 @@ export default function MyProgressMockupScreen() {
           </View>
         </View>
         <Text style={styles.caption}>
-          Compact MoodMeter inside a device frame. Full layout: Progress tab → My Progress.
+          Compact MoodMeter inside a device frame. Full layout: Progress tab → Progress.
         </Text>
       </ScrollView>
     </View>

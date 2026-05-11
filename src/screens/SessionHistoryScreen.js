@@ -1,5 +1,14 @@
-import React, { useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, PanResponder, Alert } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Animated,
+  PanResponder,
+  Alert,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   CalendarDays,
@@ -15,6 +24,12 @@ import { borderRadius, spacing } from '../theme';
 
 const FONT_REGULAR = 'Sailec-Medium';
 const FONT_BOLD = 'Sailec-Bold';
+/** Matches ProgressMainScreen `styles.root` (Trends + Session History body). */
+const PAGE_BG = '#F3F3F5';
+/** Matches ProgressMainScreen `styles.tabIntroSub` (session intro + graph subtitle). */
+const SUBTITLE_TEXT_COLOR = '#171717';
+/** Matches ProgressMainScreen muted secondary (e.g. `historicalDataHint`, `phaseTimelineSub`). */
+const META_TEXT_COLOR = '#171717AD';
 const TYPE = {
   title: 28,
   h2: 16,
@@ -22,29 +37,29 @@ const TYPE = {
   caption: 12,
 };
 const WARM = {
-  gradA: '#26BF8C',
-  gradB: '#2AB8DF',
-  gradC: '#2AB8DF',
-  textStrong: '#164C5B',
-  textMuted: '#4C7882',
-  chipBg: '#E4F5F9',
-  chipActive: '#169FB2',
-  chipActiveText: '#F5FFFF',
-  surface: '#EEF8FB',
-  cardBorder: 'rgba(42,184,223,0.22)',
-  cardShadow: '#1F8CAC',
+  gradA: '#F6A400',
+  gradB: '#F18A1F',
+  gradC: '#EB6A33',
+  textStrong: '#6E3A16',
+  textMuted: '#8D5A33',
+  chipBg: '#FCE7D1',
+  chipActive: '#E18B31',
+  chipActiveText: '#FFFFFF',
+  surface: '#FFF5EC',
+  cardBorder: 'rgba(225,139,49,0.28)',
+  cardShadow: '#E18B31',
 };
 const HM_PURPLE = {
-  gradA: '#C62B75',
-  gradB: '#7B2A8B',
-  gradC: '#3D1260',
-  textStrong: '#2F1E44',
-  textMuted: '#6A5A7E',
-  chipBg: 'rgba(107,45,139,0.12)',
-  chipActive: '#6B2D8B',
+  gradA: '#F6A400',
+  gradB: '#EE7D29',
+  gradC: '#DA5C32',
+  textStrong: '#6E3A16',
+  textMuted: '#8D5A33',
+  chipBg: '#FBE2CB',
+  chipActive: '#D9782A',
   chipActiveText: '#FFFFFF',
-  surface: '#F7F3FC',
-  cardBorder: 'rgba(107,45,139,0.18)',
+  surface: '#FFF3E8',
+  cardBorder: 'rgba(225,139,49,0.28)',
 };
 const TREND_WRAP_HEIGHT = 312;
 const TREND_GRID_TOP = 24;
@@ -53,78 +68,121 @@ const TREND_BASELINE_BOTTOM = 60;
 const TREND_X_AXIS_BOTTOM = 20;
 const TREND_TRACK_LEFT = '30%';
 const TREND_TOOLTIP_LEFT = '22%';
-const SWIPE_ACTION_WIDTH = 72;
 
-function SwipeableSessionRow({ children, onDelete }) {
+/** Swipe strip width for the delete action column. */
+const SESSION_SWIPE_COL_WIDTH = 58;
+
+function SessionSwipeRow({
+  children,
+  onDelete,
+  swipeRowId,
+  activeSwipeRowId,
+  onSwipeOpened,
+  onSwipeClosed,
+}) {
   const translateX = useRef(new Animated.Value(0)).current;
+  const currentX = useRef(0);
   const openedRef = useRef(false);
+  const dragStartXRef = useRef(0);
+  const swipeWidthRef = useRef(SESSION_SWIPE_COL_WIDTH);
+  const animateToRef = useRef(() => {});
+  const swipeCallbacksRef = useRef({ onSwipeOpened: undefined, onSwipeClosed: undefined });
 
-  const closeRow = () => {
-    openedRef.current = false;
+  const stripWidth = SESSION_SWIPE_COL_WIDTH;
+  swipeWidthRef.current = stripWidth;
+  swipeCallbacksRef.current = { onSwipeOpened, onSwipeClosed };
+
+  animateToRef.current = (toValue) => {
+    const prevOpen = openedRef.current;
+    currentX.current = toValue;
+    openedRef.current = toValue !== 0;
+    if (toValue !== 0 && !prevOpen) {
+      swipeCallbacksRef.current.onSwipeOpened?.();
+    } else if (toValue === 0 && prevOpen) {
+      swipeCallbacksRef.current.onSwipeClosed?.();
+    }
     Animated.spring(translateX, {
-      toValue: 0,
+      toValue,
       useNativeDriver: true,
       bounciness: 0,
-      speed: 30,
+      speed: 18,
     }).start();
   };
 
-  const openRow = () => {
-    openedRef.current = true;
-    Animated.spring(translateX, {
-      toValue: -SWIPE_ACTION_WIDTH,
-      useNativeDriver: true,
-      bounciness: 0,
-      speed: 30,
-    }).start();
-  };
+  useEffect(() => {
+    if (activeSwipeRowId != null && activeSwipeRowId !== swipeRowId && openedRef.current) {
+      animateToRef.current(0);
+    }
+  }, [activeSwipeRowId, swipeRowId]);
 
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, gesture) =>
-        Math.abs(gesture.dx) > Math.abs(gesture.dy) && Math.abs(gesture.dx) > 6,
-      onPanResponderGrant: () => {
-        translateX.stopAnimation();
-      },
-      onPanResponderMove: (_, gesture) => {
-        const base = openedRef.current ? -SWIPE_ACTION_WIDTH : 0;
-        const next = Math.max(-SWIPE_ACTION_WIDTH, Math.min(0, base + gesture.dx));
-        translateX.setValue(next);
-      },
-      onPanResponderRelease: (_, gesture) => {
-        const velocityOpen = gesture.vx < -0.45;
-        const draggedOpen = gesture.dx < -32;
-        const velocityClose = gesture.vx > 0.45;
-        const draggedClose = gesture.dx > 24;
-
-        if (openedRef.current) {
-          if (velocityClose || draggedClose) closeRow();
-          else openRow();
-          return;
-        }
-
-        if (velocityOpen || draggedOpen) openRow();
-        else closeRow();
-      },
-      onPanResponderTerminate: closeRow,
-    })
-  ).current;
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gesture) =>
+          Math.abs(gesture.dx) > Math.abs(gesture.dy) && Math.abs(gesture.dx) > 8,
+        onPanResponderGrant: () => {
+          translateX.stopAnimation();
+          const W = swipeWidthRef.current;
+          dragStartXRef.current = openedRef.current ? -W : 0;
+        },
+        onPanResponderMove: (_, gesture) => {
+          const W = swipeWidthRef.current;
+          const next = Math.max(-W, Math.min(0, dragStartXRef.current + gesture.dx));
+          translateX.setValue(next);
+        },
+        onPanResponderRelease: (_, gesture) => {
+          const W = swipeWidthRef.current;
+          const end = dragStartXRef.current + gesture.dx;
+          const vx = gesture.vx;
+          if (openedRef.current) {
+            const velocityClose = vx > 0.35;
+            const draggedClose = end > -W / 2;
+            if (velocityClose || draggedClose) animateToRef.current(0);
+            else animateToRef.current(-W);
+            return;
+          }
+          const velocityOpen = vx < -0.35;
+          const draggedOpen = end < -W / 2;
+          if (velocityOpen || draggedOpen) animateToRef.current(-W);
+          else animateToRef.current(0);
+        },
+        onPanResponderTerminate: (_, gesture) => {
+          const W = swipeWidthRef.current;
+          const end = dragStartXRef.current + gesture.dx;
+          const vx = gesture.vx;
+          if (openedRef.current) {
+            const velocityClose = vx > 0.35;
+            const draggedClose = end > -W / 2;
+            if (velocityClose || draggedClose) animateToRef.current(0);
+            else animateToRef.current(-W);
+            return;
+          }
+          const velocityOpen = vx < -0.35;
+          const draggedOpen = end < -W / 2;
+          if (velocityOpen || draggedOpen) animateToRef.current(-W);
+          else animateToRef.current(0);
+        },
+      }),
+    [translateX]
+  );
 
   return (
-    <View style={styles.sessionSwipeRow}>
-      <TouchableOpacity
-        activeOpacity={0.84}
-        style={styles.sessionDeleteAction}
-        accessibilityRole="button"
-        accessibilityLabel="Delete session"
-        onPress={() => {
-          closeRow();
-          onDelete?.();
-        }}
+    <View style={styles.sessionSwipeRowWrap}>
+      <View style={[styles.sessionSwipeActions, { width: stripWidth }]}>
+        <TouchableOpacity
+          style={[styles.sessionSwipeActionBtn, styles.sessionSwipeDeleteBtn]}
+          onPress={onDelete}
+          activeOpacity={0.86}
+          accessibilityRole="button"
+          accessibilityLabel="Delete session"
+        >
+          <Trash2 size={16} color="#C92262" strokeWidth={2.2} />
+        </TouchableOpacity>
+      </View>
+      <Animated.View
+        style={[styles.sessionSwipeContent, { transform: [{ translateX }] }]}
+        {...panResponder.panHandlers}
       >
-        <Trash2 size={16} color="#D64848" strokeWidth={2.4} />
-      </TouchableOpacity>
-      <Animated.View style={{ transform: [{ translateX }] }} {...panResponder.panHandlers}>
         {children}
       </Animated.View>
     </View>
@@ -206,6 +264,16 @@ function formatDate(value) {
   });
 }
 
+/** Minutes graph: show hours when ≥ 60m (e.g. `45min`, `1h`, `1h 23min`). */
+function formatTotalDurationMinutes(totalMinutes) {
+  const n = Math.max(0, Math.floor(Number(totalMinutes) || 0));
+  const h = Math.floor(n / 60);
+  const min = n % 60;
+  if (h <= 0) return `${min}min`;
+  if (min <= 0) return `${h}h`;
+  return `${h}h ${min}min`;
+}
+
 function toLocalDateKey(value) {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return null;
@@ -213,6 +281,37 @@ function toLocalDateKey(value) {
   const m = `${d.getMonth() + 1}`.padStart(2, '0');
   const day = `${d.getDate()}`.padStart(2, '0');
   return `${y}-${m}-${day}`;
+}
+
+/** Resolve saved post-session note (closest by time on same local day) for “Has note” pill. */
+function findMatchedSessionNote(entry, notes) {
+  if (!entry || !Array.isArray(notes)) return { body: null, noteId: null };
+  const direct = entry.note ?? entry.notes ?? entry.body;
+  if (typeof direct === 'string' && direct.trim()) {
+    return { body: direct.trim(), noteId: null };
+  }
+
+  const entryAt = entry.at || entry.createdAt || entry.date;
+  const entryTime = new Date(entryAt).getTime();
+  const entryKey = toLocalDateKey(entryAt);
+  if (!entryKey || !Number.isFinite(entryTime)) return { body: null, noteId: null };
+
+  let best = null;
+  let bestDelta = Infinity;
+  for (const note of notes) {
+    const rawTs = note?.createdAt || note?.updatedAt;
+    const noteTime = new Date(rawTs).getTime();
+    if (!Number.isFinite(noteTime)) continue;
+    if (toLocalDateKey(rawTs) !== entryKey) continue;
+    const delta = Math.abs(noteTime - entryTime);
+    if (delta < bestDelta) {
+      bestDelta = delta;
+      best = note;
+    }
+  }
+  const body = best?.body;
+  const trimmed = typeof body === 'string' && body.trim() ? body.trim() : null;
+  return { body: trimmed, noteId: trimmed && best?.id ? best.id : null };
 }
 
 // Use actual session names from app flows (Measure + Play themes).
@@ -251,8 +350,8 @@ function SessionIconBg({ size = 44, opacity = 0.5, idSuffix = 'default', glyphPa
           gradientUnits="userSpaceOnUse"
           gradientTransform="matrix(34.5113 -49.1729 61.5146 11.808 10.5263 52.6316)"
         >
-          <Stop stopColor="#26BF8C" />
-          <Stop offset="0.515625" stopColor="#2AB8DF" />
+          <Stop stopColor="#F6A400" />
+          <Stop offset="0.515625" stopColor="#F18A1F" />
           <Stop offset="0.9375" stopColor="#FFFFFF" stopOpacity="0" />
         </RadialGradient>
         <RadialGradient
@@ -263,8 +362,8 @@ function SessionIconBg({ size = 44, opacity = 0.5, idSuffix = 'default', glyphPa
           gradientUnits="userSpaceOnUse"
           gradientTransform="translate(56.9173 43.609) rotate(-141.968) scale(60.0424 47.0707)"
         >
-          <Stop stopColor="#6B2D8B" />
-          <Stop offset="0.494792" stopColor="#8D5DA6" stopOpacity="0.6" />
+          <Stop stopColor="#EB6A33" />
+          <Stop offset="0.494792" stopColor="#C31F64" stopOpacity="0.62" />
           <Stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
         </RadialGradient>
         <RadialGradient
@@ -275,7 +374,7 @@ function SessionIconBg({ size = 44, opacity = 0.5, idSuffix = 'default', glyphPa
           gradientUnits="userSpaceOnUse"
           gradientTransform="translate(20.1504 2.10526) rotate(88.8596) scale(64.2232 86.2412)"
         >
-          <Stop offset="0.109375" stopColor="#2AB8DF" />
+          <Stop offset="0.109375" stopColor="#F6A400" />
           <Stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
         </RadialGradient>
       </Defs>
@@ -300,8 +399,8 @@ function SessionListIcon({ iconKey = 'heart', size = 20, idSuffix = 'default' })
     <Svg width={size} height={size} viewBox="0 0 20 20" fill="none">
       <Defs>
         <SvgLinearGradient id={gradId} x1="2" y1="18" x2="18" y2="2" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="#136A6C" />
-          <Stop offset="1" stopColor="#1B5E8E" />
+          <Stop offset="0" stopColor="#C31F64" />
+          <Stop offset="1" stopColor="#E18B31" />
         </SvgLinearGradient>
       </Defs>
       {iconKey === 'calendar' ? (
@@ -369,7 +468,16 @@ export default function SessionHistoryScreen() {
   const [range, setRange] = useState('7d');
   const [metric, setMetric] = useState('coherence');
   const [deletedRowIds, setDeletedRowIds] = useState([]);
+  const [openSwipeSessionId, setOpenSwipeSessionId] = useState(null);
   const milestoneSessionCount = useMemo(() => getMilestoneListCount(effectiveSessions), [effectiveSessions]);
+
+  const notifySwipeOpened = useCallback((id) => {
+    setOpenSwipeSessionId(id);
+  }, []);
+
+  const notifySwipeClosed = useCallback((id) => {
+    setOpenSwipeSessionId((prev) => (prev === id ? null : prev));
+  }, []);
 
   const rows = useMemo(() => {
     const list = Array.isArray(surveyResults) ? surveyResults : [];
@@ -398,18 +506,25 @@ export default function SessionHistoryScreen() {
       const hasDateMatchedNote = Boolean(entryDateKey && noteDateSet.has(entryDateKey));
       const hasFallbackNote = !hasDateMatchedNote && noteFallbackCount > 0 && idx < Math.min(noteFallbackCount, targetCount);
       const noteMatch = hasDateMatchedNote || hasFallbackNote || Boolean(entry?.note || entry?.notes || entry?.body);
-      // Design-preview helper: if there are no real note matches, mark a few rows deterministically.
       const demoNote = !noteMatch && noteFallbackCount === 0 && idx % 3 === 0;
+      let { body: noteBody } = findMatchedSessionNote(entry, notes);
+      if (!noteBody && hasFallbackNote && notes[idx]) {
+        const fb = notes[idx]?.body;
+        if (typeof fb === 'string' && fb.trim()) {
+          noteBody = fb.trim();
+        }
+      }
+      const hasNote = Boolean(noteMatch || demoNote || (noteBody && noteBody.length > 0));
       return {
         id: `${entry?.at || 'now'}-${idx}`,
         at: entry?.at || entry?.createdAt || entry?.date || null,
         title: SESSION_TYPES[idx % SESSION_TYPES.length],
-        date: formatDate(entry?.at),
+        date: formatDate(entry?.at || entry?.createdAt || entry?.date),
         minutes: 10 + (idx % 3) * 5,
         pct,
         tone,
         iconVariantPaths,
-        hasNote: noteMatch || demoNote,
+        hasNote,
       };
     });
     const visibleRows = allRows.filter((row) => !deletedRowIds.includes(row.id));
@@ -471,16 +586,18 @@ export default function SessionHistoryScreen() {
     }
     if (metric === 'sessionLength') {
       const totalMin = raw.reduce((s, v) => s + v, 0);
+      const timeLabel = formatTotalDurationMinutes(totalMin);
       return {
-        title: `Total Sessions: ${raw.length}`,
+        title: `Sessions: ${raw.length}`,
         subtitle: '',
-        rightMeta: `Total Time: ${totalMin}m`,
+        rightMeta: `Total time: ${timeLabel}`,
         yTicks: ['15 m', '12 m', '9 m', '6 m', '3 m'],
         bars,
         xLabels: active.x,
         activeIndex,
         minutesTotal: totalMin,
         minutesSessions: raw.length,
+        minutesTotalLabel: timeLabel,
       };
     }
     if (metric === 'quality') {
@@ -516,7 +633,7 @@ export default function SessionHistoryScreen() {
   }, [metric, range]);
 
   return (
-    <View style={[styles.root, { backgroundColor: theme.surface }]}>
+    <View style={[styles.root, { backgroundColor: PAGE_BG }]}>
       <LinearGradient
         colors={[theme.gradA, theme.gradB, theme.gradC]}
         start={{ x: 0.15, y: 0 }}
@@ -531,7 +648,7 @@ export default function SessionHistoryScreen() {
               if (navigation.canGoBack()) {
                 navigation.goBack();
               } else {
-                navigation.navigate('MyProgress');
+                navigation.navigate('Progress');
               }
             }}
             activeOpacity={0.84}
@@ -544,16 +661,17 @@ export default function SessionHistoryScreen() {
       </LinearGradient>
 
       <ScrollView
+        style={{ flex: 1, backgroundColor: PAGE_BG }}
         contentContainerStyle={[styles.content, { paddingTop: spacing.lg, paddingBottom: insets.bottom + 22 }]}
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.sectionIntro}>
           {isGraphRoute
             ? 'Review your coherence trends across ranges and metrics.'
-            : 'Review your progress and coherence session metrics here.'}
+            : 'Here is your list of sessions for the last 7 days. Tap on the filters below to check your older sessions. Swipe on a session to delete it from this list.'}
         </Text>
         {!isGraphRoute ? (
-          <Text style={[styles.sessionCountText, { color: theme.textStrong }]}>
+          <Text style={styles.sessionCountText}>
             Showing {rows.length} sessions based on your milestone
           </Text>
         ) : null}
@@ -590,21 +708,27 @@ export default function SessionHistoryScreen() {
         {!isGraphRoute ? (
           <>
             {rows.map((row) => (
-              <SwipeableSessionRow
+              <SessionSwipeRow
                 key={row.id}
+                swipeRowId={row.id}
+                activeSwipeRowId={openSwipeSessionId}
+                onSwipeOpened={() => notifySwipeOpened(row.id)}
+                onSwipeClosed={() => notifySwipeClosed(row.id)}
                 onDelete={() =>
                   Alert.alert('Delete session?', 'This will remove the row from your history list.', [
                     { text: 'Cancel', style: 'cancel' },
                     {
                       text: 'Delete',
                       style: 'destructive',
-                      onPress: () =>
-                        setDeletedRowIds((prev) => (prev.includes(row.id) ? prev : [...prev, row.id])),
+                      onPress: () => {
+                        setOpenSwipeSessionId((prev) => (prev === row.id ? null : prev));
+                        setDeletedRowIds((prev) => (prev.includes(row.id) ? prev : [...prev, row.id]));
+                      },
                     },
                   ])
                 }
               >
-                <View style={styles.sessionCard}>
+                <View style={[styles.sessionCard, styles.sessionCardInSwipeRow]}>
                   <View style={styles.sessionLeft}>
                     <View style={styles.sessionIconWrap}>
                       <SessionIconBg size={44} opacity={1} idSuffix={row.id} glyphPaths={row.iconVariantPaths} />
@@ -626,7 +750,7 @@ export default function SessionHistoryScreen() {
                     <Text style={styles.minsTxt}>{row.minutes} min</Text>
                   </View>
                 </View>
-              </SwipeableSessionRow>
+              </SessionSwipeRow>
             ))}
           </>
         ) : (
@@ -773,7 +897,9 @@ export default function SessionHistoryScreen() {
                   <View style={styles.minutesTooltipDivider} />
                   <View style={styles.minutesTooltipCol}>
                     <Text style={styles.minutesTooltipKey} numberOfLines={1}>Time</Text>
-                    <Text style={styles.minutesTooltipVal} numberOfLines={1}>{graphState.minutesTotal ?? 6}m</Text>
+                    <Text style={styles.minutesTooltipVal} numberOfLines={1}>
+                      {graphState.minutesTotalLabel ?? formatTotalDurationMinutes(graphState.minutesTotal ?? 0)}
+                    </Text>
                   </View>
                 </View>
 
@@ -890,7 +1016,7 @@ export default function SessionHistoryScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: WARM.surface },
+  root: { flex: 1, backgroundColor: PAGE_BG },
   headerBg: {
     paddingHorizontal: spacing.md,
     paddingBottom: spacing.xl + 6,
@@ -924,7 +1050,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT_REGULAR,
     fontSize: TYPE.body,
     lineHeight: 20,
-    color: WARM.textMuted,
+    color: SUBTITLE_TEXT_COLOR,
     marginTop: spacing.sm,
     marginBottom: spacing.xl,
   },
@@ -934,6 +1060,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT_BOLD,
     fontSize: 12,
     lineHeight: 18,
+    color: SUBTITLE_TEXT_COLOR,
   },
   filterRow: { gap: 8, paddingBottom: spacing.xl },
   filterChip: {
@@ -965,22 +1092,55 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 2,
   },
-  sessionSwipeRow: {
-    position: 'relative',
-    marginBottom: spacing.lg,
+  /** Sliding panel: square trailing edge meets swipe strip flush; stroke is on sessionSwipeRowWrap. */
+  sessionCardInSwipeRow: {
+    alignSelf: 'stretch',
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
+    borderTopLeftRadius: 24,
+    borderBottomLeftRadius: 24,
+    borderWidth: 0,
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
-  sessionDeleteAction: {
-    width: 72,
-    height: '100%',
+  sessionSwipeRowWrap: {
+    marginBottom: spacing.lg,
+    borderRadius: 24,
+    overflow: 'hidden',
+    width: '100%',
+    backgroundColor: PAGE_BG,
+    borderWidth: 1,
+    borderColor: WARM.cardBorder,
+  },
+  sessionSwipeActions: {
     position: 'absolute',
     right: 0,
     top: 0,
-    borderRadius: 24,
+    bottom: 0,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    justifyContent: 'flex-end',
+    zIndex: 0,
+    elevation: 0,
+    borderTopRightRadius: 24,
+    borderBottomRightRadius: 24,
+    overflow: 'hidden',
+  },
+  sessionSwipeContent: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#D64848',
+    zIndex: 2,
+    elevation: 0,
+    width: '100%',
+  },
+  sessionSwipeActionBtn: {
+    width: 58,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  sessionSwipeDeleteBtn: {
+    backgroundColor: '#FFE6D6',
   },
   sessionLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md + 2, flex: 1, paddingRight: spacing.md },
   sessionIconWrap: {
@@ -991,17 +1151,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  sessionName: { fontFamily: FONT_REGULAR, fontSize: 15, lineHeight: 22, color: WARM.textStrong, fontWeight: '500' },
-  sessionMeta: { fontFamily: FONT_REGULAR, fontSize: TYPE.caption, lineHeight: 16, color: WARM.textMuted, fontWeight: '400' },
+  sessionName: {
+    fontFamily: FONT_REGULAR,
+    fontSize: 15,
+    lineHeight: 22,
+    fontWeight: '500',
+    color: SUBTITLE_TEXT_COLOR,
+  },
+  sessionMeta: { fontFamily: FONT_REGULAR, fontSize: TYPE.caption, lineHeight: 16, color: META_TEXT_COLOR, fontWeight: '400' },
   sessionRight: { alignItems: 'flex-end' },
   sessionNoteBadge: {
     marginBottom: 6,
     paddingHorizontal: 8,
     height: 18,
     borderRadius: 999,
-    backgroundColor: 'rgba(22,159,178,0.16)',
+    backgroundColor: 'rgba(225,139,49,0.16)',
     borderWidth: 1,
-    borderColor: 'rgba(22,159,178,0.35)',
+    borderColor: 'rgba(225,139,49,0.4)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1009,7 +1175,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT_BOLD,
     fontSize: 10,
     lineHeight: 12,
-    color: '#0F6D7D',
+    color: '#9B4E16',
   },
   cohPill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
   cohPillTxt: { fontFamily: FONT_REGULAR, fontSize: 11, lineHeight: 14, letterSpacing: 0.3, fontWeight: '600' },
@@ -1058,7 +1224,7 @@ const styles = StyleSheet.create({
     fontFamily: FONT_REGULAR,
     fontSize: TYPE.body,
     lineHeight: 18,
-    color: '#594C43',
+    color: SUBTITLE_TEXT_COLOR,
   },
   metricChipRow: { gap: 8, marginTop: spacing.lg, paddingBottom: spacing.md },
   metricChip: {
@@ -1330,7 +1496,8 @@ const styles = StyleSheet.create({
     width: 36,
     textAlign: 'right',
     fontFamily: FONT_REGULAR,
-    fontSize: 13,
+    fontSize: 11,
+    lineHeight: 14,
     color: '#2C2C2E',
   },
   minutesGridLine: {
@@ -1459,7 +1626,8 @@ const styles = StyleSheet.create({
     width: 36,
     textAlign: 'right',
     fontFamily: FONT_REGULAR,
-    fontSize: 13,
+    fontSize: 11,
+    lineHeight: 14,
     color: '#2C2C2E',
   },
   pointsGridLine: {
@@ -1567,7 +1735,8 @@ const styles = StyleSheet.create({
     width: 36,
     textAlign: 'right',
     fontFamily: FONT_REGULAR,
-    fontSize: 13,
+    fontSize: 11,
+    lineHeight: 14,
     color: '#2C2C2E',
   },
   coherenceGridLine: {

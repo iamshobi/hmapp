@@ -489,6 +489,7 @@ export default function SessionRewardsScreen() {
     lastSurveyResult,
     surveyResults,
     recordSessionSurveyAfter,
+    addSessionNote,
   } = useMysession();
 
   const themeId         = route.params?.themeId ?? 'universe';
@@ -613,6 +614,10 @@ export default function SessionRewardsScreen() {
   }, [themeId, oceanLevel]);
 
   const goBack = () => {
+    const trimmed = typeof journalText === 'string' ? journalText.trim() : '';
+    if (trimmed) {
+      addSessionNote(trimmed);
+    }
     if (themeId === 'ocean') nav.navigate('OceanTide', { themeId: 'ocean' });
     else nav.navigate('ThemeGames', { themeId });
   };

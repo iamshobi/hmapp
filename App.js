@@ -13,6 +13,7 @@ import { Home, BookOpen, HeartPulse, Gamepad2, BarChart3 } from 'lucide-react-na
 import { MysessionProvider } from './src/context/mysessionContext';
 import CriticalShiftAlertOverlay from './src/components/CriticalShiftAlertOverlay';
 import HomeScreen from './src/screens/HomeScreenRefreshed';
+import SettingsScreen from './src/screens/SettingsScreen';
 import LearnTabScreen from './src/screens/LearnTabScreen';
 import MeasureStack from './src/screens/MeasureStack';
 import ProgressStack from './src/screens/ProgressStack';
@@ -86,6 +87,7 @@ function HomeStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Home" component={HomeScreen} />
+      <Stack.Screen name="Settings" component={SettingsScreen} />
     </Stack.Navigator>
   );
 }
@@ -108,6 +110,18 @@ function tabBarStyleForMeasure(route) {
     return { display: 'none' };
   }
   if (routeName !== 'MeasureEntry' && routeName !== 'MeasureInsightsSamples') {
+    return { display: 'none' };
+  }
+  return {
+    backgroundColor: colors.white,
+    borderTopColor: 'rgba(0,0,0,0.08)',
+    borderTopWidth: 1,
+  };
+}
+
+function tabBarStyleForHome(route) {
+  const routeName = getFocusedRouteNameFromRoute(route) ?? 'Home';
+  if (routeName === 'Settings') {
     return { display: 'none' };
   }
   return {
@@ -176,10 +190,11 @@ export default function App() {
               <Tab.Screen
                 name="HomeTab"
                 component={HomeStack}
-                options={{
+                options={({ route }) => ({
                   title: 'Home',
                   tabBarIcon: ({ color, size }) => <Home size={size ?? 22} color={color} />,
-                }}
+                  tabBarStyle: tabBarStyleForHome(route),
+                })}
               />
               <Tab.Screen
                 name="Learn"
@@ -209,10 +224,11 @@ export default function App() {
                 })}
               />
               <Tab.Screen
-                name="MyProgress"
+                name="Progress"
                 component={ProgressStack}
                 options={{
-                  title: 'My Progress',
+                  title: 'Progress',
+                  tabBarLabel: 'Progress',
                   tabBarIcon: ({ color, size }) => <BarChart3 size={size ?? 22} color={color} />,
                 }}
               />

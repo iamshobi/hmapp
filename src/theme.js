@@ -39,7 +39,7 @@ export const palette = {
   hmPurpleMid: '#8E24AA',
   hmViolet: '#7C4DFF',
 
-  /** Progress / My Progress warm header */
+  /** Progress tab — warm header */
   orangeDeep: '#F57C00',
   orangeBright: '#FF9800',
   yellowWarm: '#FFB74D',
@@ -87,7 +87,7 @@ export const gradients = {
   /** Coherence session — magenta → purple stack */
   session: ['#D81B60', '#AB47BC', '#6A1B9A', '#311B92'],
   sessionCalibrating: ['#C2185B', '#8E24AA', '#4527A0'],
-  /** My Progress — warm header */
+  /** Progress — warm header */
   progressHeader: ['#FF9800', '#FFB74D', '#FFCA28'],
   /** Session complete */
   complete: ['#00897B', '#00ACC1', '#5E35B1'],
@@ -124,6 +124,41 @@ export const gradients = {
   gameSessionUniverse: [palette.hmPurpleDark, '#4527A0', B.deepPurple.hex, B.brandPurple.hex],
   /** Play / BreathSession — ocean: HM app blue + guided-techniques axis */
   gameSessionOcean: ['#031a2e', '#042898', B.appBlue.hex, '#11A8B2'],
+};
+
+/**
+ * Settings header brand icon — SVG linear-gradient(63.91deg, …) in viewBox 0 0 35 24.
+ * CSS 0° = up; SVG y increases down → direction (sin θ, -cos θ). Line through center with slack past bbox.
+ */
+const SETTINGS_BRAND_VB_W = 35;
+const SETTINGS_BRAND_VB_H = 24;
+const SETTINGS_BRAND_BADGE_DEG = 63.91;
+const SETTINGS_BRAND_BADGE_RAD = (SETTINGS_BRAND_BADGE_DEG * Math.PI) / 180;
+const SETTINGS_BRAND_VX = Math.sin(SETTINGS_BRAND_BADGE_RAD);
+const SETTINGS_BRAND_VY = -Math.cos(SETTINGS_BRAND_BADGE_RAD);
+const SETTINGS_BRAND_CX = SETTINGS_BRAND_VB_W / 2;
+const SETTINGS_BRAND_CY = SETTINGS_BRAND_VB_H / 2;
+const SETTINGS_BRAND_HALF_DIAG = Math.hypot(SETTINGS_BRAND_VB_W, SETTINGS_BRAND_VB_H) / 2;
+const SETTINGS_BRAND_L = SETTINGS_BRAND_HALF_DIAG + 8;
+
+export const settingsBrandBadgeSvgGradient = {
+  x1: SETTINGS_BRAND_CX - SETTINGS_BRAND_L * SETTINGS_BRAND_VX,
+  y1: SETTINGS_BRAND_CY - SETTINGS_BRAND_L * SETTINGS_BRAND_VY,
+  x2: SETTINGS_BRAND_CX + SETTINGS_BRAND_L * SETTINGS_BRAND_VX,
+  y2: SETTINGS_BRAND_CY + SETTINGS_BRAND_L * SETTINGS_BRAND_VY,
+  /** Offsets along gradient axis (matches design % stops); tiny epsilon keeps flat plateaus */
+  stops: [
+    { offset: '0%', color: '#6A0A8A' },
+    { offset: '21.98%', color: '#6A0A8A' },
+    { offset: '22.02%', color: '#710C88' },
+    { offset: '30.07%', color: '#831085' },
+    { offset: '42.85%', color: '#A1167F' },
+    { offset: '58.79%', color: '#C81E76' },
+    { offset: '77.04%', color: '#F2266D' },
+    { offset: '94.14%', color: '#F2266D' },
+    { offset: '94.17%', color: '#F2266D' },
+    { offset: '100%', color: '#F2266D' },
+  ],
 };
 
 /**

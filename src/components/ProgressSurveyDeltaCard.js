@@ -107,8 +107,16 @@ export default function ProgressSurveyDeltaCard({ averages }) {
         </View>
       </View>
 
-      <Modal visible={isHelpOpen} transparent animationType="slide" onRequestClose={() => setIsHelpOpen(false)}>
-        <View style={styles.modalBackdrop}>
+      <Modal
+        visible={isHelpOpen}
+        transparent
+        animationType="slide"
+        presentationStyle="overFullScreen"
+        statusBarTranslucent
+        onRequestClose={() => setIsHelpOpen(false)}
+      >
+        <View style={styles.modalRoot}>
+          <View style={styles.modalDim} />
           <View style={styles.modalPopover}>
             <View style={styles.modalHeaderRow}>
               <View style={styles.modalTitleWrap}>
@@ -219,35 +227,42 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     fontWeight: '800',
   },
-  modalBackdrop: {
+  modalRoot: {
     flex: 1,
-    backgroundColor: 'transparent',
-    justifyContent: 'flex-end',
+    width: '100%',
+  },
+  modalDim: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(23,23,23,0.7)',
   },
   modalPopover: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
     width: '100%',
     height: '75%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: 44,
-    paddingTop: 32,
-    paddingBottom: 38,
+    paddingHorizontal: 36,
+    paddingTop: 50,
+    paddingBottom: 34,
   },
   modalHeaderRow: {
-    minHeight: 34,
+    minHeight: 30,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: 22,
   },
   modalTitleWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingRight: 24,
+    paddingRight: 36,
     paddingLeft: 0,
   },
   modalTitle: {
@@ -260,32 +275,33 @@ const styles = StyleSheet.create({
   },
   modalCloseBtn: {
     position: 'absolute',
-    right: 0,
-    top: 0,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    right: -2,
+    top: -2,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'transparent',
   },
   modalBody: {
-    fontFamily: PROGRESS_FONT_REGULAR,
+    fontFamily: 'Sailec-Light',
     fontWeight: '400',
     color: '#171717',
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 26,
     textAlign: 'left',
     paddingHorizontal: 0,
-    marginBottom: 12,
+    marginBottom: 20,
   },
   modalActionRow: {
     marginTop: 'auto',
-    alignItems: 'center',
+    paddingTop: 8,
+    alignItems: 'stretch',
     justifyContent: 'center',
   },
   modalActionBtn: {
-    width: 292,
+    width: '100%',
     height: 48,
     borderRadius: 24,
     backgroundColor: '#FFFFFF',

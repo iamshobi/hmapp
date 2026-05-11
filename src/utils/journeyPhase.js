@@ -1,5 +1,5 @@
 /**
- * My Progress journey levels / substates by unique practice days.
+ * Progress journey levels / substates by unique practice days.
  *
  * Settle (Foundation): 2–5 unique days
  * Flow (Seed): 6–12 unique days

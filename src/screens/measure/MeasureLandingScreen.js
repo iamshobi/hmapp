@@ -19,7 +19,14 @@ export default function MeasureLandingScreen() {
               <Sparkles size={14} color="#FFFFFF" strokeWidth={2.2} />
               <Heart size={16} color="#FFFFFF" fill="#FFFFFF" strokeWidth={2.2} />
             </View>
-            <Settings size={20} color="#FFFFFF" />
+            <TouchableOpacity
+              onPress={() => navigation.navigate('HomeTab', { screen: 'Settings' })}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Settings"
+            >
+              <Settings size={20} color="#FFFFFF" />
+            </TouchableOpacity>
           </View>
         </View>
 
