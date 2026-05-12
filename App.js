@@ -28,14 +28,12 @@ import SessionInsightsScreen from './src/screens/SessionInsightsScreen';
 import SeaShellDetailScreen from './src/screens/SeaShellDetailScreen';
 import ShellCollectionScreen from './src/screens/ShellCollectionScreen';
 import OceanZoneInfoScreen from './src/screens/OceanZoneInfoScreen';
-import { colors, gradients, palette } from './src/theme';
-import { styleGuide } from './src/theme/styleGuide';
+import { colors } from './src/theme';
 import { AppBottomTabBar } from './src/components/ui';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
-/** Avoid default React Navigation grey behind tabs during splash handoff */
 const navTheme = {
   ...DefaultTheme,
   colors: {
@@ -48,7 +46,6 @@ const navTheme = {
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-/** Play tab: themes → games per theme → Sacred Geometry session + rewards. */
 function PlayStack() {
   return (
     <Stack.Navigator initialRouteName="PlayThemes" screenOptions={{ headerShown: false }}>

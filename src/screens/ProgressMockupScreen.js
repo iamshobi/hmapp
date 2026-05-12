@@ -1,6 +1,3 @@
-/**
- * Phone-style frame around a compact MoodMeter + mini header strip (library / showcase).
- */
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

@@ -8,14 +8,10 @@ import {
   Animated,
   PanResponder,
   Alert,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  CalendarDays,
-  Filter,
-  TrendingUp,
-  Trash2,
-} from 'lucide-react-native';
+import { CalendarDays, Filter, Trash2 } from 'lucide-react-native';
 import Svg, { Defs, LinearGradient as SvgLinearGradient, RadialGradient, Rect, Path, Stop } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -24,11 +20,8 @@ import { borderRadius, spacing } from '../theme';
 
 const FONT_REGULAR = 'Sailec-Medium';
 const FONT_BOLD = 'Sailec-Bold';
-/** Matches ProgressMainScreen `styles.root` (Trends + Session History body). */
 const PAGE_BG = '#F3F3F5';
-/** Matches ProgressMainScreen `styles.tabIntroSub` (session intro + graph subtitle). */
 const SUBTITLE_TEXT_COLOR = '#171717';
-/** Matches ProgressMainScreen muted secondary (e.g. `historicalDataHint`, `phaseTimelineSub`). */
 const META_TEXT_COLOR = '#171717AD';
 const TYPE = {
   title: 28,
@@ -69,8 +62,15 @@ const TREND_X_AXIS_BOTTOM = 20;
 const TREND_TRACK_LEFT = '30%';
 const TREND_TOOLTIP_LEFT = '22%';
 
-/** Swipe strip width for the delete action column. */
 const SESSION_SWIPE_COL_WIDTH = 58;
+const HEADER_TO_FILTER_GAP = 36;
+const FILTER_ROW_BOTTOM_GAP = 36;
+
+const RANGE_FILTER_CHIPS = [
+  { key: '7d', label: 'Last 7 Days', Icon: CalendarDays },
+  { key: 'month', label: 'This Month', Icon: null },
+  { key: 'all', label: 'All', Icon: null },
+];
 
 function SessionSwipeRow({
   children,
@@ -264,7 +264,6 @@ function formatDate(value) {
   });
 }
 
-/** Minutes graph: show hours when ≥ 60m (e.g. `45min`, `1h`, `1h 23min`). */
 function formatTotalDurationMinutes(totalMinutes) {
   const n = Math.max(0, Math.floor(Number(totalMinutes) || 0));
   const h = Math.floor(n / 60);
@@ -283,7 +282,6 @@ function toLocalDateKey(value) {
   return `${y}-${m}-${day}`;
 }
 
-/** Resolve saved post-session note (closest by time on same local day) for “Has note” pill. */
 function findMatchedSessionNote(entry, notes) {
   if (!entry || !Array.isArray(notes)) return { body: null, noteId: null };
   const direct = entry.note ?? entry.notes ?? entry.body;
@@ -314,7 +312,6 @@ function findMatchedSessionNote(entry, notes) {
   return { body: trimmed, noteId: trimmed && best?.id ? best.id : null };
 }
 
-// Use actual session names from app flows (Measure + Play themes).
 const SESSION_TYPES = ['Coherence Session', 'Constellation Game', 'Multi Day Session'];
 const SESSION_ICON_VARIANTS = [
   [
@@ -443,10 +440,10 @@ function getSessionsFromPreviewType(previewType, fallbackTotal) {
   const t = normalizePreviewType(previewType);
   if (!t) return Math.max(0, Math.floor(Number(fallbackTotal) || 0));
   if (t === 'zero') return 0;
-  if (t === 'foundation') return 5;
-  if (t === 'seed') return 10;
-  if (t === 'habit') return 30;
-  if (t === 'deepPractice') return 31;
+  if (t === 'settle' || t === 'foundation') return 5;
+  if (t === 'flow' || t === 'seed') return 10;
+  if (t === 'deep' || t === 'habit') return 30;
+  if (t === 'still' || t === 'deepPractice') return 31;
   if (t === 'pro') return 100;
   if (t === 'inactiveSurvey') return 12;
   if (t === 'partialSurveyOptOut') return 18;
@@ -478,6 +475,14 @@ export default function SessionHistoryScreen() {
   const notifySwipeClosed = useCallback((id) => {
     setOpenSwipeSessionId((prev) => (prev === id ? null : prev));
   }, []);
+
+  const goBackOrProgress = useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('Progress');
+    }
+  }, [navigation]);
 
   const rows = useMemo(() => {
     const list = Array.isArray(surveyResults) ? surveyResults : [];
@@ -638,72 +643,74 @@ export default function SessionHistoryScreen() {
         colors={[theme.gradA, theme.gradB, theme.gradC]}
         start={{ x: 0.15, y: 0 }}
         end={{ x: 0.85, y: 1 }}
-        style={[styles.headerBg, { paddingTop: insets.top + 8 }]}
+        style={[
+          styles.headerBg,
+          styles.headerBgStackInset,
+          { paddingTop: insets.top + 8 },
+        ]}
       >
-        <View style={styles.headerRow}>
+        <View style={styles.headerTrendsWrap}>
           <TouchableOpacity
-            style={styles.headerIconBtn}
+            style={[styles.headerIconBtn, styles.headerIconBtnTrends]}
             accessibilityLabel="Go back"
-            onPress={() => {
-              if (navigation.canGoBack()) {
-                navigation.goBack();
-              } else {
-                navigation.navigate('Progress');
-              }
-            }}
+            onPress={goBackOrProgress}
             activeOpacity={0.84}
           >
             <TopBarBackIcon size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>{isGraphRoute ? 'Trends' : 'Session History'}</Text>
-          <View style={styles.headerRightSpacer} />
+          <Text style={styles.headerTitleTrends}>{isGraphRoute ? 'Trends' : 'Session History'}</Text>
+          <Text style={styles.trendsHeaderSub}>
+            {isGraphRoute ? 'Review your practice trends' : 'Review your Coherence Sessions'}
+          </Text>
         </View>
       </LinearGradient>
 
       <ScrollView
         style={{ flex: 1, backgroundColor: PAGE_BG }}
-        contentContainerStyle={[styles.content, { paddingTop: spacing.lg, paddingBottom: insets.bottom + 22 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 22 }]}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.sectionIntro}>
-          {isGraphRoute
-            ? 'Review your coherence trends across ranges and metrics.'
-            : 'Here is your list of sessions for the last 7 days. Tap on the filters below to check your older sessions. Swipe on a session to delete it from this list.'}
-        </Text>
-        {!isGraphRoute ? (
-          <Text style={styles.sessionCountText}>
-            Showing {rows.length} sessions based on your milestone
-          </Text>
-        ) : null}
-
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-          <TouchableOpacity
-            style={[styles.filterChip, { backgroundColor: theme.chipBg }, range === '7d' && [styles.filterChipActive, { backgroundColor: theme.chipActive }]]}
-            onPress={() => setRange('7d')}
-            activeOpacity={0.86}
+        <View style={styles.filterStripWrap}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterRow}
           >
-            <CalendarDays size={12} color={range === '7d' ? theme.chipActiveText : theme.textMuted} />
-            <Text style={[styles.filterTxt, { color: theme.textMuted }, range === '7d' && [styles.filterTxtActive, { color: theme.chipActiveText }]]}>Last 7 Days</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterChip, { backgroundColor: theme.chipBg }, range === 'month' && [styles.filterChipActive, { backgroundColor: theme.chipActive }]]}
-            onPress={() => setRange('month')}
-            activeOpacity={0.86}
-          >
-            <Text style={[styles.filterTxt, { color: theme.textMuted }, range === 'month' && [styles.filterTxtActive, { color: theme.chipActiveText }]]}>This Month</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.filterChip, { backgroundColor: theme.chipBg }, range === 'all' && [styles.filterChipActive, { backgroundColor: theme.chipActive }]]}
-            onPress={() => setRange('all')}
-            activeOpacity={0.86}
-          >
-            <Text style={[styles.filterTxt, { color: theme.textMuted }, range === 'all' && [styles.filterTxtActive, { color: theme.chipActiveText }]]}>All</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.filterChip, { backgroundColor: theme.chipBg }]} activeOpacity={0.86}>
-            <Filter size={12} color={theme.textMuted} />
-            <Text style={[styles.filterTxt, { color: theme.textMuted }]}>Session Type</Text>
-          </TouchableOpacity>
-        </ScrollView>
+            {RANGE_FILTER_CHIPS.map(({ key: rangeKey, label, Icon }) => {
+              const active = range === rangeKey;
+              return (
+                <TouchableOpacity
+                  key={rangeKey}
+                  style={[
+                    styles.metricChip,
+                    Icon ? styles.filterChipIconRow : null,
+                    { backgroundColor: theme.chipBg },
+                    active && [styles.metricChipActive, { backgroundColor: theme.chipActive }],
+                  ]}
+                  onPress={() => setRange(rangeKey)}
+                  activeOpacity={0.88}
+                >
+                  {Icon ? (
+                    <Icon size={14} color={active ? theme.chipActiveText : theme.textMuted} strokeWidth={2.25} />
+                  ) : null}
+                  <Text
+                    style={[
+                      styles.metricChipTxt,
+                      { color: theme.textMuted },
+                      active && [styles.metricChipTxtActive, { color: theme.chipActiveText }],
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+            <TouchableOpacity style={[styles.metricChip, styles.filterChipIconRow, { backgroundColor: theme.chipBg }]} activeOpacity={0.88}>
+              <Filter size={14} color={theme.textMuted} strokeWidth={2.25} />
+              <Text style={[styles.metricChipTxt, { color: theme.textMuted }]}>Session Type</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
 
         {!isGraphRoute ? (
           <>
@@ -733,21 +740,31 @@ export default function SessionHistoryScreen() {
                     <View style={styles.sessionIconWrap}>
                       <SessionIconBg size={44} opacity={1} idSuffix={row.id} glyphPaths={row.iconVariantPaths} />
                     </View>
-                    <View>
-                      <Text style={styles.sessionName}>{row.title}</Text>
-                      <Text style={styles.sessionMeta}>{row.date}</Text>
-                    </View>
-                  </View>
-                  <View style={styles.sessionRight}>
-                    {row.hasNote ? (
-                      <View style={styles.sessionNoteBadge}>
-                        <Text style={styles.sessionNoteBadgeTxt}>Has note</Text>
+                    <View style={styles.sessionTextBlock}>
+                      <View style={styles.sessionTitleRow}>
+                        <Text style={[styles.sessionName, styles.sessionTitleFlex]} numberOfLines={2}>
+                          {row.title}
+                        </Text>
+                        {row.hasNote ? (
+                          <View style={[styles.sessionNoteBadge, styles.sessionNoteBadgeInline]}>
+                            <Text style={styles.sessionNoteBadgeTxt}>Has note</Text>
+                          </View>
+                        ) : null}
                       </View>
-                    ) : null}
-                    <View style={[styles.cohPill, { backgroundColor: row.tone.bg }]}>
-                      <Text style={[styles.cohPillTxt, { color: row.tone.text }]}>{row.pct}% COH</Text>
+                      <View style={styles.sessionMetaRow}>
+                        <Text style={[styles.sessionMeta, styles.sessionMetaFlex]} numberOfLines={1}>
+                          {row.date}
+                        </Text>
+                        <View style={styles.sessionCohDurationRow}>
+                          <View style={[styles.sessionMetaPill, { backgroundColor: row.tone.bg }]}>
+                            <Text style={[styles.sessionMetaPillMinutes, { color: row.tone.text }]}>
+                              {`${row.minutes} min, `}
+                            </Text>
+                            <Text style={[styles.cohPillTxt, { color: row.tone.text }]}>{row.pct}% COH</Text>
+                          </View>
+                        </View>
+                      </View>
                     </View>
-                    <Text style={styles.minsTxt}>{row.minutes} min</Text>
                   </View>
                 </View>
               </SessionSwipeRow>
@@ -1023,66 +1040,63 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: borderRadius.sheet,
     borderBottomRightRadius: borderRadius.sheet,
   },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  headerBgStackInset: {
+    paddingLeft: 36,
   },
-  headerTitle: {
-    fontFamily: FONT_BOLD,
-    fontSize: TYPE.title,
-    lineHeight: 34,
-    color: '#FFFFFF',
-    fontWeight: '700',
-    flex: 1,
-    textAlign: 'center',
+  headerTrendsWrap: {
+    width: '100%',
+    alignItems: 'flex-start',
   },
-  headerRightSpacer: { width: 36 },
-  headerIconBtn: { flexDirection: 'row', alignItems: 'center', padding: 6 },
-  headerSubtitle: {
-    marginTop: spacing.xs,
-    fontFamily: FONT_REGULAR,
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.9)',
-  },
-  content: { paddingHorizontal: spacing.lg },
-  sectionIntro: {
-    fontFamily: FONT_REGULAR,
-    fontSize: TYPE.body,
-    lineHeight: 20,
-    color: SUBTITLE_TEXT_COLOR,
+  headerTitleTrends: {
     marginTop: spacing.sm,
-    marginBottom: spacing.xl,
+    width: '100%',
+    fontFamily: FONT_REGULAR,
+    fontSize: 30,
+    lineHeight: 35,
+    fontWeight: '500',
+    letterSpacing: 0,
+    color: '#FFFFFF',
+    textAlign: 'left',
   },
-  sessionCountText: {
-    marginTop: -4,
-    marginBottom: spacing.md,
-    fontFamily: FONT_BOLD,
-    fontSize: 12,
-    lineHeight: 18,
-    color: SUBTITLE_TEXT_COLOR,
+  trendsHeaderSub: {
+    marginTop: spacing.xs,
+    width: '100%',
+    fontFamily: FONT_REGULAR,
+    fontSize: 14,
+    lineHeight: 24,
+    fontWeight: '400',
+    color: '#FFFFFF',
+    letterSpacing: 0,
+    textAlign: 'left',
   },
-  filterRow: { gap: 8, paddingBottom: spacing.xl },
-  filterChip: {
-    height: 34,
-    borderRadius: borderRadius.full,
-    backgroundColor: WARM.chipBg,
-    paddingHorizontal: 14,
+  headerIconBtn: { flexDirection: 'row', alignItems: 'center', padding: 6 },
+  headerIconBtnTrends: { paddingLeft: 0, paddingRight: 6, paddingVertical: 6 },
+  content: { paddingHorizontal: spacing.lg },
+  filterStripWrap: {
+    alignSelf: 'stretch',
+    paddingTop: HEADER_TO_FILTER_GAP,
+  },
+  filterRow: {
+    gap: 10,
+    alignItems: 'center',
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingBottom: FILTER_ROW_BOTTOM_GAP,
+  },
+  filterChipIconRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'center',
+    gap: 7,
   },
-  filterChipActive: { backgroundColor: WARM.chipActive },
-  filterTxt: { fontFamily: FONT_REGULAR, fontSize: TYPE.caption, lineHeight: 16, color: WARM.textMuted },
-  filterTxtActive: { color: WARM.chipActiveText, fontFamily: FONT_BOLD },
   sessionCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
     paddingHorizontal: spacing.md + 2,
     paddingVertical: spacing.md + 2,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-start',
     marginBottom: 0,
     borderWidth: 1,
     borderColor: WARM.cardBorder,
@@ -1092,7 +1106,6 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 2,
   },
-  /** Sliding panel: square trailing edge meets swipe strip flush; stroke is on sessionSwipeRowWrap. */
   sessionCardInSwipeRow: {
     alignSelf: 'stretch',
     borderTopRightRadius: 0,
@@ -1142,7 +1155,39 @@ const styles = StyleSheet.create({
   sessionSwipeDeleteBtn: {
     backgroundColor: '#FFE6D6',
   },
-  sessionLeft: { flexDirection: 'row', alignItems: 'center', gap: spacing.md + 2, flex: 1, paddingRight: spacing.md },
+  sessionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md + 2,
+    flex: 1,
+    minWidth: 0,
+  },
+  sessionTextBlock: {
+    flex: 1,
+    minWidth: 0,
+  },
+  sessionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  sessionTitleFlex: {
+    flex: 1,
+    minWidth: 0,
+  },
+  sessionMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+    width: '100%',
+  },
+  sessionMetaFlex: {
+    flex: 1,
+    minWidth: 0,
+    paddingRight: spacing.sm,
+  },
   sessionIconWrap: {
     width: 44,
     height: 44,
@@ -1150,6 +1195,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    flexShrink: 0,
   },
   sessionName: {
     fontFamily: FONT_REGULAR,
@@ -1157,9 +1203,22 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     fontWeight: '500',
     color: SUBTITLE_TEXT_COLOR,
+    ...Platform.select({
+      android: { includeFontPadding: false },
+      default: {},
+    }),
   },
-  sessionMeta: { fontFamily: FONT_REGULAR, fontSize: TYPE.caption, lineHeight: 16, color: META_TEXT_COLOR, fontWeight: '400' },
-  sessionRight: { alignItems: 'flex-end' },
+  sessionMeta: {
+    fontFamily: FONT_REGULAR,
+    fontSize: TYPE.caption,
+    lineHeight: 16,
+    color: META_TEXT_COLOR,
+    fontWeight: '400',
+    ...Platform.select({
+      android: { includeFontPadding: false },
+      default: {},
+    }),
+  },
   sessionNoteBadge: {
     marginBottom: 6,
     paddingHorizontal: 8,
@@ -1177,9 +1236,46 @@ const styles = StyleSheet.create({
     lineHeight: 12,
     color: '#9B4E16',
   },
-  cohPill: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  cohPillTxt: { fontFamily: FONT_REGULAR, fontSize: 11, lineHeight: 14, letterSpacing: 0.3, fontWeight: '600' },
-  minsTxt: { marginTop: 6, fontFamily: FONT_REGULAR, fontSize: TYPE.caption, lineHeight: 16, color: WARM.textMuted, fontWeight: '400' },
+  sessionNoteBadgeInline: {
+    marginBottom: 0,
+    flexShrink: 0,
+    marginTop: 1,
+  },
+  sessionMetaPill: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    flexShrink: 0,
+  },
+  sessionMetaPillMinutes: {
+    fontFamily: FONT_REGULAR,
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '500',
+    ...Platform.select({
+      android: { includeFontPadding: false },
+      default: {},
+    }),
+  },
+  cohPillTxt: {
+    fontFamily: FONT_REGULAR,
+    fontSize: 11,
+    lineHeight: 14,
+    letterSpacing: 0.3,
+    fontWeight: '600',
+    ...Platform.select({
+      android: { includeFontPadding: false },
+      default: {},
+    }),
+  },
+  sessionCohDurationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    flexShrink: 0,
+  },
   graphCard: {
     borderRadius: 28,
     backgroundColor: '#FFFFFF',
@@ -1226,22 +1322,35 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     color: SUBTITLE_TEXT_COLOR,
   },
-  metricChipRow: { gap: 8, marginTop: spacing.lg, paddingBottom: spacing.md },
+  metricChipRow: {
+    gap: 10,
+    marginTop: spacing.lg,
+    paddingBottom: 36,
+    alignItems: 'center',
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   metricChip: {
-    height: 32,
+    minHeight: 36,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: borderRadius.full,
     backgroundColor: WARM.chipBg,
-    paddingHorizontal: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   metricChipActive: { backgroundColor: WARM.chipActive },
   metricChipTxt: {
     fontFamily: FONT_REGULAR,
-    fontSize: TYPE.caption,
-    lineHeight: 16,
-    letterSpacing: 0.2,
+    fontSize: 13,
+    lineHeight: 18,
+    letterSpacing: 0,
+    textAlign: 'center',
     color: WARM.textMuted,
+    ...Platform.select({
+      android: { includeFontPadding: false },
+      default: {},
+    }),
   },
   metricChipTxtActive: { color: WARM.chipActiveText, fontFamily: FONT_BOLD },
   chartWrap: {

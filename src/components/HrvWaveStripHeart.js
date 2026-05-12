@@ -1,13 +1,4 @@
-/**
- * Ocean-theme HRV strip — heart-trace parametric wave.
- *
- *   f(t) = 13·cos(t) − 5·cos(2t) − 2·cos(3t) − cos(4t)
- *
- * Traces two rounded upper lobes, a shallow centre cleft, and one pointed
- * downward spike per 2π period (one full heart silhouette per cycle).
- *
- * Pass `compact={true}` for the small bottom-of-screen widget.
- */
+
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
@@ -26,18 +17,12 @@ function heartY(t) {
   return 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t);
 }
 
-/**
- * Amplitude: 18 % of height at HRV=0 → 50 % at HRV=1
- * Low coherence = flat wave; high coherence = tall, prominent wave.
- */
+
 function getAmp(height, hrv) {
   return height * (0.18 + 0.32 * hrv);
 }
 
-/**
- * Cycle count: 2.2 at HRV=0 (rapid, tight oscillations) → 1.2 at HRV=1 (broad, slow).
- * Low coherence looks busy/choppy; high coherence looks smooth and rhythmic.
- */
+
 function getCycles(hrv) {
   return 2.2 - hrv * 1.0;
 }
@@ -70,7 +55,7 @@ export default function HrvWaveStripHeart({ hrv = 0.5, compact = false, embedWid
   const PADDING_H = compact ? 10 : 24;
 
   const { width: screenW } = useWindowDimensions();
-  /** When set (e.g. bottom HUD), path width matches parent track — avoids full-screen width clipping / dark box */
+  
   const width =
     embedWidth != null && embedWidth > 0
       ? Math.max(40, embedWidth)

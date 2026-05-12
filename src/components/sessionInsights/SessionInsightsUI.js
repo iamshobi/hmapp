@@ -179,9 +179,6 @@ export function ReflectionHero({ badgeText, title, body, align = 'center' }) {
   );
 }
 
-/**
- * Post-session “state shift”: compact summary + accordion details (Numbers / Graph).
- */
 export function StateShiftInsightSection({
   stressBefore,
   stressAfter,
@@ -663,7 +660,6 @@ export function TrendLayerComparisonCard({
               : [0, 3, 2, 5, 4, 7, 6, 8, 9, 10];
       let series = [];
       if (metricKey === 'stress') {
-        // Stress should appear lower after sessions compared with before sessions.
         const raw = wobble.map((w, i) =>
           Math.max(6, Math.min(96, base - i * (phase === 'after' ? 1.6 : 0.8) - w * 0.5))
         );

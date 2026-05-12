@@ -1,6 +1,4 @@
-/**
- * The Sacred Geometry — Play hub: difficulty, steps, coherence hints.
- */
+
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Pressable, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';

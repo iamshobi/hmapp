@@ -1,7 +1,4 @@
-/**
- * Month grid: per-day mood-colored dots. Logged mood or skip wins; past days without a log use
- * illustrative fills (mostly positive wheel colors). Future dates use placeholder fill.
- */
+
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
@@ -32,13 +29,13 @@ export default function CoherenceCalendar({
   initialYear,
   initialMonthIndex,
   moodEntries,
-  /** `'before'` | `'after'` — session start vs end only; default combines both */
+  
   moodPhase,
   selectedDay,
   onSelectDay,
   summaryCard,
   compact = false,
-  /** (year, monthIndex 0–11) when user changes month */
+  
   onMonthYearChange,
 }) {
   const boot = new Date();

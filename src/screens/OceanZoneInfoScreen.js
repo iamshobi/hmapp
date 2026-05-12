@@ -1,6 +1,4 @@
-/**
- * Pelagic zone education — popup modal (ocean theme), same copy as session zone help.
- */
+
 import React from 'react';
 import {
   View,

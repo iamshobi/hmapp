@@ -1,6 +1,4 @@
-/**
- * First Play step: choose a game theme (Sky, Ocean, Universe, …).
- */
+
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';

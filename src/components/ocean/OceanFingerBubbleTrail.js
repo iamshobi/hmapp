@@ -1,6 +1,4 @@
-/**
- * Finger-drag micro-interaction: short-lived bubbles along the stroke (below shell hit layer).
- */
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, PanResponder, StyleSheet, View } from 'react-native';
 

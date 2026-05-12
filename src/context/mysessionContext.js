@@ -1,6 +1,4 @@
-/**
- * Mysession context: streak + garden gamification, surveys, mood, and ocean collectibles (persisted).
- */
+
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GLOBAL_LEVEL_COUNT } from '../constants/mySessionLevels';
@@ -24,13 +22,7 @@ function recomputeGentleFromStored(prevParsed, criticalStrainDayFlags) {
   return { gentleMode, criticalShiftAlertPending };
 }
 
-/**
- * Persisted session state (AsyncStorage).
- *
- * Migration (one-time per install): canonical key is `mySession`. If empty, try in order:
- * `mysession_data` (prior rename), then `breath_garden_data` (original). Copy first hit to
- * `mySession`, remove that legacy key; if `mySession` already had data, drop any leftover legacy keys.
- */
+
 const STORAGE_KEY = 'mySession';
 const LEGACY_MIGRATION_KEYS = ['mysession_data', 'breath_garden_data'];
 
@@ -58,42 +50,33 @@ const DEFAULT_STATE = {
   totalSessions: 0,
   totalMinutes: 0,
   coherencePoints: 0,
-  /** Completed mandala (Play) sessions — each completion awards a badge */
+  
   zentangleBadges: 0,
-  /** Sequential Play levels: 0 = only first global level unlocked */
+  
   maxUnlockedGlobalIndex: 0,
-  /** Unique sea shell ids discovered across ocean sessions */
+  
   shellCollectionIds: [],
-  /** Unique pearl ids discovered across ocean sessions */
+  
   pearlCollectionIds: [],
-  /**
-   * Ocean Dive list: highest unlock index (0…5) that the player may start.
-   * Level index i is playable when i <= oceanMaxUnlockedLevelIndex. Starts at 0 (Epipelagic only).
-   */
+  
   oceanMaxUnlockedLevelIndex: 0,
-  /** At least one finished ocean session in a Drift-zone level (epipelagic / mesopelagic). */
+  
   oceanDriftModeComplete: false,
-  /** At least one finished ocean session in a Swim-zone level (bathypelagic / abyssopelagic). */
+  
   oceanSwimModeComplete: false,
-  /**
-   * Daily mood capture: { 'YYYY-MM-DD': { sessions: [...] } } (legacy flat start/end also supported when reading).
-   * Each session: { startMoodId?, endMoodId?, startSkipped?, endSkipped? }.
-   */
+  
   moodEntries: {},
-  /** Numeric survey check-ins from Measure flow and post-session reflection. */
+  
   currentSurveyBefore: null,
   lastSurveyResult: null,
   surveyResults: [],
-  /** Post-session reflection notes entered by user. */
+  
   sessionNotes: [],
-  /**
-   * Local calendar days (YYYY-MM-DD) where the user logged critical strain (high stress + drained + feel bad).
-   * Updated on Measure save and when a session survey completes (uses before values for that day).
-   */
+  
   criticalStrainDayFlags: {},
-  /** Derived: true while the last three local days all have critical strain. */
+  
   gentleMode: false,
-  /** Show one-shot Critical Shift alert overlay when gentle mode is newly entered. */
+  
   criticalShiftAlertPending: false,
 };
 
@@ -209,7 +192,7 @@ export function MysessionProvider({ children }) {
     })();
   }, []);
 
-  /** Play session: streak + stats + unlock next global level + badge */
+  
   const completePlaySession = useCallback((minutes = 1, points = 10, globalLevelIndex = 0) => {
     const today = getTodayDateString();
     const cap = Math.max(0, GLOBAL_LEVEL_COUNT - 1);
@@ -240,10 +223,7 @@ export function MysessionProvider({ children }) {
     });
   }, []);
 
-  /**
-   * Record that the player finished an ocean session in Drift or Swim (for Swim/Dive mode unlocks).
-   * Call when a session completes in epipelagic/mesopelagic (drift) or bathypelagic/abyssopelagic (swim).
-   */
+  
   const recordOceanModeSessionComplete = useCallback((groupId) => {
     if (groupId !== 'drift' && groupId !== 'swim') return;
     setData((prev) => {
@@ -255,7 +235,7 @@ export function MysessionProvider({ children }) {
     });
   }, []);
 
-  /** Merge ocean shell ids into the lifetime collection (deduped, persisted). Recomputes zone unlock index. */
+  
   const mergeShellCollection = useCallback((ids) => {
     if (!Array.isArray(ids) || ids.length === 0) return;
     setData((prev) => {
@@ -273,7 +253,7 @@ export function MysessionProvider({ children }) {
     });
   }, []);
 
-  /** Merge pearl ids into the lifetime collection (deduped, persisted). Recomputes zone unlock index. */
+  
   const mergePearlCollection = useCallback((ids) => {
     if (!Array.isArray(ids) || ids.length === 0) return;
     setData((prev) => {
@@ -291,7 +271,7 @@ export function MysessionProvider({ children }) {
     });
   }, []);
 
-  /** Home / non-Play flows */
+  
   const completeSession = useCallback((minutes = 1, points = 10) => {
     const today = getTodayDateString();
     setData((prev) => {
@@ -318,7 +298,7 @@ export function MysessionProvider({ children }) {
     });
   }, []);
 
-  /** Record mood at session start/end. Appends sessions per day so multiple sessions are supported. */
+  
   const recordMoodEntry = useCallback(({ timing, moodId = null, skipped = false, date = null }) => {
     if (timing !== 'start' && timing !== 'end') return;
     const keyDate = typeof date === 'string' && date ? date : getTodayDateString();
@@ -569,5 +549,5 @@ export function useMysession() {
   return ctx;
 }
 
-/** Alias matching the module name */
+
 export const mysessionContext = MysessionContext;

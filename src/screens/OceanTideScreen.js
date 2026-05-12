@@ -1,9 +1,4 @@
-/**
- * Ocean game intro screen.
- * Layout: top-bar → floating ocean-orb hero → coherence instruction →
- *         vertical-timeline level list.
- * Reference: The Constellation Game intro screen.
- */
+
 import React from 'react';
 import {
   View,
@@ -30,11 +25,11 @@ import {
 import { useMysession } from '../context/mysessionContext';
 import { spacing, borderRadius, shadows, palette, oceanDepthIconGlow } from '../theme';
 
-/* ── Session durations ────────────────────────────────────────────── */
+
 const DEFAULT_SESSION_SEC     = 90;
 const FULL_COLUMN_SESSION_SEC = 120;
 
-/* ── Zone gradient thumbnails ─────────────────────────────────────── */
+
 const THUMB_GRADS = {
   fullColumn:    ['#2AA8D2', '#1D7EC1', '#145FB0'],
   epipelagic:    ['#5ABCE0', '#2D9FD2', '#1688C6'],
@@ -50,29 +45,29 @@ function fmtTime(sec) {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-/* ══════════════════════════════════════════════════════════════════ */
-/* SUB-COMPONENTS                                                     */
-/* ══════════════════════════════════════════════════════════════════ */
 
-/* ── Floating ocean orb ───────────────────────────────────────────── */
+
+
+
+
 function OceanHeroOrb() {
   const S = 148;
   return (
     <View style={heroStyles.wrap}>
-      {/* Outer atmospheric glow */}
+      
       <View style={heroStyles.glowOuter} />
       <View style={heroStyles.glowInner} />
 
-      {/* Globe */}
+      
       <Svg width={S} height={S} viewBox="0 0 148 148" style={heroStyles.globe}>
-        {/* Diffuse rim */}
+        
         <SvgCircle cx={74} cy={74} r={72} fill="none"
           stroke="rgba(80,190,245,0.22)" strokeWidth={1.5} />
-        {/* Ocean body */}
+        
         <SvgCircle cx={74} cy={74} r={62}
           fill="rgba(4,30,72,0.88)"
           stroke="rgba(70,190,255,0.55)" strokeWidth={1.8} />
-        {/* Horizontal pelagic-zone bands */}
+        
         <Path d="M12,55 Q40,47 74,55 Q108,63 136,55"
           stroke="rgba(80,200,255,0.28)" strokeWidth={1.5} fill="none" />
         <Path d="M12,70 Q40,62 74,70 Q108,78 136,70"
@@ -81,23 +76,23 @@ function OceanHeroOrb() {
           stroke="rgba(80,200,255,0.28)" strokeWidth={1.5} fill="none" />
         <Path d="M22,100 Q44,93 74,100 Q104,107 126,100"
           stroke="rgba(80,200,255,0.18)" strokeWidth={1.2} fill="none" />
-        {/* Vertical meridian arcs */}
+        
         <Path d="M74,12 Q108,40 108,74 Q108,108 74,136"
           stroke="rgba(80,200,255,0.16)" strokeWidth={1.2} fill="none" />
         <Path d="M74,12 Q40,40 40,74 Q40,108 74,136"
           stroke="rgba(80,200,255,0.10)" strokeWidth={1} fill="none" />
-        {/* Polar shimmer */}
+        
         <Ellipse cx={74} cy={22} rx={22} ry={7}
           fill="rgba(160,230,255,0.12)" />
-        {/* Seafloor shadow */}
+        
         <Ellipse cx={74} cy={132} rx={30} ry={6}
           fill="rgba(0,0,0,0.25)" />
       </Svg>
 
-      {/* Reflection under globe */}
+      
       <View style={heroStyles.reflection} />
 
-      {/* Glassy bubbles */}
+      
       <View style={heroStyles.sp1}><OceanGlassBubble size={22} /></View>
       <View style={heroStyles.sp2}><OceanGlassBubble size={13} opacity={0.72} /></View>
       <View style={heroStyles.sp3}><OceanGlassBubble size={16} opacity={0.85} /></View>
@@ -139,7 +134,7 @@ const heroStyles = StyleSheet.create({
   sp4: { position: 'absolute', bottom: 50, left: 26 },
 });
 
-/* ── Timeline + Level row ─────────────────────────────────────────── */
+
 const CARD_H    = 76;
 const DOT_SIZE  = 10;
 const LINE_W    = 1.5;
@@ -150,23 +145,23 @@ function LevelRow({ level, isFirst, isLast, locked, onPress }) {
 
   return (
     <View style={[rowStyles.outer, locked && rowStyles.outerLocked]}>
-      {/* ── Left timeline column ── */}
+      
       <View style={rowStyles.timelineCol}>
-        {/* Line above dot */}
+        
         <View style={[rowStyles.line, { opacity: isFirst ? 0 : 1 }]} />
-        {/* Dot */}
+        
         <View style={[rowStyles.dot, isFirst && rowStyles.dotFilled]} />
-        {/* Line below dot */}
+        
         <View style={[rowStyles.line, { opacity: isLast ? 0 : 1 }]} />
       </View>
 
-      {/* ── Card ── */}
+      
       <TouchableOpacity
         style={[rowStyles.card, shadows.card, locked && rowStyles.cardLocked]}
         onPress={onPress}
         activeOpacity={0.88}
       >
-        {/* Thumbnail */}
+        
         <LinearGradient
           colors={grad}
           style={rowStyles.thumb}
@@ -183,7 +178,7 @@ function LevelRow({ level, isFirst, isLast, locked, onPress }) {
           />
         </LinearGradient>
 
-        {/* Text */}
+        
         <View style={rowStyles.textCol}>
           <Text style={rowStyles.title} numberOfLines={1}>{level.title}</Text>
           <Text style={rowStyles.sub}>
@@ -275,9 +270,9 @@ const rowStyles = StyleSheet.create({
   },
 });
 
-/* ══════════════════════════════════════════════════════════════════ */
-/* MAIN SCREEN                                                        */
-/* ══════════════════════════════════════════════════════════════════ */
+
+
+
 export default function OceanTideScreen() {
   const insets = useSafeAreaInsets();
   const nav    = useNavigation();
@@ -285,7 +280,7 @@ export default function OceanTideScreen() {
   const themeId = route.params?.themeId ?? 'ocean';
   const { oceanMaxUnlockedLevelIndex } = useMysession();
 
-  /** Go straight to zone detail; Dive In opens the analyzing interstitial then session (OceanLevelDetail). */
+  
   const openSession = (level, durationSec = DEFAULT_SESSION_SEC) => {
     nav.navigate('OceanLevelDetail', {
       levelId: level.id,
@@ -294,7 +289,7 @@ export default function OceanTideScreen() {
     });
   };
 
-  /* ── Build ordered level list: zones first, Full Column last (same order as OCEAN_LEVEL_UNLOCK_ORDER) ── */
+  
   const levels = [
     ...OCEAN_DEPTH_LEVELS.map((lvl) => ({
       id:          lvl.id,
@@ -325,7 +320,7 @@ export default function OceanTideScreen() {
 
   return (
     <View style={styles.root}>
-      {/* Deep ocean gradient background */}
+      
       <LinearGradient
         colors={['#0A2A48', '#0D3B60', '#112A52', '#0C1A3A']}
         style={StyleSheet.absoluteFill}
@@ -334,7 +329,7 @@ export default function OceanTideScreen() {
       />
       <StatusBar style="light" />
 
-      {/* ── Top bar ── */}
+      
       <View style={[styles.topBar, { paddingTop: insets.top + 6 }]}>
         <TouchableOpacity
           style={styles.backBtn}
@@ -346,7 +341,7 @@ export default function OceanTideScreen() {
 
         <Text style={styles.screenTitle}>The Ocean Dive</Text>
 
-        {/* My Shell Collection — opens gallery (replaces sparkle badge) */}
+        
         <TouchableOpacity
           style={styles.badgeOrbTouch}
           onPress={() => nav.navigate('ShellCollection')}
@@ -376,17 +371,17 @@ export default function OceanTideScreen() {
           Each zone is another layer of the ocean—dive deeper and collect shells along the way.
         </Text>
 
-        {/* ── Coherence instruction ── */}
+        
         <Text style={styles.instruction}>
           Sustain{' '}
           <Text style={styles.instructionBold}>high coherence</Text>
           {' '}for longer to complete the dive on time.
         </Text>
 
-        {/* ── Hero orb ── */}
+        
         <OceanHeroOrb />
 
-        {/* ── Level list ── */}
+        
         <View style={styles.listWrap}>
           {levels.map((level, idx) => {
             const unlockIdx = getOceanLevelUnlockIndex(level.id);
@@ -417,11 +412,11 @@ export default function OceanTideScreen() {
   );
 }
 
-/* ── Styles ──────────────────────────────────────────────────────── */
+
 const styles = StyleSheet.create({
   root: { flex: 1 },
 
-  /* Top bar */
+  
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -452,7 +447,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
 
-  /* Scroll content */
+  
   scroll: {
     paddingHorizontal: 20,
     paddingTop: 8,
@@ -468,7 +463,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
-  /* Instruction */
+  
   instruction: {
     fontSize: 15,
     fontWeight: '400',
@@ -483,7 +478,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.96)',
   },
 
-  /* Level list container */
+  
   listWrap: {
     marginTop: 8,
   },

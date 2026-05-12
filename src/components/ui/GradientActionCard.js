@@ -50,7 +50,7 @@ export function GradientActionCard({
     );
   }
 
-  /* Compact card — icon badge centered, title at bottom */
+  
   const inner = (
     <LinearGradient
       colors={colorsArr}
@@ -81,7 +81,7 @@ export function GradientActionCard({
 }
 
 const styles = StyleSheet.create({
-  /* Compact (Daily Practice) */
+  
   touchCompact: {
     flex: 1,
     borderRadius: borderRadius.lg,
@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
 
-  /* Large (Programs grid) */
+  
   touchLarge: {
     width: '48%',
     borderRadius: borderRadius.lg,

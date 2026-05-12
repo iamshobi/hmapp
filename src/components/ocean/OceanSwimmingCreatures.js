@@ -1,26 +1,4 @@
-/**
- * OceanSwimmingCreatures — transparent PNG icons with a 3-layer neon glow stack.
- *
- * PNG ICONS
- * ─────────
- *   All 8 creature PNGs are RGBA transparent (colorType 6).
- *   tintColor='#FFFFFF' colours the silhouette white; zone-tint colour is used
- *   for the glow rings behind the image, giving a neon-halo effect.
- *
- * NEON GLOW STACK  (3 concentric coloured circles behind the icon)
- * ────────────────────────────────────────────────────────────────
- *   Outer ambient ring  (×1.80 icon size, low opacity, pulsed)
- *   Mid bloom ring      (×1.35 icon size, mid opacity, pulsed)
- *   Inner tight ring    (×1.05 icon size, high opacity, pulsed)
- *   PNG creature on top (tintColor white)
- *
- *   glowPulse (0.28 → 1.0, 3.2 s) drives all three ring opacities.
- *
- * CRASH SAFETY (Android RN 0.83 New Architecture / Fabric)
- * ─────────────────────────────────────────────────────────
- *   scaleX flip lives in a plain View — never mixed with native-driver animated transforms.
- *   No shadow props. Glow via solid-colour View rings (opacity animated via native driver).
- */
+
 import React, { useEffect, useRef, useCallback } from 'react';
 import { sampleYFracAvoidingBreathDot } from '../../constants/oceanSessionBreathingExclusion';
 import {
@@ -32,10 +10,10 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
-/* ══════════════════════════════════════════════════════════════════ */
-/*  PNG CREATURE IMAGES  (RGBA transparent, colorType=6)              */
-/* ══════════════════════════════════════════════════════════════════ */
-/** Shared with OceanAnalyzingInterstitialDecor — same RGBA PNGs as in-game swim layer */
+
+
+
+
 export const CREATURE_IMAGES = {
   dolphin:    require('../../../assets/ocean-creatures/dolphin.png'),
   fish:       require('../../../assets/ocean-creatures/fish.png'),
@@ -47,12 +25,12 @@ export const CREATURE_IMAGES = {
   seahorse:   require('../../../assets/ocean-creatures/seahorse.png'),
 };
 
-/* ══════════════════════════════════════════════════════════════════ */
-/*  NEON GLOW WRAPPER                                                  */
-/*                                                                     */
-/*  Three coloured rings behind the PNG give the neon halo look.      */
-/*  glowPulse is an Animated.Value (0.28 → 1.0) from SwimSlot.        */
-/* ══════════════════════════════════════════════════════════════════ */
+
+
+
+
+
+
 export function NeonCreaturePng({ name, color, size, glowPulse, scaleX }) {
   const imageSource = CREATURE_IMAGES[name] || CREATURE_IMAGES.fish;
 
@@ -80,7 +58,7 @@ export function NeonCreaturePng({ name, color, size, glowPulse, scaleX }) {
     // scaleX flip in plain View — static transform must not live inside animated transform
     <View style={{ width: size, height: size, transform: [{ scaleX }] }}>
 
-      {/* Outer ambient ring */}
+      
       <Animated.View style={{
         position: 'absolute',
         width: outerR, height: outerR,
@@ -91,7 +69,7 @@ export function NeonCreaturePng({ name, color, size, glowPulse, scaleX }) {
         top:  -(outerR - size) / 2,
       }} />
 
-      {/* Mid bloom ring */}
+      
       <Animated.View style={{
         position: 'absolute',
         width: midR, height: midR,
@@ -102,7 +80,7 @@ export function NeonCreaturePng({ name, color, size, glowPulse, scaleX }) {
         top:  -(midR - size) / 2,
       }} />
 
-      {/* Inner tight ring */}
+      
       <Animated.View style={{
         position: 'absolute',
         width: innerR, height: innerR,
@@ -113,7 +91,7 @@ export function NeonCreaturePng({ name, color, size, glowPulse, scaleX }) {
         top:  -(innerR - size) / 2,
       }} />
 
-      {/* Creature PNG — white silhouette on transparent background */}
+      
       <Image
         source={imageSource}
         style={{ width: size, height: size }}
@@ -124,17 +102,17 @@ export function NeonCreaturePng({ name, color, size, glowPulse, scaleX }) {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════ */
-/*  NATURAL FACING DIRECTION OF EACH PNG                              */
-/*                                                                     */
-/*  true  = creature faces RIGHT in its source image                  */
-/*  false = creature faces LEFT  in its source image                  */
-/*                                                                     */
-/*  scaleX logic:                                                      */
-/*    goRight === facesRight  →  scaleX =  1  (no flip needed)        */
-/*    goRight !== facesRight  →  scaleX = -1  (flip to face travel)   */
-/* ══════════════════════════════════════════════════════════════════ */
-/** Snout / “front” points toward +X in the PNG when true; toward −X when false (horizontal swim only). */
+
+
+
+
+
+
+
+
+
+
+
 const CREATURE_FACES_RIGHT = {
   dolphin:    true,
   fish:       true,
@@ -146,9 +124,9 @@ const CREATURE_FACES_RIGHT = {
   seahorse:   true,
 };
 
-/* ══════════════════════════════════════════════════════════════════ */
-/*  ZONE → CREATURE POOLS + TINT COLOURS                              */
-/* ══════════════════════════════════════════════════════════════════ */
+
+
+
 const ZONES = [
   { maxDepth: 200,      tint: '#4DD8F0', creatures: ['dolphin',    'fish',       'seahorse',  'scallop']    },
   { maxDepth: 1000,     tint: '#7AB5FF', creatures: ['pufferfish', 'seahorse',   'starfish',  'conch']      },
@@ -162,9 +140,9 @@ function getZonePool(depthM) {
   return ZONES[ZONES.length - 1];
 }
 
-/* ══════════════════════════════════════════════════════════════════ */
-/*  LAYER CONFIG                                                       */
-/* ══════════════════════════════════════════════════════════════════ */
+
+
+
 const BASE_SIZE    = 34;
 const SWIM_BASE_MS = 14000;
 const GAP_MIN_MS   = 2000;
@@ -181,9 +159,9 @@ const LAYERS = [
   { sizeMultiplier: 1.00, opacityPeak: 0.95, speedFactor: 1.15, yBand: [0.22, 0.78], unduleAmp: 10, unduleMs: 2200, spawnDelay: 2400 },
 ];
 
-/* ══════════════════════════════════════════════════════════════════ */
-/*  SwimSlot                                                           */
-/* ══════════════════════════════════════════════════════════════════ */
+
+
+
 function SwimSlot({ active, depthM, layerIndex }) {
   const { width: W, height: H } = useWindowDimensions();
   const layer    = LAYERS[layerIndex];
@@ -320,9 +298,9 @@ function SwimSlot({ active, depthM, layerIndex }) {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════ */
-/*  MAIN EXPORT                                                        */
-/* ══════════════════════════════════════════════════════════════════ */
+
+
+
 export default function OceanSwimmingCreatures({
   active = false,
   depthM = 0,

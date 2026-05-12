@@ -1,15 +1,10 @@
-/**
- * Keep collectibles / swim lanes away from the centred breathing dot on Ocean session.
- * Dot sits in `OceanDepthCinematicOverlay` (full-screen flex centre).
- *
- * Normalized coords: nx = x/W, ny = y/H for points (e.g. centre of shell anchor).
- */
 
-/** Inclusive horizontal band [nxMin, nxMax] to avoid (screen centre column). */
+
+
 export const BREATH_DOT_EXCLUDE_NX_MIN = 0.26;
 export const BREATH_DOT_EXCLUDE_NX_MAX = 0.74;
 
-/** Inclusive vertical band [nyMin, nyMax] to avoid (screen middle). */
+
 export const BREATH_DOT_EXCLUDE_NY_MIN = 0.36;
 export const BREATH_DOT_EXCLUDE_NY_MAX = 0.64;
 
@@ -22,10 +17,7 @@ export function isNormalizedPointInBreathingExclusion(nx, ny) {
   );
 }
 
-/**
- * Sample yFrac in [bandMin, bandMax] uniformly outside [BREATH_DOT_EXCLUDE_NY_MIN, BREATH_DOT_EXCLUDE_NY_MAX].
- * If the band lies fully inside exclusion, bias toward the band edges.
- */
+
 export function sampleYFracAvoidingBreathDot(bandMin, bandMax) {
   const exMin = BREATH_DOT_EXCLUDE_NY_MIN;
   const exMax = BREATH_DOT_EXCLUDE_NY_MAX;

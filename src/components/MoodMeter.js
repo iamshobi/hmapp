@@ -1,7 +1,4 @@
-/**
- * Mood / coherence hub: Calendar · Trends (charts + overall mood) · Insights (session mood lift).
- * Supports compact mode for phone mockups. Charts: react-native-svg (no recharts).
- */
+
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import Svg, { Path, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
@@ -27,7 +24,7 @@ const TABS = [
   { id: 'insights', label: 'Insights' },
 ];
 
-/** 5 weeks × sample coherence 0–1 (rising) */
+
 const TREND_COHERENCE = [0.35, 0.42, 0.51, 0.58, 0.67, 0.72, 0.78, 0.82, 0.86, 0.88, 0.9, 0.91, 0.93, 0.94, 0.95];
 const TREND_STRESS = [0.92, 0.88, 0.82, 0.75, 0.68, 0.58, 0.48, 0.4, 0.32, 0.26, 0.22, 0.18, 0.15, 0.12, 0.1];
 
@@ -119,7 +116,7 @@ function RangeSubTabs({ value, onChange, compact }) {
   );
 }
 
-/** Pre- vs post-session mood for grids and summaries (session start vs end). */
+
 function BeforeAfterToggle({ value, onChange, compact }) {
   return (
     <View style={[styles.beforeAfterWrap, compact && styles.beforeAfterWrapCompact]}>
@@ -378,10 +375,7 @@ function OverallMoodInline({ moodEntries, compact, moodPhase }) {
       </View>
       <TouchableOpacity
         style={styles.inlineOverallBtn}
-        onPress={() => {
-          // Keep full-screen detail available.
-          // Parent component owns navigation.
-        }}
+        onPress={() => {}}
         disabled
         activeOpacity={1}
       >
@@ -403,7 +397,7 @@ function dayLevelByKeyFromEntries(moodEntries, moodPhase) {
 
 function YearInPixels({ year, compact, moodEntries, moodPhase }) {
   const dotSize = compact ? 8 : 10;
-  /** Vertical gap between day rows — slightly looser so the grid reads as one block */
+  
   const rowGap = compact ? 6 : 7;
   const rowLabelW = compact ? 22 : 26;
   const maxDays = 31;
@@ -529,7 +523,7 @@ function computeStressInsightFromDayLevels(dayLevelByKey) {
 
 export default function MoodMeter({
   compact = false,
-  /** Lock calendar to April 2026 for demos */
+  
   demoApril2026 = false,
 }) {
   const { moodEntries } = useMysession();
@@ -542,7 +536,7 @@ export default function MoodMeter({
     demoApril2026 ? { y: 2026, m: 3 } : { y: boot.getFullYear(), m: boot.getMonth() }
   );
   const [selectedYear, setSelectedYear] = useState(demoApril2026 ? 2026 : new Date().getFullYear());
-  /** Session start vs end mood for calendar grids and scoped summaries */
+  
   const [moodPhase, setMoodPhase] = useState('after');
 
   const initialCal = useMemo(() => {

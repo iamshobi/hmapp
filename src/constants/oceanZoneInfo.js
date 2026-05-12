@@ -1,6 +1,4 @@
-/**
- * Pelagic zone educational copy — same as Breath Session (?) help modal.
- */
+
 
 export const ZONE_INFO = {
   epipelagic: {

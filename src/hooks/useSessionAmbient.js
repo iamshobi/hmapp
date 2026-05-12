@@ -16,10 +16,7 @@ function computeVolume(wallMs, totalDurationMs) {
   return TARGET_VOLUME * fadeIn * fadeOut;
 }
 
-/**
- * Looped session music with fade-in at start and fade-out before session end.
- * `source` — expo-audio asset (`require(...)`) or URL; defaults to cosmic session BGM.
- */
+
 export function useSessionAmbient({ enabled, totalDurationMs, wallMs, source = SESSION_AUDIO_SOURCE }) {
   const player = useAudioPlayer(source, {
     updateInterval: 250,

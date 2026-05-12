@@ -1,7 +1,4 @@
-/**
- * Rare sea shells float briefly; tap to collect (once per shell type per session — parent dedupes).
- * Tap plays a short chime, then a pop: main bubble swells and fades while small bubbles scatter and vanish.
- */
+
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import {
   View,
@@ -22,12 +19,12 @@ const SPAWN_MIN_MS = 7500;
 const SPAWN_MAX_MS = 17000;
 const ON_SCREEN_MS = 15000;
 
-/** Main bubble: subtle nip, then gentle swell + dissolve (small zoom — emphasis on particles) */
+
 const BURST_ANTICIPATION_MS = 70;
 const BURST_EXPAND_MS = 400;
 const BURST_ANTICIPATION_SCALE = 1.06;
 const BURST_EXPAND_SCALE = 1.38;
-/** Mini bubbles: drift out and fade (stagger overlaps main) */
+
 const PARTICLE_COUNT = 16;
 const PARTICLE_DURATION_MS = 460;
 const PARTICLE_STAGGER_MS = 14;
@@ -42,7 +39,7 @@ function hashInstId(str) {
   return h >>> 0;
 }
 
-/** Deterministic 0…1 per shell instance + particle index */
+
 function particleRng(seed, i) {
   const x = Math.sin(seed * 0.001 + i * 12.9898) * 43758.5453;
   return x - Math.floor(x);
@@ -86,7 +83,7 @@ function ShellFloater({
     });
   }, [instId]);
 
-  /** Like `OceanSwimmingCreatures` undulate — ± sway on X/Y with independent periods so motion stays organic. */
+  
   const floatMotion = useMemo(() => {
     const seed = hashInstId(String(instId));
     const r = (k) => particleRng(seed, k);

@@ -1,6 +1,4 @@
-/**
- * Instrument-style depth readout — makes descent legible even when the art is subtle.
- */
+
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 

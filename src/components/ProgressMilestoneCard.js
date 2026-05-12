@@ -15,57 +15,57 @@ function getProgressCopyFromPhase(detail) {
       body: "You built a lasting rhythm. Your practice is now a dependable reset. This level of consistency reshapes how well you're improving by reducing stress and improving your energy and mood.",
     };
   }
-  if (levelKey === 'deepPractice') {
+  if (levelKey === 'still') {
     if (phaseState === 'start') {
       return {
         title: '',
-        body: 'Welcome to Deep Practice! You are now in the highest level of consistency and calm.',
+        body: 'Welcome to Still! You are now in the highest level of consistency and calm.',
       };
     }
     return {
       title: '',
-      body: "You're in Deep Practice. Every session now deepens your resilience, focus, and emotional balance.",
+      body: "You're in Still. Every session now deepens your resilience, focus, and emotional balance.",
     };
   }
-  if (levelKey === 'habit') {
+  if (levelKey === 'deep') {
     if (phaseState === 'start') {
       return {
         title: '',
-        body: 'You have entered Habit level! Your consistency is becoming your strength. Keep going to earn your Habit badge.',
+        body: 'You have entered Deep level! Your consistency is becoming your strength. Keep going to earn your Deep milestone.',
       };
     }
     if (phaseState === 'end') {
       return {
         title: '',
-        body: "Excellent progress. You've completed Habit! Keep your rhythm strong as you step into Deep Practice.",
+        body: "Excellent progress. You've completed Deep! Keep your rhythm strong as you step into Still.",
       };
     }
     const remaining = Math.max(1, 30 - sessions);
     return {
       title: '',
-      body: `You are only ${remaining} session${remaining === 1 ? '' : 's'} away from completing this level and earning your Habit badge! Continue your journey!`,
+      body: `You are only ${remaining} session${remaining === 1 ? '' : 's'} away from completing this level and earning your Deep milestone! Continue your journey!`,
     };
   }
-  if (levelKey === 'seed') {
+  if (levelKey === 'flow') {
     if (phaseState === 'start') {
       return {
         title: '',
-        body: 'You have entered Seed level! Keep your momentum going to earn your Seed badge.',
+        body: 'You have entered Flow level! Keep your momentum going to earn your Flow milestone.',
       };
     }
     if (phaseState === 'end') {
       return {
         title: '',
-        body: "Great work. You've completed Seed! Keep going to strengthen your rhythm and unlock Habit.",
+        body: "Great work. You've completed Flow! Keep going to strengthen your rhythm and unlock Deep.",
       };
     }
     const remaining = Math.max(1, 10 - sessions);
     return {
       title: '',
-      body: `You are only ${remaining} session${remaining === 1 ? '' : 's'} away from completing this level and earning your Seed badge! Continue your journey!`,
+      body: `You are only ${remaining} session${remaining === 1 ? '' : 's'} away from completing this level and earning your Flow milestone! Continue your journey!`,
     };
   }
-  if (levelKey === 'foundation') {
+  if (levelKey === 'settle') {
     if (phaseState === 'start') {
       return {
         title: '',
@@ -75,13 +75,13 @@ function getProgressCopyFromPhase(detail) {
     if (phaseState === 'end') {
       return {
         title: '',
-        body: 'Great work. Did you know deep breathing improves your sleep, mood & physiology? Keep going to receive your Foundation badge!',
+        body: 'Great work. Did you know deep breathing improves your sleep, mood & physiology? Keep going to reach your Settle milestone!',
       };
     }
     const remaining = Math.max(1, 5 - sessions);
     return {
       title: '',
-      body: `You are only ${remaining} session${remaining === 1 ? '' : 's'} away from completing this level and earning your Foundation badge! Continue your journey!`,
+      body: `You are only ${remaining} session${remaining === 1 ? '' : 's'} away from completing this level and earning your Settle milestone! Continue your journey!`,
     };
   }
   return {
@@ -118,7 +118,6 @@ function splitSessionPrefix(title) {
 
 export default function ProgressMilestoneCard({
   totalSessions = 0,
-  /** Sessions count used for level/sub-state (preview uses trendSessionCount). Defaults to totalSessions. */
   sessionPhaseCount,
   previewType = null,
   milestoneState = null,

@@ -1,6 +1,4 @@
-/**
- * Home — matches HeartMath reference design.
- */
+
 import React, { useMemo, useState } from 'react';
 import {
   View,
@@ -67,7 +65,7 @@ export default function HomeScreen() {
         bounces
         contentContainerStyle={styles.scrollContent}
       >
-        {/* ── Hero gradient header ── */}
+
         <LinearGradient
           colors={gradients.shellHeader}
           start={{ x: 0.15, y: 0 }}
@@ -77,13 +75,12 @@ export default function HomeScreen() {
           <HomeEcgWave />
           <SafeAreaView edges={['top']} style={styles.safeTop}>
             <View style={styles.topRow}>
-              {/* Logo + wordmark */}
+
               <View style={styles.brandRow}>
                 <Logo size={36} />
                 <Text style={styles.wordmark}>HeartMath</Text>
               </View>
 
-              {/* Icon tray */}
               <View style={styles.topIcons}>
                 <TouchableOpacity
                   hitSlop={12}
@@ -108,7 +105,6 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            {/* Greeting */}
             <Text style={styles.greeting}>
               {greeting}, {USER_NAME}!
             </Text>
@@ -121,7 +117,6 @@ export default function HomeScreen() {
           </SafeAreaView>
         </LinearGradient>
 
-        {/* ── Hero card overlapping the gradient ── */}
         <View style={styles.cardOverlap}>
           <View style={[styles.heroCard, shadows.cardLift]}>
             <Text style={styles.heroMeta}>Getting Started • 5 min</Text>
@@ -159,7 +154,6 @@ export default function HomeScreen() {
           {moodMeterExpanded ? <MoodMeter compact={false} demoApril2026={false} /> : null}
         </View>
 
-        {/* ── Daily Practice ── */}
         <View style={styles.section}>
           <View style={styles.sectionHead}>
             <View>
@@ -197,7 +191,6 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* ── Utility row: Unlock + Full History ── */}
         <View style={styles.utilityRow}>
           <TouchableOpacity
             style={styles.unlockBtn}
@@ -231,7 +224,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: { paddingBottom: spacing.xxl },
 
-  /* header */
   headerBg: {
     paddingBottom: spacing.xxxl + spacing.xxl,
   },
@@ -300,7 +292,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
 
-  /* hero card overlap */
   cardOverlap: {
     marginTop: -(spacing.xxxl),
     paddingHorizontal: spacing.lg,
@@ -343,7 +334,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-  /* sections */
   section: {
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.lg,
@@ -391,7 +381,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
 
-  /* utility */
   utilityRow: {
     flexDirection: 'row',
     alignItems: 'center',

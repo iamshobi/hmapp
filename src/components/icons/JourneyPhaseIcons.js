@@ -2,17 +2,11 @@ import React, { useEffect, useRef } from 'react';
 import { Animated, Easing } from 'react-native';
 import Svg, { Circle, Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 
-/**
- * My Journey phase icons (Settle → Flow → Deep → Still).
- * Settle: dot. Active-phase pulse is applied in JourneyPhaseIcon for whichever glyph is active.
- * Flow: parallel wave lines (no heart).
- * Deep: spiral (no heart).
- * Still: gradient body + diagonal shine when active/completed; grey outline + mild fill when future/zero.
- */
+
 
 const VB = 24;
 
-/** Closed heart path (24×24) — Still only */
+
 const HEART_FILL_PATH =
   'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z';
 
@@ -22,7 +16,7 @@ function toneToColor(variant) {
   return '#171717AD';
 }
 
-/** Two full sine cycles across [x0,x1] */
+
 function buildParallelWavePath(centerY, amplitude, x0, x1, fullCycles, segments = 28) {
   let d = '';
   for (let i = 0; i <= segments; i += 1) {
@@ -102,7 +96,7 @@ function DeepGlyph({ color, size }) {
   );
 }
 
-/** Inactive Still: outline + soft fill (no glow). */
+
 const STILL_INACTIVE_STROKE = '#9B9BA8';
 const STILL_INACTIVE_FILL = 'rgba(155, 155, 168, 0.28)';
 
@@ -177,7 +171,7 @@ const GLYPHS = {
   Still: StillGlyph,
 };
 
-/** Scale pulse for the single timeline node with `variant === 'active'`. */
+
 function ActivePhasePulseWrap({ size, children }) {
   const pulse = useRef(new Animated.Value(1)).current;
 

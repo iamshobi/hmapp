@@ -1,6 +1,4 @@
-/**
- * Minimal line icons — ocean / marine / nautical. Stroke-only, HM shell friendly.
- */
+
 import React from 'react';
 import Svg, { Path, Circle } from 'react-native-svg';
 

@@ -1,6 +1,4 @@
-/**
- * Sea shell detail — rarity tag, depth line, where-to-find tag (ocean modes / zones), quote.
- */
+
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,15 +11,15 @@ import { getPearlById } from '../constants/oceanZoneCollectibles';
 import { getOceanLevelById } from '../constants/oceanDepthLevels';
 import { borderRadius, spacing, shadows, gradients } from '../theme';
 
-/** Primary dismiss action — matches Session Complete (ocean) CTA */
+
 const DONE_LABEL = '#01579B';
 
-/** Same gradient as Session Complete for ocean (`SESSION_REWARDS_THEMES.ocean` + `gradients.gameSessionOcean`) */
+
 const SESSION_COMPLETE_BG = [...gradients.gameSessionOcean];
 const SESSION_COMPLETE_GRADIENT_START = { x: 0.35, y: 0 };
 const SESSION_COMPLETE_GRADIENT_END = { x: 0.65, y: 1 };
 
-/** Single line like “Found at 8 m depth” when narrow band; otherwise range. */
+
 function depthLine(shell) {
   const [a, b] = shell.depthRange;
   const span = b - a;

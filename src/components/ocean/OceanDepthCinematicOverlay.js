@@ -10,7 +10,7 @@ function clamp01(v) {
   return Math.min(1, Math.max(0, v));
 }
 
-/* ── Zone glow colours (brighter than textColor for the dot) ──────── */
+
 const ZONE_DOT_COLORS = [
   '#9DDBF5', // epipelagic  — cyan
   '#6FB8D8', // mesopelagic — mid blue
@@ -19,11 +19,11 @@ const ZONE_DOT_COLORS = [
   '#8060C0', // hadal — violet
 ];
 
-/* ── Breathing pulse durations (inhale / exhale ms) ─────────────── */
+
 const INHALE_MS = 3200;
 const EXHALE_MS = 3200;
 
-/* ── Breathing dot sizes ─────────────────────────────────────────── */
+
 const DOT_SIZE   = 18;   // core dot diameter at rest
 const RING_SIZE  = 28;   // inner ring diameter at rest
 
@@ -39,7 +39,7 @@ function BreathingDot({ color }) {
     const t = setTimeout(() => {
       loop = Animated.loop(
         Animated.sequence([
-        /* ── INHALE: dot grows, rings expand & fade ── */
+        
         Animated.parallel([
           Animated.timing(dotScale, {
             toValue: 1.55,
@@ -72,7 +72,7 @@ function BreathingDot({ color }) {
             useNativeDriver: true,
           }),
         ]),
-        /* ── EXHALE: dot shrinks, rings collapse & glow ── */
+        
         Animated.parallel([
           Animated.timing(dotScale, {
             toValue: 0.65,
@@ -114,7 +114,7 @@ function BreathingDot({ color }) {
 
   return (
     <View style={styles.breathingDotContainer} pointerEvents="none">
-      {/* Outer diffuse ring */}
+      
       <Animated.View
           style={[
           styles.breathingRing2,
@@ -128,7 +128,7 @@ function BreathingDot({ color }) {
           },
         ]}
       />
-      {/* Inner tight ring */}
+      
       <Animated.View
         style={[
           styles.breathingRing1,
@@ -142,7 +142,7 @@ function BreathingDot({ color }) {
           },
         ]}
       />
-      {/* Core dot */}
+      
       <Animated.View
         style={[
           styles.breathingCore,
@@ -159,7 +159,7 @@ function BreathingDot({ color }) {
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════ */
+
 export default function OceanDepthCinematicOverlay({
   depthM = 0,
   visible = false,
@@ -169,7 +169,7 @@ export default function OceanDepthCinematicOverlay({
   const opacity = useRef(new Animated.Value(0)).current;
   const slideY  = useRef(new Animated.Value(6)).current;
 
-  /* Fade in on mount / become visible */
+  
   useEffect(() => {
     if (!visible) {
       opacity.setValue(0);
@@ -182,7 +182,7 @@ export default function OceanDepthCinematicOverlay({
     ]).start();
   }, [visible, opacity, slideY]);
 
-  /* Cross-fade when zone changes */
+  
   useEffect(() => {
     if (!visible || zoneIndex === displayZoneIndex) return;
     Animated.timing(opacity, { toValue: 0, duration: 360, useNativeDriver: true }).start(() => {
@@ -204,17 +204,17 @@ export default function OceanDepthCinematicOverlay({
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
 
-      {/* ── Centre breathing dot (replaces left progress track) ── */}
+      
       <BreathingDot color={dotColor} />
 
-      {/* ── Right zone dot rail ── */}
+      
       <View style={styles.dotRail}>
         {OCEAN_CINEMATIC_ZONES.map((z, i) => (
           <View key={z.id} style={[styles.dot, i === zoneIndex && styles.dotActive]} />
         ))}
       </View>
 
-      {/* ── Bottom depth counter ── */}
+      
       <Animated.View
         style={[styles.bottomStrip, { opacity, transform: [{ translateY: slideY }] }]}
       >
@@ -231,7 +231,7 @@ export default function OceanDepthCinematicOverlay({
 }
 
 const styles = StyleSheet.create({
-  /* ── Breathing dot — absolutely centred ── */
+  
   breathingDotContainer: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
 
-  /* ── Right zone dot rail ── */
+  
   dotRail: {
     position: 'absolute',
     right: 22,
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.78)',
   },
 
-  /* ── Bottom depth counter ── */
+  
   bottomStrip: {
     position: 'absolute',
     bottom: 36,

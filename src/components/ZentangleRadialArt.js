@@ -1,6 +1,4 @@
-/**
- * Flower of Life — vector outlines traced by comet light; faint gold wake; full metallic reveal at end.
- */
+
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Path, Circle, G, Defs, RadialGradient, Stop, LinearGradient } from 'react-native-svg';
@@ -19,10 +17,10 @@ const { width: SCREEN_W } = Dimensions.get('window');
 const DEFAULT_SIZE = Math.min(SCREEN_W - 48, 320);
 
 const FIELD = '#0A1628';
-/** Progress at which we show the complete line drawing + border (session nearly done) */
+
 const REVEAL_AT = 0.985;
 
-/** Flower of Life = 19 circles in trace order */
+
 const FLOWER_CIRCLE_COUNT = 19;
 
 function clamp01(x) {
@@ -85,11 +83,11 @@ export default function ZentangleRadialArt({
   const p = Math.max(0, Math.min(1, Number.isFinite(raw) ? raw : 0));
   const revealLine = p >= REVEAL_AT;
   const drawProgress = revealLine ? 1 : Math.min(p / REVEAL_AT, 1);
-  /** Linear in session time → constant-speed comet along the stroke order (no ease curves). */
+  
   const t = mandala.circleCount * drawProgress;
   const showTrail = !revealLine && drawProgress > 0.004;
 
-  /** Thin aesthetic strokes */
+  
   const trailStrokeW = overlayOnCosmic ? 1.35 : 1.15;
   const wakeStrokeMain = overlayOnCosmic ? 1.15 : 1.0;
   const wakeStrokeHi = overlayOnCosmic ? 0.65 : 0.55;
@@ -98,7 +96,7 @@ export default function ZentangleRadialArt({
     mandala.circleCount - 1,
     Math.max(0, Math.floor(Math.min(t, mandala.circleCount - 0.001)))
   );
-  /** Linear 0…1 along the active circle — matches dash offset so comet moves at uniform angular speed. */
+  
   const headAlong = clamp01(t - headIdx);
 
   const head = useMemo(
@@ -168,7 +166,7 @@ export default function ZentangleRadialArt({
               <Stop offset="70%" stopColor="#E8CF7A" stopOpacity="0.9" />
               <Stop offset="100%" stopColor="#C9A227" stopOpacity="0.4" />
             </RadialGradient>
-            {/* Metallic gold for final reveal — reference: polished gold lines */}
+            
             <LinearGradient id="goldMetallic" x1="0%" y1="0%" x2="100%" y2="100%">
               <Stop offset="0%" stopColor="#FFF8E1" stopOpacity="1" />
               <Stop offset="28%" stopColor="#E8CF7A" stopOpacity="1" />
@@ -185,7 +183,7 @@ export default function ZentangleRadialArt({
 
           {revealLine ? (
             <G>
-              {/* Soft “emboss” shadow under gold lines */}
+              
               <G transform="translate(1.2, 1.8)">
                 <Path
                   d={mandala.combinedPath}
@@ -261,7 +259,7 @@ export default function ZentangleRadialArt({
 
                 return (
                   <G key={`circ${i}`}>
-                    {/* Slightly colored traced path — soft gold wash */}
+                    
                     <Path
                       d={pathD}
                       stroke="#B8956A"

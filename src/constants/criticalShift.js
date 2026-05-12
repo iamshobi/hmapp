@@ -1,15 +1,12 @@
-/**
- * "Critical strain" = high stress + drained + feel bad on the 1–10 check-in.
- * Gentle mode triggers after this pattern three local-calendar days in a row.
- */
 
-/** Stress scale: low 1 — high 10 */
+
+
 export const CRITICAL_STRESS_MIN = 8;
 
-/** Energy: drained left — energized right */
+
 export const CRITICAL_ENERGY_MAX = 3;
 
-/** Mood: feel bad left — feel good right */
+
 export const CRITICAL_MOOD_MAX = 3;
 
 export const RECOVERY_BREATH_DURATION_SEC = 120;
@@ -35,7 +32,7 @@ export function isCriticalStrainSnapshot(stress, energy, mood) {
   return stress >= CRITICAL_STRESS_MIN && energy <= CRITICAL_ENERGY_MAX && mood <= CRITICAL_MOOD_MAX;
 }
 
-/** Today, yesterday, and two days ago must all be flagged. */
+
 export function hasThreeDayCriticalStreak(flags) {
   if (!flags || typeof flags !== 'object') return false;
   const t = getLocalDateString(new Date());
@@ -44,7 +41,7 @@ export function hasThreeDayCriticalStreak(flags) {
   return !!flags[t] && !!flags[y1] && !!flags[y2];
 }
 
-/** Drop keys older than `keepDays` before today to limit storage size. */
+
 export function pruneCriticalStrainFlags(flags, keepDays = 14) {
   if (!flags || typeof flags !== 'object') return {};
   const cutoff = addDaysLocalDate(getLocalDateString(new Date()), -keepDays);

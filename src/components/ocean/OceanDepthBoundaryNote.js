@@ -1,6 +1,4 @@
-/**
- * Small caption when the dive crosses 200 m (twilight / Mesopelagic boundary) — fade in → hold → out.
- */
+
 import React, { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, Animated } from 'react-native';
 import {

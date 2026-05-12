@@ -1,6 +1,4 @@
-/**
- * Minimal vector ocean icons (`OceanMinimalIcon`). Keys only — no raster assets.
- */
+
 
 export const OCEAN_MINIMAL_ICON_KEYS = new Set([
   'oceanSunlit',

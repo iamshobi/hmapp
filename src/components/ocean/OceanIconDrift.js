@@ -1,6 +1,4 @@
-/**
- * Subtle floating motion for ocean PNG/SVG icons (native-driver friendly).
- */
+
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing } from 'react-native';
 

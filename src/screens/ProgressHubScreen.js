@@ -1,6 +1,3 @@
-/**
- * Progress hub — full-width MoodMeter demo + entry to rationale & phone mockup.
- */
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';

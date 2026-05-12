@@ -1,6 +1,4 @@
-/**
- * Games available under one theme (e.g. Universe → The Sacred Geometry).
- */
+
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';

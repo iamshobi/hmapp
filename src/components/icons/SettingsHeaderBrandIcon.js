@@ -2,10 +2,6 @@ import React, { useId } from 'react';
 import Svg, { Defs, LinearGradient, Stop, Path } from 'react-native-svg';
 import { settingsBrandBadgeSvgGradient } from '../../theme';
 
-/**
- * HeartMath settings header mark — paths from design SVG (viewBox 0 0 35 24).
- * Filled with the brand linear gradient inside the artwork (sits on the Settings screen background).
- */
 export default function SettingsHeaderBrandIcon({ width = 35, height = 24 }) {
   const reactId = useId();
   const gradId = `settingsBrandGrad_${reactId.replace(/[^a-zA-Z0-9_-]/g, '')}`;

@@ -1,6 +1,3 @@
-/**
- * Progress — HeartMath-style: warm header, Practice Stats, streaks, community banner, MoodMeter.
- */
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -15,8 +12,10 @@ import {
   TextInput,
   Alert,
   Animated,
+  Easing,
   PanResponder,
   Linking,
+  useWindowDimensions,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Defs, LinearGradient as SvgLinearGradient, Path, Stop } from 'react-native-svg';
@@ -40,21 +39,19 @@ import { colors, spacing, borderRadius, typography } from '../theme';
 import { getJourneyPhaseDetail, getEditorialQuotePoolKey } from '../utils/journeyPhase';
 
 const PROGRESS_FONT_REGULAR = 'Sailec-Medium';
-const PROGRESS_FONT_MEDIUM = 'Sailec-Medium';
+const PROGRESS_FONT_REGULAR_ITALIC = 'Sailec-RegularItalic';
 const PROGRESS_FONT_BOLD = 'Sailec-Bold';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-/** Milestone bands: Foundation 0–5, Seed 6–10, Habit 11–30, Deep Practice 31+, pro 100+. */
-
 function getScienceTypeFromSessions(totalSessions) {
   const n = Math.max(0, Math.floor(Number(totalSessions) || 0));
   if (n >= 100) return 'pro';
-  if (n >= 31) return 'deepPractice';
-  if (n >= 11) return 'habit';
-  if (n >= 6) return 'seed';
+  if (n >= 31) return 'still';
+  if (n >= 11) return 'deep';
+  if (n >= 6) return 'flow';
   if (n >= 2) return 'building';
   if (n >= 1) return 'firstTime';
   return 'zero';
@@ -77,6 +74,10 @@ function getCoherenceFromSessions(totalSessions) {
 
 function normalizePreviewType(type) {
   if (type === 'growing') return 'building';
+  if (type === 'foundation') return 'settle';
+  if (type === 'seed') return 'flow';
+  if (type === 'habit') return 'deep';
+  if (type === 'deepPractice') return 'still';
   return type;
 }
 
@@ -92,7 +93,6 @@ function getPreviewAveragesByType(type) {
   };
 }
 
-/** My Journey active phase by unique practice days: Settle 2–5, Flow 6–12, Deep 13–19, Still 20+. */
 function getProgressPhaseIndex(practiceDayCount) {
   const n = Math.max(0, Math.floor(Number(practiceDayCount) || 0));
   if (n >= 20) return 3;
@@ -137,13 +137,8 @@ const EDITORIAL_QUOTE_AUTHORS = {
   'Be not afraid of growing slowly, be afraid only of standing still.': 'Chinese Proverb',
   'It does not matter how slowly you go as long as you do not stop.': 'Confucius',
 };
-/** Next Steps body when surveys are inactive / no completed check-ins yet (Trends & Notes paused for new data). */
-const JOURNEY_NEXT_STEPS_INACTIVE_SURVEY_COPY =
-  'Keep up your practice. When you’re ready, turn on the "Enable Survey" in Survey Settings above—after that, new session\'s insights will be updated in the Progress screen.';
-
-/** Next Steps body when only some sessions include surveys (historical / partial insights). */
-const JOURNEY_NEXT_STEPS_PARTIAL_SURVEY_COPY =
-  'Right now, the Progress screen only reflects sessions where surveys were finished earlier. Turn on the "Enable Survey" in Survey Settings above—after that, new session\'s insights will be integrated in the Progress screen.';
+const JOURNEY_NEXT_STEPS_SURVEY_SETTINGS_COPY =
+  'Turn on the "Enable Survey Settings" in banner above—after that, new session\'s insights will be updated here.';
 
 function NoteViewIcon({ size = 26, color = '#E18B31' }) {
   return (
@@ -295,14 +290,14 @@ function getSampleNotesForType(effectiveScienceType, now) {
   ];
 
   if (
-    effectiveScienceType === 'foundation' ||
-    effectiveScienceType === 'seed' ||
+    effectiveScienceType === 'settle' ||
+    effectiveScienceType === 'flow' ||
     effectiveScienceType === 'building'
   ) {
     return sampleBuildingPair;
   }
 
-  if (effectiveScienceType === 'habit' || effectiveScienceType === 'advanced') {
+  if (effectiveScienceType === 'deep' || effectiveScienceType === 'advanced') {
     return [...sampleBuildingPair, ...sampleHabitExtra];
   }
 
@@ -327,6 +322,159 @@ function getSampleNotesForType(effectiveScienceType, now) {
       1000 * 60 * 60 * 24 * 42
     ),
   ];
+}
+
+function getTrendSessionCount(sciencePreviewType, totalSessions) {
+  if (!sciencePreviewType) return totalSessions;
+  return getSnapshotForPreviewType(sciencePreviewType).sessions;
+}
+
+function computeTrendAveragesFromSession(sciencePreviewType, surveyResults, totalSessions) {
+  if (sciencePreviewType) {
+    if (sciencePreviewType === 'inactiveSurvey') {
+      return getPreviewAveragesByType('building');
+    }
+    return getPreviewAveragesByType(sciencePreviewType);
+  }
+  const list = Array.isArray(surveyResults) ? surveyResults : [];
+  const averageField = (key) => {
+    const nums = list.map((item) => item?.[key]).filter((v) => Number.isFinite(v));
+    if (!nums.length) return null;
+    return nums.reduce((sum, v) => sum + v, 0) / nums.length;
+  };
+  const fromResults = {
+    stressBefore: averageField('stressBefore'),
+    stressAfter: averageField('stressAfter'),
+    energyBefore: averageField('energyBefore'),
+    energyAfter: averageField('energyAfter'),
+    moodBefore: averageField('moodBefore'),
+    moodAfter: averageField('moodAfter'),
+  };
+  const hasAnySurveyMetric =
+    Number.isFinite(fromResults.stressBefore) ||
+    Number.isFinite(fromResults.stressAfter) ||
+    Number.isFinite(fromResults.energyBefore) ||
+    Number.isFinite(fromResults.energyAfter) ||
+    Number.isFinite(fromResults.moodBefore) ||
+    Number.isFinite(fromResults.moodAfter);
+  if (hasAnySurveyMetric) return fromResults;
+  return getPreviewAveragesByType(getScienceTypeFromSessions(totalSessions));
+}
+
+function countDistinctPracticeDays({ previewPracticeDays, moodEntries, surveyResults, totalSessions }) {
+  if (previewPracticeDays != null) return previewPracticeDays;
+  const days = new Set();
+
+  if (moodEntries && typeof moodEntries === 'object') {
+    Object.entries(moodEntries).forEach(([dateKey, dayValue]) => {
+      const sessions = Array.isArray(dayValue?.sessions) ? dayValue.sessions : [];
+      if (sessions.length > 0) days.add(dateKey);
+    });
+  }
+
+  if (Array.isArray(surveyResults)) {
+    surveyResults.forEach((entry) => {
+      const key = toLocalDateKey(entry?.at);
+      if (key) days.add(key);
+    });
+  }
+
+  if (days.size === 0 && totalSessions > 0) {
+    return 1;
+  }
+
+  return days.size;
+}
+
+const WEEKLY_TREND_COHERENCE_BOOST_BY_LEVEL = {
+  pro: 0.7,
+  still: 0.5,
+  deep: 0.32,
+  flow: 0.18,
+};
+
+const WEEKLY_TREND_BAR_SHAPE_BY_LEVEL = {
+  pro: [0.9, 0.96, 0.94, 0.98, 1.0, 1.02, 1.04],
+  still: [0.8, 0.86, 0.9, 0.94, 0.97, 1.0, 1.02],
+  deep: [0.68, 0.74, 0.8, 0.86, 0.9, 0.94, 0.98],
+  flow: [0.52, 0.58, 0.64, 0.7, 0.76, 0.84, 0.9],
+};
+
+const WEEKLY_TREND_BAR_SHAPE_DEFAULT = [0.38, 0.42, 0.48, 0.54, 0.6, 0.68, 0.76];
+
+function computeWeeklyTrendsPreview(trendSessionCount, journeyLevelKey) {
+  const sessions = Math.max(0, Math.floor(Number(trendSessionCount) || 0));
+  const coherenceBoost =
+    WEEKLY_TREND_COHERENCE_BOOST_BY_LEVEL[journeyLevelKey] ?? 0.05;
+  const baseAvg = sessions > 0 ? getCoherenceFromSessions(sessions) : 0;
+  const avgValue = Math.min(6.1, Math.max(0, baseAvg + coherenceBoost));
+  const levelShape =
+    WEEKLY_TREND_BAR_SHAPE_BY_LEVEL[journeyLevelKey] ?? WEEKLY_TREND_BAR_SHAPE_DEFAULT;
+  const activeDays = sessions <= 0 ? 0 : Math.min(7, Math.max(1, Math.round(sessions / 2)));
+  const activeStartIdx = Math.max(0, 7 - activeDays);
+  const bars = levelShape.map((shape, idx) => {
+    if (idx < activeStartIdx) return 0;
+    const normalized = Math.max(0, Math.min(1, (avgValue * shape) / 6.1));
+    return Math.max(16, Math.round(normalized * 100));
+  });
+  const highestValue =
+    sessions <= 0 ? 0 : Math.min(6.1, avgValue * levelShape[levelShape.length - 1]);
+  const spikeHeightPct = Math.max(
+    30,
+    Math.min(88, Math.round((Math.max(0.1, highestValue) / 12) * 100)),
+  );
+
+  return {
+    highest: highestValue.toFixed(1),
+    avg: avgValue.toFixed(1),
+    yTicks: ['2'],
+    xLabels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+    bars,
+    spikeHeightPct,
+  };
+}
+
+function buildSurveySettingsBannerAnimatedStyle(exitAnim, measuredBannerHeight) {
+  const fadeAndSlide = {
+    opacity: exitAnim,
+    transform: [
+      {
+        translateY: exitAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [-24, 0],
+        }),
+      },
+    ],
+  };
+  if (measuredBannerHeight <= 0) {
+    return fadeAndSlide;
+  }
+  return {
+    ...fadeAndSlide,
+    maxHeight: exitAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, measuredBannerHeight],
+    }),
+    overflow: 'hidden',
+  };
+}
+
+function filterSessionNotesByRange(notesForDisplay, notesRange) {
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const startOfWeek = new Date(startOfToday);
+  startOfWeek.setDate(startOfToday.getDate() - 6);
+  const startOfMonth = new Date(startOfToday);
+  startOfMonth.setDate(startOfToday.getDate() - 29);
+
+  return notesForDisplay.filter((note) => {
+    const stamp = new Date(note.updatedAt || note.createdAt);
+    if (Number.isNaN(stamp.getTime())) return false;
+    if (notesRange === 'today') return stamp >= startOfToday;
+    if (notesRange === 'week') return stamp >= startOfWeek;
+    if (notesRange === 'month') return stamp >= startOfMonth;
+    return stamp >= startOfMonth;
+  });
 }
 
 function NoteSwipeRow({ children, onView, onEdit, onDelete, onOpenChange }) {
@@ -383,39 +531,13 @@ function JourneySection({
   activeNodeGlowAnim,
   showPhaseCompletionBurst,
   phaseCompletionAnim,
-  showSurveySettingsCard,
-  surveySettingsCardAnimatedStyle,
-  onSurveySettingsCardLayout,
-  hasIncompleteOrInactiveSurveyData,
-  hasPartialSurveyOptOutData,
   journeySummaryMessage,
-  renderInactiveSurveyToggle,
-  renderPartialSurveyToggle,
-  showInactiveSurveyNextStepsCopy,
-  showPartialSurveyNextStepsCopy,
+  showSurveyBannerNextStepsCopy,
   journeyCtaLabel,
   onPressJourneyCta,
 }) {
   return (
     <>
-      {showSurveySettingsCard ? (
-        <Animated.View style={[styles.journeySurveyCardWrap, surveySettingsCardAnimatedStyle]}>
-          <View
-            style={styles.journeySurveyCard}
-            onLayout={(e) => {
-              const h = Math.ceil(e.nativeEvent.layout.height);
-              if (h > 0) onSurveySettingsCardLayout(h);
-            }}
-          >
-            <Text style={styles.journeySurveyTitle}>Survey Settings</Text>
-            <View style={styles.journeySurveyToggleWrap}>
-              {hasIncompleteOrInactiveSurveyData ? renderInactiveSurveyToggle() : null}
-              {hasPartialSurveyOptOutData ? renderPartialSurveyToggle() : null}
-            </View>
-          </View>
-        </Animated.View>
-      ) : null}
-
       <View style={styles.phaseTimelineCard}>
         <View style={styles.phaseTimelineHeaderRow}>
           <View style={styles.phaseTimelineTitleWrap}>
@@ -531,21 +653,17 @@ function JourneySection({
       </View>
 
       <View style={styles.journeyNextStepsCard}>
-        <Text style={styles.journeyNextStepsTitle}>Next Steps!</Text>
-        {showInactiveSurveyNextStepsCopy || showPartialSurveyNextStepsCopy ? (
+        <Text style={styles.journeyNextStepsTitle}>Next Steps</Text>
+        {showSurveyBannerNextStepsCopy ? (
           <View style={styles.journeySummaryRow}>
-            <Text style={styles.journeySummaryText}>
-              {showInactiveSurveyNextStepsCopy
-                ? JOURNEY_NEXT_STEPS_INACTIVE_SURVEY_COPY
-                : JOURNEY_NEXT_STEPS_PARTIAL_SURVEY_COPY}
-            </Text>
+            <Text style={styles.journeySummaryText}>{JOURNEY_NEXT_STEPS_SURVEY_SETTINGS_COPY}</Text>
           </View>
         ) : (
           <View style={styles.journeySummaryRow}>
             <Text style={styles.journeySummaryText}>{journeySummaryMessage}</Text>
           </View>
         )}
-        {!showInactiveSurveyNextStepsCopy && !showPartialSurveyNextStepsCopy && journeyCtaLabel ? (
+        {!showSurveyBannerNextStepsCopy && journeyCtaLabel ? (
           <TouchableOpacity style={styles.journeyNextStepsCtaBtn} onPress={onPressJourneyCta} activeOpacity={0.88}>
             <Text style={styles.journeyLevelOneCtaTxt}>{journeyCtaLabel}</Text>
           </TouchableOpacity>
@@ -798,11 +916,11 @@ function NotesSection({
                 <Text style={styles.communityToday}>Today, you have contributed</Text>
               ) : null}
               {!isZeroSnapshotState ? (
-                <Text style={styles.communityBig}>{communityCount.today} points!</Text>
+                <Text style={styles.communityBig}>{communityCount.today} Points</Text>
               ) : null}
               {!isZeroSnapshotState ? <View style={styles.commRule} /> : null}
               <Text style={styles.communitySub}>Our community has reached</Text>
-              <Text style={styles.communityBig}>{`${(communityCount.total / 1000000).toFixed(1)}M`} points!</Text>
+              <Text style={styles.communityBig}>{`${(communityCount.total / 1000000).toFixed(1)}M`} Points</Text>
             </LinearGradient>
           ) : null}
       </TouchableOpacity>
@@ -831,7 +949,7 @@ function NotesSection({
             />
             <Text style={styles.editorialQuoteBlock}>
               <Text style={styles.editorialQuoteText}>"{editorialQuote}"</Text>
-              <Text style={styles.editorialQuoteSource}> - {editorialQuoteAuthor}</Text>
+              <Text style={styles.editorialQuoteSource}>{`  ${editorialQuoteAuthor}`}</Text>
             </Text>
           </LinearGradient>
         </View>
@@ -859,6 +977,15 @@ function NotesSection({
 
 export default function ProgressMainScreen() {
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  const helpSheetMaxHeight = Math.round(windowHeight * 0.91);
+  const helpSheetChromePx =
+    50 + 30 + 22 + 12 + 48;
+  const helpSheetBottomPadding = Math.max(insets.bottom, 16) + 18;
+  const helpScrollMaxHeight = Math.max(
+    120,
+    helpSheetMaxHeight - helpSheetChromePx - helpSheetBottomPadding,
+  );
   const navigation = useNavigation();
   const route = useRoute();
   const {
@@ -910,6 +1037,11 @@ export default function ProgressMainScreen() {
   const isInactiveSurveyPreview = sciencePreviewType === 'inactiveSurvey';
   const isPartialSurveyOptOutPreview = sciencePreviewType === 'partialSurveyOptOut';
   const progressTabOrder = React.useMemo(() => ['trend', 'checkins', 'insights'], []);
+
+  const trendSessionCount = React.useMemo(
+    () => getTrendSessionCount(sciencePreviewType, totalSessions),
+    [sciencePreviewType, totalSessions],
+  );
 
   useEffect(() => {
     const nextPreviewType = normalizePreviewType(route?.params?.previewType ?? null);
@@ -977,134 +1109,84 @@ export default function ProgressMainScreen() {
     if (activeProgressTab !== 'insights') setHasOpenNoteSwipeActions(false);
   }, [activeProgressTab]);
 
-  const trendAverages = React.useMemo(() => {
-    if (sciencePreviewType) {
-      if (sciencePreviewType === 'inactiveSurvey') {
-        return getPreviewAveragesByType('building');
-      }
-      return getPreviewAveragesByType(sciencePreviewType);
-    }
-    const list = Array.isArray(surveyResults) ? surveyResults : [];
-    const avg = (key) => {
-      const nums = list.map((item) => item?.[key]).filter((v) => Number.isFinite(v));
-      if (!nums.length) return null;
-      return nums.reduce((sum, v) => sum + v, 0) / nums.length;
-    };
-    const fromResults = {
-      stressBefore: avg('stressBefore'),
-      stressAfter: avg('stressAfter'),
-      energyBefore: avg('energyBefore'),
-      energyAfter: avg('energyAfter'),
-      moodBefore: avg('moodBefore'),
-      moodAfter: avg('moodAfter'),
-    };
-    const hasAny =
-      Number.isFinite(fromResults.stressBefore) ||
-      Number.isFinite(fromResults.stressAfter) ||
-      Number.isFinite(fromResults.energyBefore) ||
-      Number.isFinite(fromResults.energyAfter) ||
-      Number.isFinite(fromResults.moodBefore) ||
-      Number.isFinite(fromResults.moodAfter);
-    if (hasAny) return fromResults;
+  const trendAverages = React.useMemo(
+    () => computeTrendAveragesFromSession(sciencePreviewType, surveyResults, totalSessions),
+    [sciencePreviewType, surveyResults, totalSessions],
+  );
 
-    return getPreviewAveragesByType(getScienceTypeFromSessions(totalSessions));
-  }, [sciencePreviewType, surveyResults, totalSessions]);
-
-  const trendSessionCount = React.useMemo(() => {
-    if (!sciencePreviewType) return totalSessions;
-    return getSnapshotForPreviewType(sciencePreviewType).sessions;
-  }, [sciencePreviewType, totalSessions]);
   const previewPracticeDays = React.useMemo(() => {
     const t = normalizePreviewType(sciencePreviewType);
     if (!t) return null;
     return PREVIEW_PRACTICE_DAYS_BY_TYPE[t] ?? null;
   }, [sciencePreviewType]);
-  const uniquePracticeDays = React.useMemo(() => {
-    if (previewPracticeDays != null) return previewPracticeDays;
-    const days = new Set();
-
-    if (moodEntries && typeof moodEntries === 'object') {
-      Object.entries(moodEntries).forEach(([dateKey, dayValue]) => {
-        const sessions = Array.isArray(dayValue?.sessions) ? dayValue.sessions : [];
-        if (sessions.length > 0) days.add(dateKey);
-      });
-    }
-
-    if (Array.isArray(surveyResults)) {
-      surveyResults.forEach((entry) => {
-        const key = toLocalDateKey(entry?.at);
-        if (key) days.add(key);
-      });
-    }
-
-    if (days.size === 0 && totalSessions > 0) {
-      return 1;
-    }
-
-    return days.size;
-  }, [previewPracticeDays, moodEntries, surveyResults, totalSessions]);
-  const hasEnoughSessionsForProgressTabs = trendSessionCount >= 30;
+  const uniquePracticeDays = React.useMemo(
+    () =>
+      countDistinctPracticeDays({
+        previewPracticeDays,
+        moodEntries,
+        surveyResults,
+        totalSessions,
+      }),
+    [previewPracticeDays, moodEntries, surveyResults, totalSessions],
+  );
   const hasAtLeastThirtySessions = trendSessionCount >= 30;
   const activePhaseIdx = getProgressPhaseIndex(uniquePracticeDays);
   const journeyPhaseDetail = React.useMemo(() => getJourneyPhaseDetail(uniquePracticeDays), [uniquePracticeDays]);
   const journeySummaryMessage = React.useMemo(() => {
     const d = journeyPhaseDetail;
-    if (d.levelKey === 'foundation') {
+    if (d.levelKey === 'settle') {
       if (d.phaseState === 'start') {
-        return 'Start your journey by practicing on 2 unique days to enter Settle.';
+        return 'Small moments of calm begin to shift the nervous system out of stress mode.';
       }
       if (d.phaseState === 'end') {
         return 'Great work. You have completed Settle with consistent practice across unique days.';
       }
-      const remaining = Math.max(1, 5 - uniquePracticeDays);
-      return `You are only ${remaining} practice day${remaining === 1 ? '' : 's'} away from completing Settle.`;
+      return 'Each session helps your body remember safety, balance, and recovery.';
     }
-    if (d.levelKey === 'seed') {
+    if (d.levelKey === 'flow') {
       if (d.phaseState === 'start') {
-        return 'You have entered Flow level! Keep your daily consistency going.';
+        return 'Your practice is helping create more coherent heart rhythm patterns.';
       }
       if (d.phaseState === 'end') {
         return "Great work. You've completed Flow! Keep going to unlock Deep.";
       }
-      const remaining = Math.max(1, 12 - uniquePracticeDays);
-      return `You are only ${remaining} practice day${remaining === 1 ? '' : 's'} away from completing Flow.`;
+      return 'Consistency supports emotional balance, resilience, and clearer thinking.';
     }
-    if (d.levelKey === 'habit') {
+    if (d.levelKey === 'deep') {
       if (d.phaseState === 'start') {
-        return 'You have entered Deep level! Your consistency is becoming your strength.';
+        return 'Positive emotions can strengthen physiological coherence over time.';
       }
       if (d.phaseState === 'end') {
         return "Excellent progress. You've completed Deep! Keep going to step into Still.";
       }
-      const remaining = Math.max(1, 19 - uniquePracticeDays);
-      return `You are only ${remaining} practice day${remaining === 1 ? '' : 's'} away from completing Deep.`;
+      return 'Every session reinforces calm, flexibility, and inner steadiness.';
     }
-    if (d.levelKey === 'deepPractice') {
+    if (d.levelKey === 'still') {
       if (d.phaseState === 'start') {
-        return "Welcome to Still! You are now in the highest level of consistency and calm.";
+        return 'Your system is learning to access calm naturally and consistently.';
       }
-      return "You're in Still. Every session now deepens your resilience, focus, and emotional balance.";
+      return 'Long-term coherence practice supports emotional stability and wellbeing.';
     }
-    return "You're in Still. Keep nurturing your daily rhythm.";
-  }, [journeyPhaseDetail, uniquePracticeDays]);
+    return 'Long-term coherence practice supports emotional stability and wellbeing.';
+  }, [journeyPhaseDetail]);
   const journeyCtaLabel = React.useMemo(() => {
     const d = journeyPhaseDetail;
-    if (d.levelKey === 'foundation' || d.levelKey === 'seed' || d.levelKey === 'habit') {
+    if (d.levelKey === 'settle' || d.levelKey === 'flow' || d.levelKey === 'deep') {
       return d.phaseState === 'end' ? 'Set Reminder' : 'Start Session';
     }
-    if (d.levelKey === 'deepPractice') {
+    if (d.levelKey === 'still') {
       return d.phaseState === 'start' ? 'Start Session' : 'Set Reminder';
     }
     return null;
   }, [journeyPhaseDetail]);
   const journeyHelpStageCopy = React.useMemo(() => {
-    if (journeyPhaseDetail.levelKey === 'deepPractice') {
+    if (journeyPhaseDetail.levelKey === 'still') {
       return 'You have reached Still stage now. Here, presence becomes more natural. What started as a practice begins to feel like a way of being.';
     }
-    if (journeyPhaseDetail.levelKey === 'habit') {
+    if (journeyPhaseDetail.levelKey === 'deep') {
       return 'You have reached Deep stage now. At this stage, the patterns you’re building begin to stick, supporting more stable focus and emotional balance.';
     }
-    if (journeyPhaseDetail.levelKey === 'seed') {
+    if (journeyPhaseDetail.levelKey === 'flow') {
       return 'You have reached Flow stage now. With repetition, your system starts to find a rhythm—making it easier to shift into a calm, coherent state.';
     }
     return 'You have reached Settle stage now. This is where your nervous system begins to learn what it feels like to slow down and come into balance.';
@@ -1112,9 +1194,7 @@ export default function ProgressMainScreen() {
   const onPressJourneyCta = () => {
     if (journeyCtaLabel === 'Set Reminder') {
       Alert.alert('Reminder setup', 'Reminder setup will be available here soon.');
-      return;
     }
-    // Intentionally keep Start Session CTA non-navigating on Progress.
   };
   const surveyResultsCount = Array.isArray(surveyResults) ? surveyResults.length : 0;
   const hasIncompleteOrInactiveSurveyData =
@@ -1130,60 +1210,27 @@ export default function ProgressMainScreen() {
     hasIncompleteOrInactiveSurveyData && inactiveSurveyOptInChoice !== 'yes';
   const showPartialSurveyNextStepsCopy =
     hasPartialSurveyOptOutData && progressOptInChoice !== 'yes';
+  const showSurveyBannerNextStepsCopy =
+    showInactiveSurveyNextStepsCopy || showPartialSurveyNextStepsCopy;
 
   useEffect(() => {
     showSurveySettingsCardRef.current = showSurveySettingsCard;
   }, [showSurveySettingsCard]);
 
-  const surveySettingsCardAnimatedStyle = React.useMemo(() => {
-    const h = surveySettingsCardHeight;
-    const marginBottom = surveySettingsExitAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, spacing.md],
-    });
+  const onSurveySettingsBannerLayout = React.useCallback((e) => {
+    const h = Math.ceil(e.nativeEvent.layout.height);
     if (h > 0) {
-      return {
-        opacity: surveySettingsExitAnim,
-        marginBottom,
-        maxHeight: surveySettingsExitAnim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, h],
-        }),
-        transform: [
-          {
-            translateY: surveySettingsExitAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [-32, 0],
-            }),
-          },
-        ],
-        overflow: 'hidden',
-      };
+      setSurveySettingsCardHeight((prev) => (Math.abs(prev - h) > 1 ? h : prev));
     }
-    return {
-      opacity: surveySettingsExitAnim,
-      marginBottom,
-      transform: [
-        {
-          translateY: surveySettingsExitAnim.interpolate({
-            inputRange: [0, 1],
-            outputRange: [-32, 0],
-          }),
-        },
-      ],
-      overflow: 'hidden',
-    };
-  }, [surveySettingsCardHeight, surveySettingsExitAnim]);
-
-  const onSurveySettingsCardLayout = React.useCallback((measuredHeight) => {
-    setSurveySettingsCardHeight((prev) =>
-      measuredHeight > 0 && Math.abs(prev - measuredHeight) > 2 ? measuredHeight : prev
-    );
   }, []);
 
-  /** Hide weekly trends only when surveys are fully off / no data — partial survey still shows historical trends. */
+  const surveySettingsBannerAnimatedStyle = React.useMemo(
+    () => buildSurveySettingsBannerAnimatedStyle(surveySettingsExitAnim, surveySettingsCardHeight),
+    [surveySettingsExitAnim, surveySettingsCardHeight],
+  );
+
   const shouldHideTrendsCard =
-    hasIncompleteOrInactiveSurveyData ||
+    !hasSurveyInsightsOptOutState &&
     Math.max(0, Math.floor(Number(trendSessionCount) || 0)) < 5;
   const isSurveyFullyPaused = hasIncompleteOrInactiveSurveyData;
   const isSurveyHistoricalOnly = hasPartialSurveyOptOutData;
@@ -1212,7 +1259,6 @@ export default function ProgressMainScreen() {
   }, [surveyPreferenceFadeAnim, surveySettingsExitAnim]);
 
   const finishSurveySettingsHide = React.useCallback(() => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setSurveySettingsDismissed(true);
     surveySettingsExitAnim.setValue(1);
     setSurveyPreferenceUpdatedVisible(false);
@@ -1222,10 +1268,10 @@ export default function ProgressMainScreen() {
   const runSurveySettingsExitAnimation = React.useCallback(() => {
     surveyPreferenceFadeAnim.stopAnimation();
     surveySettingsExitAnim.stopAnimation();
-    surveySettingsExitAnim.setValue(1);
     Animated.timing(surveySettingsExitAnim, {
       toValue: 0,
-      duration: 420,
+      duration: Platform.OS === 'android' ? 420 : 380,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start(({ finished }) => {
       if (finished) {
@@ -1233,6 +1279,14 @@ export default function ProgressMainScreen() {
       }
     });
   }, [finishSurveySettingsHide, surveyPreferenceFadeAnim, surveySettingsExitAnim]);
+
+  const onDismissSurveySettingsBanner = React.useCallback(() => {
+    if (surveySettingsExitDelayTimerRef.current) {
+      clearTimeout(surveySettingsExitDelayTimerRef.current);
+      surveySettingsExitDelayTimerRef.current = null;
+    }
+    runSurveySettingsExitAnimation();
+  }, [runSurveySettingsExitAnimation]);
 
   const beginSurveyPreferenceSavedSequence = React.useCallback(() => {
     cancelSurveyPreferenceSavedSequence();
@@ -1265,7 +1319,7 @@ export default function ProgressMainScreen() {
     surveyPreferenceFadeAnim,
   ]);
   const onPressCommunityHelpReadMore = React.useCallback(async () => {
-    const url = 'https://cdn.heartmath.com/manuals/IB_Coherence_Achevment_rev1a.pdf';
+    const url = 'https://www.heartmath.com/';
     try {
       const supported = await Linking.canOpenURL(url);
       if (!supported) {
@@ -1322,11 +1376,11 @@ export default function ProgressMainScreen() {
             enabled && styles.tabsLockedToggleSwitchTextActive,
           ]}
         >
-          Enable Survey
+          Enable Survey Settings
         </Text>
       </TouchableOpacity>
       <Text style={styles.toggleMicrocopy}>
-        This only updates your survey preference. You can change it anytime.
+        Update your survey preferences for daily feedback. Change at any time in settings.
       </Text>
       {surveyPreferenceUpdatedVisible ? (
         <Animated.Text style={[styles.toggleConfirmationText, { opacity: surveyPreferenceFadeAnim }]}>
@@ -1367,23 +1421,10 @@ export default function ProgressMainScreen() {
     const now = Date.now();
     return getSampleNotesForType(effectiveScienceType, now);
   }, [effectiveScienceType, notesList, shouldShowEmptyState]);
-  const filteredNotes = React.useMemo(() => {
-    const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startOfWeek = new Date(startOfToday);
-    startOfWeek.setDate(startOfToday.getDate() - 6);
-    const startOfMonth = new Date(startOfToday);
-    startOfMonth.setDate(startOfToday.getDate() - 29);
-
-    return notesForDisplay.filter((note) => {
-      const stamp = new Date(note.updatedAt || note.createdAt);
-      if (Number.isNaN(stamp.getTime())) return false;
-      if (notesRange === 'today') return stamp >= startOfToday;
-      if (notesRange === 'week') return stamp >= startOfWeek;
-      if (notesRange === 'month') return stamp >= startOfMonth;
-      return stamp >= startOfMonth;
-    });
-  }, [notesForDisplay, notesRange]);
+  const filteredNotes = React.useMemo(
+    () => filterSessionNotesByRange(notesForDisplay, notesRange),
+    [notesForDisplay, notesRange],
+  );
 
   useEffect(() => {
     if (!hasAtLeastThirtySessions && notesRange === 'month') {
@@ -1400,7 +1441,7 @@ export default function ProgressMainScreen() {
   };
 
   const shouldPrioritizeInsightsCard =
-    hasEnoughSessionsForProgressTabs &&
+    hasAtLeastThirtySessions &&
     trendSessionCount > 0 &&
     !shouldFullyLockInsights &&
     !hasSurveyInsightsOptOutState;
@@ -1421,49 +1462,10 @@ export default function ProgressMainScreen() {
       streak: isZero ? '-' : `${Math.max(0, Math.round(Number(streak) || 0))}d`,
     };
   }, [sciencePreviewType, totalSessions, coherencePoints, streak]);
-  const trendsPreview = React.useMemo(() => {
-    const sessions = Math.max(0, Math.floor(Number(trendSessionCount) || 0));
-    const levelBoost =
-      journeyPhaseDetail.levelKey === 'pro'
-        ? 0.7
-        : journeyPhaseDetail.levelKey === 'deepPractice'
-          ? 0.5
-          : journeyPhaseDetail.levelKey === 'habit'
-            ? 0.32
-            : journeyPhaseDetail.levelKey === 'seed'
-              ? 0.18
-              : 0.05;
-    const baseAvg = sessions > 0 ? getCoherenceFromSessions(sessions) : 0;
-    const avgValue = Math.min(6.1, Math.max(0, baseAvg + levelBoost));
-    const levelShape =
-      journeyPhaseDetail.levelKey === 'pro'
-        ? [0.9, 0.96, 0.94, 0.98, 1.0, 1.02, 1.04]
-        : journeyPhaseDetail.levelKey === 'deepPractice'
-          ? [0.8, 0.86, 0.9, 0.94, 0.97, 1.0, 1.02]
-          : journeyPhaseDetail.levelKey === 'habit'
-            ? [0.68, 0.74, 0.8, 0.86, 0.9, 0.94, 0.98]
-            : journeyPhaseDetail.levelKey === 'seed'
-              ? [0.52, 0.58, 0.64, 0.7, 0.76, 0.84, 0.9]
-              : [0.38, 0.42, 0.48, 0.54, 0.6, 0.68, 0.76];
-    const activeDays = sessions <= 0 ? 0 : Math.min(7, Math.max(1, Math.round(sessions / 2)));
-    const activeStartIdx = Math.max(0, 7 - activeDays);
-    const bars = levelShape.map((shape, idx) => {
-      if (idx < activeStartIdx) return 0;
-      const normalized = Math.max(0, Math.min(1, (avgValue * shape) / 6.1));
-      return Math.max(16, Math.round(normalized * 100));
-    });
-    const highestValue = sessions <= 0 ? 0 : Math.min(6.1, avgValue * levelShape[levelShape.length - 1]);
-    const spikeHeightPct = Math.max(30, Math.min(88, Math.round((Math.max(0.1, highestValue) / 12) * 100)));
-
-    return {
-      highest: highestValue.toFixed(1),
-      avg: avgValue.toFixed(1),
-      yTicks: ['2'],
-      xLabels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      bars,
-      spikeHeightPct,
-    };
-  }, [trendSessionCount, journeyPhaseDetail.levelKey]);
+  const trendsPreview = React.useMemo(
+    () => computeWeeklyTrendsPreview(trendSessionCount, journeyPhaseDetail.levelKey),
+    [trendSessionCount, journeyPhaseDetail.levelKey],
+  );
   const isZeroSnapshotState =
     normalizePreviewType(sciencePreviewType) === 'zero' || (!sciencePreviewType && totalSessions <= 0);
   useEffect(() => {
@@ -1533,9 +1535,9 @@ export default function ProgressMainScreen() {
       return;
     }
     const isCompletedStage =
-      (journeyPhaseDetail.levelKey === 'foundation' ||
-        journeyPhaseDetail.levelKey === 'seed' ||
-        journeyPhaseDetail.levelKey === 'habit') &&
+      (journeyPhaseDetail.levelKey === 'settle' ||
+        journeyPhaseDetail.levelKey === 'flow' ||
+        journeyPhaseDetail.levelKey === 'deep') &&
       journeyPhaseDetail.phaseState === 'end';
     if (!isCompletedStage) return;
 
@@ -1600,7 +1602,7 @@ export default function ProgressMainScreen() {
   const focusJourneyToggle = () => {
     progressScrollRef.current?.scrollTo({ y: 0, animated: true });
   };
-  const tabsSection = hasEnoughSessionsForProgressTabs ? (
+  const tabsSection = hasAtLeastThirtySessions ? (
     <View style={styles.tabsSharedCard}>
       <TouchableOpacity
         style={[
@@ -1861,6 +1863,30 @@ export default function ProgressMainScreen() {
         </View>
       </LinearGradient>
 
+      {showSurveySettingsCard ? (
+        <Animated.View
+          needsOffscreenAlphaCompositing={Platform.OS === 'android'}
+          collapsable={false}
+          style={[styles.surveySettingsBanner, surveySettingsBannerAnimatedStyle]}
+        >
+          <View style={styles.surveySettingsBannerInner} onLayout={onSurveySettingsBannerLayout}>
+            <TouchableOpacity
+              style={styles.surveySettingsBannerClose}
+              onPress={onDismissSurveySettingsBanner}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss survey settings banner"
+            >
+              <X size={22} color="#E18B31" />
+            </TouchableOpacity>
+            <View style={styles.journeySurveyToggleWrap}>
+              {hasIncompleteOrInactiveSurveyData ? renderInactiveSurveyToggle() : null}
+              {hasPartialSurveyOptOutData ? renderPartialSurveyToggle() : null}
+            </View>
+          </View>
+        </Animated.View>
+      ) : null}
+
       <ScrollView
         ref={progressScrollRef}
         onScroll={(event) => {
@@ -1883,16 +1909,8 @@ export default function ProgressMainScreen() {
           activeNodeGlowAnim={activeNodeGlowAnim}
           showPhaseCompletionBurst={showPhaseCompletionBurst}
           phaseCompletionAnim={phaseCompletionAnim}
-          showSurveySettingsCard={showSurveySettingsCard}
-          surveySettingsCardAnimatedStyle={surveySettingsCardAnimatedStyle}
-          onSurveySettingsCardLayout={onSurveySettingsCardLayout}
-          hasIncompleteOrInactiveSurveyData={hasIncompleteOrInactiveSurveyData}
-          hasPartialSurveyOptOutData={hasPartialSurveyOptOutData}
           journeySummaryMessage={journeySummaryMessage}
-          renderInactiveSurveyToggle={renderInactiveSurveyToggle}
-          renderPartialSurveyToggle={renderPartialSurveyToggle}
-          showInactiveSurveyNextStepsCopy={showInactiveSurveyNextStepsCopy}
-          showPartialSurveyNextStepsCopy={showPartialSurveyNextStepsCopy}
+          showSurveyBannerNextStepsCopy={showSurveyBannerNextStepsCopy}
           journeyCtaLabel={journeyCtaLabel}
           onPressJourneyCta={onPressJourneyCta}
         />
@@ -1973,7 +1991,12 @@ export default function ProgressMainScreen() {
       >
         <View style={styles.communityHelpBackdrop}>
           <View style={styles.communityHelpDim} />
-          <View style={styles.communityHelpPopover}>
+          <View
+            style={[
+              styles.communityHelpPopover,
+              { maxHeight: helpSheetMaxHeight, paddingBottom: helpSheetBottomPadding },
+            ]}
+          >
             <View style={styles.communityHelpHeaderRow}>
               <View style={styles.communityHelpTitleWrap}>
                 <Text style={styles.communityHelpModalTitle}>My Journey</Text>
@@ -1988,11 +2011,18 @@ export default function ProgressMainScreen() {
                 <X size={20} color="#6B2D8B" />
               </TouchableOpacity>
             </View>
-            <Text style={styles.communityHelpBody}>
-              Progress is based on the number of days you practice, with extra momentum for staying consistent.
-              {'\n\n'}
-              {journeyHelpStageCopy}
-            </Text>
+            <ScrollView
+              style={[styles.communityHelpScroll, { maxHeight: helpScrollMaxHeight }]}
+              contentContainerStyle={styles.communityHelpScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator
+            >
+              <Text style={styles.communityHelpBody}>
+                Progress is based on the number of consistent days you practice.
+                {'\n\n'}
+                {journeyHelpStageCopy}
+              </Text>
+            </ScrollView>
             <View style={styles.communityHelpActionRow}>
               <TouchableOpacity
                 style={styles.communityHelpActionBtn}
@@ -2015,10 +2045,15 @@ export default function ProgressMainScreen() {
       >
         <View style={styles.communityHelpBackdrop}>
           <View style={styles.communityHelpDim} />
-          <View style={styles.communityHelpPopover}>
+          <View
+            style={[
+              styles.communityHelpPopover,
+              { maxHeight: helpSheetMaxHeight, paddingBottom: helpSheetBottomPadding },
+            ]}
+          >
             <View style={styles.communityHelpHeaderRow}>
               <View style={styles.communityHelpTitleWrap}>
-                <Text style={styles.communityHelpModalTitle}>How Points Work</Text>
+                <Text style={styles.communityHelpModalTitle}>Coherence Points</Text>
               </View>
               <TouchableOpacity
                 style={styles.communityHelpCloseBtn}
@@ -2030,14 +2065,33 @@ export default function ProgressMainScreen() {
                 <X size={22} color="#6B2D8B" />
               </TouchableOpacity>
             </View>
-            <Text style={styles.communityHelpBody}>
-              Points are earned through coherence - a measurable state where your breathing, heart rhythm, and
-              nervous system become more synchronized. Longer periods of steady coherence generate more points.
-              {'\n\n'}
-              <Text style={styles.communityHelpLink} onPress={onPressCommunityHelpReadMore}>
-                Read more.
+            <ScrollView
+              style={[styles.communityHelpScroll, { maxHeight: helpScrollMaxHeight }]}
+              contentContainerStyle={styles.communityHelpScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator
+            >
+              <Text style={styles.communityHelpBody}>
+                Each time your Coherence Score updates, it generates Coherence Points. For example, if your first
+                Coherence Score is 2.0 and your second Coherence Score is 3.0, you will have generated 2.0 + 3.0 =
+                5.0 Coherence Points.
+                {'\n\n'}
+                Your Coherence Points accumulate through your session and are added to your lifetime total. Some
+                people set a daily objective of reaching a specific number of Coherence Points. When first beginning,
+                we recommend 300 Coherence Points a day - and then increase this over time as it feels right to you.
+                {'\n\n'}
+                You can also check out the overall coherence points from our global community of users focused on
+                increasing coherence.
+                {'\n\n'}
+                <Text
+                  style={styles.communityHelpLink}
+                  onPress={onPressCommunityHelpReadMore}
+                  accessibilityRole="link"
+                >
+                  Learn More
+                </Text>
               </Text>
-            </Text>
+            </ScrollView>
             <View style={styles.communityHelpActionRow}>
               <TouchableOpacity
                 style={styles.communityHelpActionBtn}
@@ -2060,6 +2114,8 @@ const styles = StyleSheet.create({
     paddingBottom: 34,
     borderBottomLeftRadius: borderRadius.sheet,
     borderBottomRightRadius: borderRadius.sheet,
+    zIndex: 20,
+    elevation: 12,
   },
   headerRow: {
     flexDirection: 'row',
@@ -2082,6 +2138,37 @@ const styles = StyleSheet.create({
   scroll: {
     paddingHorizontal: spacing.md,
     paddingTop: spacing.xl,
+  },
+  surveySettingsBanner: {
+    width: '100%',
+    alignSelf: 'stretch',
+    marginTop: -borderRadius.sheet,
+    backgroundColor: '#FFF8EE',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(0,0,0,0.08)',
+    zIndex: 25,
+    ...Platform.select({
+      android: {
+        elevation: 4,
+      },
+      default: {
+        elevation: 16,
+      },
+    }),
+  },
+  surveySettingsBannerInner: {
+    position: 'relative',
+    paddingHorizontal: spacing.md + 2,
+    paddingTop: spacing.md + 4,
+    paddingBottom: spacing.lg,
+    justifyContent: 'center',
+  },
+  surveySettingsBannerClose: {
+    position: 'absolute',
+    top: spacing.md + 2,
+    right: spacing.md + 2,
+    zIndex: 2,
+    padding: spacing.xs,
   },
   communityCardFrame: {
     width: '100%',
@@ -2129,7 +2216,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     width: '100%',
-    height: '75%',
+    flexDirection: 'column',
+    overflow: 'hidden',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     borderBottomLeftRadius: 0,
@@ -2137,7 +2225,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 36,
     paddingTop: 50,
-    paddingBottom: 34,
+  },
+  communityHelpScroll: {},
+  communityHelpScrollContent: {
+    paddingBottom: 12,
   },
   communityHelpHeaderRow: {
     minHeight: 30,
@@ -2224,7 +2315,7 @@ const styles = StyleSheet.create({
     marginTop: 0,
     marginBottom: spacing.md,
     borderRadius: borderRadius.lg,
-    backgroundColor: '#FFF4E8',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.07)',
     paddingHorizontal: spacing.md,
@@ -2257,13 +2348,13 @@ const styles = StyleSheet.create({
     borderRadius: 7,
   },
   trendsMetaLeft: {
-    fontFamily: PROGRESS_FONT_MEDIUM,
+    fontFamily: PROGRESS_FONT_REGULAR,
     fontSize: 12,
     lineHeight: 18,
     color: '#000000',
   },
   trendsMetaRight: {
-    fontFamily: PROGRESS_FONT_MEDIUM,
+    fontFamily: PROGRESS_FONT_REGULAR,
     fontSize: 12,
     lineHeight: 18,
     color: '#000000',
@@ -2271,9 +2362,9 @@ const styles = StyleSheet.create({
   trendsChartWrap: {
     height: 222,
     borderRadius: 14,
-    backgroundColor: '#FFF8EF',
+    backgroundColor: '#FFF4E8',
     borderWidth: 1,
-    borderColor: 'rgba(107,45,139,0.18)',
+    borderColor: 'rgba(225,139,49,0.22)',
     overflow: 'hidden',
     position: 'relative',
   },
@@ -2420,7 +2511,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   insightsSummaryText: {
-    fontFamily: PROGRESS_FONT_MEDIUM,
+    fontFamily: PROGRESS_FONT_REGULAR,
     fontSize: 15,
     lineHeight: 26,
     fontWeight: '600',
@@ -2549,7 +2640,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(225,139,49,0.5)',
   },
   notesRangeTabTxt: {
-    fontFamily: PROGRESS_FONT_MEDIUM,
+    fontFamily: PROGRESS_FONT_REGULAR,
     color: '#171717',
     fontSize: 13,
     fontWeight: '600',
@@ -2733,27 +2824,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
     paddingBottom: spacing.md,
   },
-  journeySurveyCardWrap: {
-    alignSelf: 'stretch',
-  },
-  journeySurveyCard: {
-    alignSelf: 'stretch',
-    borderRadius: borderRadius.lg,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.07)',
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
-  },
-  journeySurveyTitle: {
-    fontFamily: PROGRESS_FONT_BOLD,
-    fontSize: 14,
-    lineHeight: 26,
-    color: '#2C2C2E',
-    fontWeight: '800',
-    marginBottom: 6,
-  },
   journeyNextStepsTitle: {
     fontFamily: PROGRESS_FONT_BOLD,
     fontSize: 14,
@@ -2805,8 +2875,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
   },
   communityHelpActionRow: {
-    marginTop: 'auto',
-    paddingTop: 8,
+    paddingTop: 12,
     alignItems: 'stretch',
     justifyContent: 'center',
   },
@@ -2845,7 +2914,9 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   journeySurveyToggleWrap: {
-    marginBottom: 2,
+    minWidth: 0,
+    paddingRight: 44,
+    justifyContent: 'center',
   },
   journeyNextStepsCtaBtn: {
     marginTop: 10,
@@ -3074,7 +3145,7 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 2,
     textAlign: 'center',
-    fontFamily: PROGRESS_FONT_MEDIUM,
+    fontFamily: PROGRESS_FONT_REGULAR,
     color: '#171717AD',
     fontSize: 13,
     lineHeight: 26,
@@ -3138,34 +3209,34 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF9F2',
   },
   sessionInsightsStateBadgeText: {
-    fontFamily: PROGRESS_FONT_MEDIUM,
+    fontFamily: PROGRESS_FONT_REGULAR,
     fontSize: 13,
     lineHeight: 26,
     color: '#171717',
     fontWeight: '600',
   },
   toggleMicrocopy: {
-    marginTop: 4,
-    fontFamily: PROGRESS_FONT_REGULAR,
+    marginTop: spacing.xs,
+    fontFamily: PROGRESS_FONT_REGULAR_ITALIC,
     fontSize: 13,
-    lineHeight: 18,
+    lineHeight: 22,
     color: '#1717177A',
   },
   toggleConfirmationText: {
-    marginTop: 4,
-    fontFamily: PROGRESS_FONT_MEDIUM,
+    marginTop: spacing.xs,
+    fontFamily: PROGRESS_FONT_REGULAR,
     fontSize: 13,
     lineHeight: 26,
     color: '#2C9A5F',
     fontWeight: '600',
   },
   tabsLockedToggleSwitchRow: {
-    marginTop: 8,
+    marginTop: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.sm,
     alignSelf: 'flex-start',
-    paddingVertical: 2,
+    paddingVertical: spacing.xs,
   },
   tabsLockedToggleSwitchKnob: {
     width: 30,
@@ -3194,7 +3265,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E18B31',
   },
   tabsLockedToggleSwitchText: {
-    fontFamily: PROGRESS_FONT_MEDIUM,
+    fontFamily: PROGRESS_FONT_REGULAR,
     color: '#171717',
     fontSize: 13,
     lineHeight: 26,
@@ -3284,7 +3355,7 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(52,37,61,0.2)',
   },
   inactiveSurveyToggleTxt: {
-    fontFamily: PROGRESS_FONT_MEDIUM,
+    fontFamily: PROGRESS_FONT_REGULAR,
     color: '#171717',
     fontSize: 13,
     lineHeight: 26,

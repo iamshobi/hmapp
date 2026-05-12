@@ -1,6 +1,4 @@
-/**
- * Soft sine wave bands with slow vertical drift + horizontal sway — motion stays readable as water darkens.
- */
+
 import React, { useEffect, useRef, useMemo } from 'react';
 import { Animated, StyleSheet, Easing, useWindowDimensions } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -16,7 +14,7 @@ function wavePath(w, y0, amp, cycles) {
   return d;
 }
 
-/** hrvNormalized high → smooth waves; low → faster, larger storm motion */
+
 export default function OceanWaveMotionOverlay({ depthProgress = 0, hrvNormalized = 0.5 }) {
   const { width: W, height: H } = useWindowDimensions();
   const drift = useRef(new Animated.Value(0)).current;

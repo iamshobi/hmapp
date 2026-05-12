@@ -27,10 +27,10 @@ function buildPreviewLoggedSet(year, monthIndex, previewType) {
   const map = {
     zero: [],
     firstTime: [8],
-    foundation: [6, 12, 18],
-    seed: [3, 6, 9, 12, 15, 18, 21, 24],
-    habit: [2, 5, 8, 11, 14, 17, 20, 23, 26, 29],
-    deepPractice: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27],
+    settle: [6, 12, 18],
+    flow: [3, 6, 9, 12, 15, 18, 21, 24],
+    deep: [2, 5, 8, 11, 14, 17, 20, 23, 26, 29],
+    still: [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27],
     building: [3, 8, 14, 21, 27],
     inactiveSurvey: [4, 11, 19, 26],
     partialSurveyOptOut: [3, 9, 15],
@@ -38,7 +38,8 @@ function buildPreviewLoggedSet(year, monthIndex, previewType) {
     advanced: [2, 5, 8, 11, 14, 17, 20, 23, 26, 29],
     pro: [1, 3, 5, 7, 8, 11, 14, 17, 19, 21, 24, 27, 29],
   };
-  const days = map[previewType] || map.building;
+  const key = normalizePreviewType(previewType);
+  const days = map[key] || map.building;
   const set = new Set();
   days.forEach((d) => {
     set.add(dayKey(year, monthIndex, d));
@@ -60,17 +61,21 @@ function buildPreviewGraySet(year, monthIndex, previewType) {
 
 function normalizePreviewType(type) {
   if (type === 'growing') return 'building';
+  if (type === 'foundation') return 'settle';
+  if (type === 'seed') return 'flow';
+  if (type === 'habit') return 'deep';
+  if (type === 'deepPractice') return 'still';
   return type;
 }
 
 function getSessionsForType(type) {
   const t = normalizePreviewType(type);
   if (t === 'pro') return 100;
-  if (t === 'deepPractice') return 35;
-  if (t === 'habit') return 18;
+  if (t === 'still') return 35;
+  if (t === 'deep') return 18;
   if (t === 'advanced') return 18;
-  if (t === 'seed') return 8;
-  if (t === 'foundation') return 3;
+  if (t === 'flow') return 8;
+  if (t === 'settle') return 3;
   if (t === 'inactiveSurvey') return 12;
   if (t === 'partialSurveyOptOut') return 18;
   if (t === 'building') return 5;
@@ -146,7 +151,6 @@ export default function ProgressCheckinsCalendar({
     }
     if (sessionsDisplay <= 0) return 0;
     if (loggedDays.size > 0) return Math.min(loggedDays.size, sessionsDisplay);
-    // If we only know sessions count (no dated entries), assume at least one practiced day.
     return 1;
   }, [loggedDays.size, monthIndex, previewType, sessionsDisplay, year]);
   const partialSurveyCounts = useMemo(() => {

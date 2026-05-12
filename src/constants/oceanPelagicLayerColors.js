@@ -1,10 +1,4 @@
-/**
- * Pelagic zone colors aligned with the five-layer ocean depth diagram:
- * Epipelagic (sunlight) → Mesopelagic (twilight) → Bathypelagic (midnight) →
- * Abyssopelagic (abyssal) → Hadalpelagic (trenches), plus air above the sea surface.
- *
- * Depth axis matches session backdrop: OCEAN_BACKDROP_DEPTH_MIN_M … OCEAN_BACKDROP_DEPTH_MAX_M.
- */
+
 
 import { OCEAN_BACKDROP_DEPTH_MIN_M, OCEAN_BACKDROP_DEPTH_MAX_M } from './oceanDepthLevels';
 
@@ -39,10 +33,7 @@ function rgbaFromHex(hex, a) {
   return `rgba(${r},${g},${b},${a})`;
 }
 
-/**
- * Sharp zone bands (diagram): shallow → deep within each band.
- * Colors tuned to sunlit / twilight / midnight / navy / indigo trench.
- */
+
 const PELAGIC_SEGMENTS = [
   {
     lo: OCEAN_BACKDROP_DEPTH_MIN_M,
@@ -72,7 +63,7 @@ function segmentForDepthM(d) {
   return PELAGIC_SEGMENTS[PELAGIC_SEGMENTS.length - 1];
 }
 
-/** Representative colour at this absolute depth (m) */
+
 export function pelagicKeyColorAtDepthM(depthM) {
   const s = segmentForDepthM(depthM);
   const span = s.hi - s.lo || 1;
@@ -83,10 +74,7 @@ export function pelagicKeyColorAtDepthM(depthM) {
   };
 }
 
-/**
- * Low-density “water” tint — clearer than before so iceberg pan reads through (going-deep via motion).
- * `diveProgress01` nudges the lower stops slightly darker over the dive.
- */
+
 export function getPelagicDepthOverlayGradientRGBA(depthM, diveProgress01 = 0) {
   const dip = clamp01(diveProgress01);
   const { color: key } = pelagicKeyColorAtDepthM(depthM);
@@ -103,7 +91,7 @@ export function getPelagicDepthOverlayGradientRGBA(depthM, diveProgress01 = 0) {
   ];
 }
 
-/** 0–1 over full axis (air … trench) — for ambient shimmer strength */
+
 export function pelagicNormalizedDepthM(depthM) {
   const lo = OCEAN_BACKDROP_DEPTH_MIN_M;
   const hi = OCEAN_BACKDROP_DEPTH_MAX_M;

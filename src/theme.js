@@ -1,9 +1,3 @@
-/**
- * HeartMath app tokens. Shell colors/gradients map to
- * `src/constants/hmDesignLibrary.tokens.json` (HM Design Library: theme.css + ColorsPage).
- * Figma Make canvas/frame: `src/constants/designLibrary.js`.
- * Game / session (zen, coherence) keep legacy stacks where not specified in HM JSON.
- */
 import { StyleSheet } from 'react-native';
 import { DESIGN_LIBRARY_CANVAS } from './constants/designLibrary';
 import hm from './constants/hmDesignLibrary.tokens.json';
@@ -16,12 +10,10 @@ const N = hm.neutral;
 const G = hm.gradients;
 const SH = hm.shell.fromThemeCss;
 
-/** Canonical palette — HM library tokens + legacy keys for games / sessions */
 export const palette = {
   white: N.white.hex,
   black: '#212121',
 
-  /** HM Design Library — brand (ColorsPage) */
   hmBrandPurple: B.brandPurple.hex,
   hmBrandMagenta: B.brandMagenta.hex,
   hmDeepPurple: B.deepPurple.hex,
@@ -31,7 +23,6 @@ export const palette = {
   hmLightPurple: B.lightPurple.hex,
   hmSurfacePurple: B.surfacePurple.hex,
 
-  /** Primary brand axis — aligned where overlapping; keep for gradients / games */
   hmMagenta: B.brandMagenta.hex,
   hmPink: '#EC407A',
   hmPurple: '#6A1B9A',
@@ -39,31 +30,25 @@ export const palette = {
   hmPurpleMid: '#8E24AA',
   hmViolet: '#7C4DFF',
 
-  /** Progress tab — warm header */
   orangeDeep: '#F57C00',
   orangeBright: '#FF9800',
   yellowWarm: '#FFB74D',
   yellowLight: '#FFCA28',
 
-  /** Teal / cyan accents */
   teal: '#00897B',
   cyan: '#00ACC1',
   tealBright: '#00BFA5',
   blueBright: '#0091EA',
 
-  /** Session / measure (burgundy) */
   maroonSession: '#4A0E2E',
   magentaDeep: '#C2185B',
 
-  /** Coherence education card */
   greenZone: N.successGreen.hex,
   zoneBlue: '#2196F3',
   zoneOrange: '#FF9800',
 
-  /** UI chrome */
   navyControl: '#1E2A3B',
   designLibraryCanvas: DESIGN_LIBRARY_CANVAS,
-  /** Shell text — HM dark + muted (secondary = mid gray for subtitles) */
   textOnLight: N.darkText.hex,
   textSecondary: '#616161',
   textMuted: N.mutedText.hex,
@@ -71,28 +56,20 @@ export const palette = {
   overlayBokeh: 'rgba(255,255,255,0.35)',
   inputBackground: SH.inputBackground,
 
-  /** Sage zen (Play / Breath session only) */
   sage: '#91A88C',
   sageDark: '#6B8B6E',
 };
 
-/** Native splash — first stop must match `gradients.shellHeader[0]` (`app.json` splash). */
 export const splashNativeBackground = palette.hmPurpleDark;
 
 export const gradients = {
-  /** Legacy — teal → blue → purple */
   home: ['#00BFA5', '#0091EA', '#651FFF'],
-  /** Learn tab — HM “Guided Techniques” (ColorsPage) */
   learn: [...G.guidedTechniques.stops],
-  /** Coherence session — magenta → purple stack */
   session: ['#D81B60', '#AB47BC', '#6A1B9A', '#311B92'],
   sessionCalibrating: ['#C2185B', '#8E24AA', '#4527A0'],
-  /** Progress — warm header */
   progressHeader: ['#FF9800', '#FFB74D', '#FFCA28'],
-  /** Session complete */
   complete: ['#00897B', '#00ACC1', '#5E35B1'],
 
-  /** Home header — deep violet → magenta (library + splash) */
   shellHeader: ['#311B92', '#4527A0', '#6A1B9A', '#8E24AA', '#AB47BC'],
   magentaPurple: ['#D81B60', '#AB47BC', '#6A1B9A'],
   congratsModal: ['#D81B60', '#8E24AA', '#4527A0'],
@@ -100,18 +77,15 @@ export const gradients = {
   burgundyField: ['#4A0E2E', '#541B31'],
   measureMagenta: ['#C2185B', '#AD1457'],
 
-  /** Daily Practice — HM ColorsPage gradients */
   dailyLearn: [...G.guidedTechniques.stops, B.deepPurple.hex],
   dailyMeasure: [...G.measure.stops],
   dailyPlay: [...G.play.stops],
-  /** CTA — purple ramp (between HM brand + material) */
   ctaPurple: [B.brandPurple.hex, B.deepPurple.hex, '#4A148C'],
 
   zenGameSession: ['#FDF9F0', '#EEF4EE', '#DCE8DC'],
   zenGameCalibrating: ['#F8F4EC', '#E8F0E8', '#D8E6D8'],
   zenGameComplete: ['#E8F0E8', '#C8DCC8', '#91A88C'],
 
-  /** GradientActionCard — HM tokens */
   actionLearn: [...G.guidedTechniques.stops, B.deepPurple.hex],
   actionMeasure: [...G.measure.stops],
   actionPlay: [...G.play.stops],
@@ -120,16 +94,10 @@ export const gradients = {
   actionCourses: [B.appBlue.hex, '#5E35B1', B.deepPurple.hex],
   actionAudiobooks: ['#5C6BC0', '#3949AB', '#283593'],
 
-  /** Play / BreathSession — universe (Sacred Geometry): deep purple ramp */
   gameSessionUniverse: [palette.hmPurpleDark, '#4527A0', B.deepPurple.hex, B.brandPurple.hex],
-  /** Play / BreathSession — ocean: HM app blue + guided-techniques axis */
   gameSessionOcean: ['#031a2e', '#042898', B.appBlue.hex, '#11A8B2'],
 };
 
-/**
- * Settings header brand icon — SVG linear-gradient(63.91deg, …) in viewBox 0 0 35 24.
- * CSS 0° = up; SVG y increases down → direction (sin θ, -cos θ). Line through center with slack past bbox.
- */
 const SETTINGS_BRAND_VB_W = 35;
 const SETTINGS_BRAND_VB_H = 24;
 const SETTINGS_BRAND_BADGE_DEG = 63.91;
@@ -146,7 +114,6 @@ export const settingsBrandBadgeSvgGradient = {
   y1: SETTINGS_BRAND_CY - SETTINGS_BRAND_L * SETTINGS_BRAND_VY,
   x2: SETTINGS_BRAND_CX + SETTINGS_BRAND_L * SETTINGS_BRAND_VX,
   y2: SETTINGS_BRAND_CY + SETTINGS_BRAND_L * SETTINGS_BRAND_VY,
-  /** Offsets along gradient axis (matches design % stops); tiny epsilon keeps flat plateaus */
   stops: [
     { offset: '0%', color: '#6A0A8A' },
     { offset: '21.98%', color: '#6A0A8A' },
@@ -161,9 +128,6 @@ export const settingsBrandBadgeSvgGradient = {
   ],
 };
 
-/**
- * Ocean decorative icons: tint = depth accent; glow mixes accent with session cyan (HM shell highlight).
- */
 export function oceanDepthIconGlow(accentHex) {
   const a = accentHex.replace('#', '');
   if (a.length !== 6) return accentHex;
@@ -200,7 +164,6 @@ export const colors = {
   purple: '#7C4DFF',
   purpleLight: '#B388FF',
   purpleDark: '#6A1B9A',
-  /** HM Design Library — active tab / links */
   navActive: palette.hmBrandPurple,
   teal: '#00897B',
   cyan: '#00ACC1',
@@ -245,7 +208,6 @@ export const borderRadius = {
   md: 12,
   lg: 20,
   xl: 28,
-  /** Bottom sheets / large cards (reference ~32–40px) */
   sheet: 32,
   full: 9999,
 };
@@ -274,15 +236,7 @@ export const shadows = {
   },
 };
 
-/**
- * Typography — reference: geometric sans, white on gradients, dark on white cards.
- * Use with `Text style={[typography.heroTitle, typography.onDark]}` etc.
- */
 export const typography = {
-  /**
-   * Splash / wordmark on brand gradients — geometric sans, strong weight, slight tracking.
-   * Align `app.json` splash `backgroundColor` with `gradients.shellHeader[0]` for a seamless handoff.
-   */
   brandWordmark: {
     fontSize: 36,
     fontWeight: '700',
@@ -291,49 +245,27 @@ export const typography = {
   },
   heroTitle: { fontSize: 28, fontWeight: '700', letterSpacing: -0.3 },
   coherence: { fontSize: 34, fontWeight: '200', letterSpacing: -0.5 },
-  /** Modal / screen titles on white */
   modalTitle: { fontSize: 26, fontWeight: '800', letterSpacing: -0.2 },
-  /** Greeting line on shell */
   greeting: { fontSize: 26, fontWeight: '600', letterSpacing: 0.2 },
   greetingSub: { fontSize: 17, fontWeight: '400' },
-  /** Section headers on light bg */
   sectionTitle: { fontSize: 20, fontWeight: '800' },
   sectionSub: { fontSize: 14, fontWeight: '400' },
-  /** CTA button label */
   buttonPrimary: { fontSize: 17, fontWeight: '700', letterSpacing: 0.4 },
-  /** EXIT / secondary caps */
   exitLabel: { fontSize: 13, fontWeight: '700', letterSpacing: 1 },
-  /** Coherence / timer on session */
   timer: { fontSize: 15, fontWeight: '600', letterSpacing: 0.3 },
-  /** Body on dark gradient */
   bodyOnDark: { fontSize: 16, fontWeight: '400', lineHeight: 24 },
-  /** Body on white */
   bodyOnLight: { fontSize: 16, color: palette.textOnLight, lineHeight: 24 },
 };
 
-/**
- * Reusable component recipes (plain objects — spread into StyleSheet or merge).
- * Ghost pill: white border, transparent fill (Done on congrats modals).
- */
-/**
- * Badges (gallery + detail) — minimal scale on dark gradients: few sizes, calm contrast, 8pt rhythm.
- * Pair with app fonts (e.g. Sailec-Bold / Sailec-Medium) in screen StyleSheets.
- */
 export const badgesUi = {
-  /** Screen title */
   titleSize: 20,
   titleSpacing: -0.25,
-  /** Section headings, badge names in grid */
   headlineSize: 16,
-  /** Body copy, card values */
   bodySize: 15,
   bodyLine: 22,
-  /** Labels, chips, nav */
   labelSize: 12,
   labelLine: 16,
-  /** Secondary lines, filters */
   metaSize: 11,
-  /** Uppercase / tiny */
   captionSize: 10,
   captionTracking: 0.6,
   text: {
@@ -347,7 +279,6 @@ export const badgesUi = {
   border: 'rgba(255,255,255,0.11)',
   borderStrong: 'rgba(255,255,255,0.16)',
   track: 'rgba(255,255,255,0.10)',
-  /** Progress / accent — one restrained ramp */
   progressFill: ['rgba(255,255,255,0.45)', 'rgba(255,255,255,0.72)'],
 };
 

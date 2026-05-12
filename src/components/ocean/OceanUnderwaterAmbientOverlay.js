@@ -1,7 +1,4 @@
-/**
- * Soft drifting light bands — underwater hint. Low coherence → stronger / faster motion;
- * high coherence → calmer drift and steadier light. Optional `tintDepthM` follows pelagic palette.
- */
+
 import React, { useEffect, useRef, useMemo } from 'react';
 import { Animated, StyleSheet, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';

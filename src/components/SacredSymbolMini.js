@@ -1,8 +1,4 @@
-/**
- * Minimal line-art icons for sacred geometry symbols (viewBox 0 0 100 100).
- * Index order matches SACRED_GEOMETRY_SYMBOLS — aligned with Pardesco article
- * symbol sequence and typical diagrams for each name.
- */
+
 import React from 'react';
 import Svg, { Circle, Path, G, Line } from 'react-native-svg';
 
@@ -18,7 +14,7 @@ function S({ children, size = 56 }) {
   );
 }
 
-/** Classic Sephirot layout (10 nodes) — matches Tree of Life diagrams like Pardesco’s. */
+
 const TREE_NODES = [
   [50, 10],
   [28, 26],
@@ -31,7 +27,7 @@ const TREE_NODES = [
   [72, 64],
   [50, 84],
 ];
-/** Simplified paths between Sephirot (common Tree of Life diagrams). */
+
 const TREE_EDGES = [
   [0, 1],
   [0, 2],
@@ -54,7 +50,7 @@ const TREE_EDGES = [
 export default function SacredSymbolMini({ index, size = 56 }) {
   switch (index) {
     case 0:
-      /* Torus / Lotus of Life — concentric flow (reference: torus / lotus) */
+      
       return (
         <S size={size}>
           <Circle cx="50" cy="50" r="32" stroke={STROKE} strokeWidth={W} />
@@ -63,7 +59,7 @@ export default function SacredSymbolMini({ index, size = 56 }) {
         </S>
       );
     case 1:
-      /* Flower of Life — overlapping circles (reference: Flower of Life) */
+      
       return (
         <S size={size}>
           <Circle cx="50" cy="50" r="10" stroke={STROKE} strokeWidth={W} />
@@ -82,7 +78,7 @@ export default function SacredSymbolMini({ index, size = 56 }) {
         </S>
       );
     case 2:
-      /* Tree of Life — 10 Sephirot + paths (reference: Tree of Life) */
+      
       return (
         <S size={size}>
           {TREE_EDGES.map(([a, b], i) => (
@@ -102,7 +98,7 @@ export default function SacredSymbolMini({ index, size = 56 }) {
         </S>
       );
     case 3:
-      /* Sri Yantra — interlocking triangles (reference: Sri Yantra) */
+      
       return (
         <S size={size}>
           <Path d="M 50 22 L 78 72 L 22 72 Z" stroke={STROKE} strokeWidth={W} />
@@ -111,7 +107,7 @@ export default function SacredSymbolMini({ index, size = 56 }) {
         </S>
       );
     case 4:
-      /* Six Petal Rosette — inner ring of Seed (reference: six petals around center) */
+      
       return (
         <S size={size}>
           <Circle cx="50" cy="50" r="28" stroke={STROKE} strokeWidth={W} />
@@ -124,7 +120,7 @@ export default function SacredSymbolMini({ index, size = 56 }) {
         </S>
       );
     case 5:
-      /* Metatron's Cube — 13 vertices from Flower of Life + key lines (reference: Metatron's Cube) */
+      
       return (
         <S size={size}>
           <Circle cx="50" cy="50" r="28" stroke={STROKE} strokeWidth={W} />
@@ -155,7 +151,7 @@ export default function SacredSymbolMini({ index, size = 56 }) {
         </S>
       );
     case 6:
-      /* Star of David — two interlocking triangles (reference: Star of David) */
+      
       return (
         <S size={size}>
           <Path d="M 50 18 L 78 78 L 22 78 Z" stroke={STROKE} strokeWidth={W} />
@@ -163,7 +159,7 @@ export default function SacredSymbolMini({ index, size = 56 }) {
         </S>
       );
     case 7:
-      /* Star tetrahedron / Merkaba (reference: Merkaba) */
+      
       return (
         <S size={size}>
           <Path d="M 50 22 L 78 72 L 22 72 Z" stroke={STROKE} strokeWidth={W} />
@@ -172,7 +168,7 @@ export default function SacredSymbolMini({ index, size = 56 }) {
         </S>
       );
     case 8:
-      /* Vesica Piscis */
+      
       return (
         <S size={size}>
           <Circle cx="38" cy="50" r="25" stroke={STROKE} strokeWidth={W} />
@@ -180,7 +176,7 @@ export default function SacredSymbolMini({ index, size = 56 }) {
         </S>
       );
     case 9:
-      /* Seed of Life */
+      
       return (
         <S size={size}>
           <Circle cx="50" cy="50" r="12" stroke={STROKE} strokeWidth={W} />
@@ -193,7 +189,7 @@ export default function SacredSymbolMini({ index, size = 56 }) {
         </S>
       );
     case 10:
-      /* Egg of Life */
+      
       return (
         <S size={size}>
           <Circle cx="50" cy="50" r="8" stroke={STROKE} strokeWidth={W} />
@@ -206,7 +202,7 @@ export default function SacredSymbolMini({ index, size = 56 }) {
         </S>
       );
     case 11:
-      /* Fruit of Life */
+      
       return (
         <S size={size}>
           <Circle cx="50" cy="50" r="8" stroke={STROKE} strokeWidth={W} />

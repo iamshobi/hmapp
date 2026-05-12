@@ -1,7 +1,4 @@
-/**
- * Session rewards — Session Complete, zone/symbol badges, shells (ocean), My Shell Collection,
- * How do you feel now, My Notes, Done.
- */
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
@@ -32,7 +29,6 @@ import SessionMoodFaceIcon from '../components/SessionMoodFaceIcons';
 import MoodChooserModal from '../components/MoodChooserModal';
 import { gradients, shadows } from '../theme';
 
-/** Shared text / chrome — cards & accents switch via `SESSION_REWARDS_THEMES` */
 const C = {
   white:   '#FFFFFF',
   white72: 'rgba(255,255,255,0.72)',
@@ -41,10 +37,6 @@ const C = {
   white12: 'rgba(255,255,255,0.12)',
 };
 
-/**
- * Session Complete screen: magenta/purple (universe / sacred geometry) vs deep blue–teal (ocean),
- * aligned with `gradients.gameSessionOcean` and Ocean Tide accents.
- */
 const SESSION_REWARDS_THEMES = {
   universe: {
     grad: ['#D81B7A', '#8B1FA8', '#5E1688'],
@@ -78,7 +70,6 @@ const SESSION_REWARDS_THEMES = {
   },
 };
 
-/* ── SVG helpers ─────────────────────────────────────────────────── */
 function HeartPlusIcon() {
   return (
     <Svg width={28} height={28} viewBox="0 0 24 24" fill="none">
@@ -106,7 +97,6 @@ function SparkleIcon({ size = 32 }) {
   );
 }
 
-/* ── Floating celebration particle (sparkle = universe, glass bubble = ocean) ── */
 function CelebrationParticle({ x, y, delay, size = 10, travelY = 48, ocean = false }) {
   const anim = useRef(new Animated.Value(0)).current;
 
@@ -154,7 +144,6 @@ function CelebrationParticle({ x, y, delay, size = 10, travelY = 48, ocean = fal
   );
 }
 
-/* ── Corner accent — sparkles (universe) vs glass bubbles (ocean) ── */
 function CornerAccent({ corner, ocean = false }) {
   const flipX = corner === 'tr' || corner === 'br';
   const flipY = corner === 'bl' || corner === 'br';
@@ -201,7 +190,6 @@ function CornerAccent({ corner, ocean = false }) {
   );
 }
 
-/* ── Celebration overlay — corners + floating motifs ─────────────── */
 function CelebrationOverlay({ ocean = false }) {
   const { width: W, height: H } = useWindowDimensions();
 
@@ -243,23 +231,20 @@ function CelebrationOverlay({ ocean = false }) {
   );
 }
 
-/* ── Zone badge icons — one per pelagic zone ─────────────────────── */
 function ZoneBadgeIcon({ zoneId = 'epipelagic', size = 60, color = '#9DDBF5' }) {
   const op = (v) => v; // opacity helper — kept inline for clarity
 
   const designs = {
-    /* ── Sunlit zone: sun + water surface + light shafts ── */
     epipelagic: (
       <>
-        {/* Sun */}
         <SvgCircle cx={50} cy={26} r={10} fill="none" stroke={color} strokeWidth={3} />
-        {/* Sun rays */}
+
         <Path d="M50,10 L50,6 M64,16 L67,13 M72,28 L76,28 M64,38 L67,41 M36,38 L33,41 M28,28 L24,28 M36,16 L33,13"
           stroke={color} strokeWidth={2.2} strokeLinecap="round" />
-        {/* Water surface wavy line */}
+
         <Path d="M8,52 Q20,46 32,52 Q44,58 56,52 Q68,46 80,52 Q86,55 92,52"
           stroke={color} strokeWidth={2.5} fill="none" />
-        {/* Light shafts below surface */}
+
         <Path d="M28,54 L22,82" stroke={color} strokeWidth={2} strokeLinecap="round" opacity={0.35} />
         <Path d="M40,54 L36,82" stroke={color} strokeWidth={2.5} strokeLinecap="round" opacity={0.45} />
         <Path d="M52,54 L50,82" stroke={color} strokeWidth={2.8} strokeLinecap="round" opacity={0.5} />
@@ -268,17 +253,16 @@ function ZoneBadgeIcon({ zoneId = 'epipelagic', size = 60, color = '#9DDBF5' }) 
       </>
     ),
 
-    /* ── Twilight zone: crescent + fading shafts + scattered glows ── */
     mesopelagic: (
       <>
-        {/* Fading shafts from top */}
+
         <Path d="M30,10 L28,48" stroke={color} strokeWidth={2} strokeLinecap="round" opacity={0.18} />
         <Path d="M42,10 L41,52" stroke={color} strokeWidth={2.2} strokeLinecap="round" opacity={0.24} />
         <Path d="M54,10 L54,52" stroke={color} strokeWidth={2.5} strokeLinecap="round" opacity={0.28} />
         <Path d="M66,10 L67,48" stroke={color} strokeWidth={2.2} strokeLinecap="round" opacity={0.22} />
-        {/* Crescent moon */}
+
         <Path d="M62,34 A20,20 0 1,1 62,66 A13,13 0 1,0 62,34 Z" fill={color} opacity={0.88} />
-        {/* Scattered bioluminescent dots */}
+
         <SvgCircle cx={24} cy={70} r={2.5} fill={color} opacity={0.42} />
         <SvgCircle cx={38} cy={80} r={2}   fill={color} opacity={0.32} />
         <SvgCircle cx={55} cy={75} r={1.8} fill={color} opacity={0.28} />
@@ -287,17 +271,16 @@ function ZoneBadgeIcon({ zoneId = 'epipelagic', size = 60, color = '#9DDBF5' }) 
       </>
     ),
 
-    /* ── Midnight zone: bioluminescent constellation in darkness ── */
     bathypelagic: (
       <>
-        {/* Central glow cluster */}
+
         <SvgCircle cx={50} cy={50} r={16} fill={color} opacity={0.1} />
         <SvgCircle cx={50} cy={50} r={9}  fill={color} opacity={0.22} />
         <SvgCircle cx={50} cy={50} r={4}  fill={color} opacity={0.85} />
-        {/* Radiating thin spines */}
+
         <Path d="M50,34 L50,29 M64,38 L68,34 M68,52 L73,52 M62,64 L66,68 M50,66 L50,71 M38,64 L34,68 M32,52 L27,52 M36,38 L32,34"
           stroke={color} strokeWidth={1.5} strokeLinecap="round" opacity={0.5} />
-        {/* Satellite dots */}
+
         <SvgCircle cx={22} cy={32} r={3}   fill={color} opacity={0.55} />
         <SvgCircle cx={78} cy={30} r={2.5} fill={color} opacity={0.48} />
         <SvgCircle cx={18} cy={64} r={2.2} fill={color} opacity={0.4}  />
@@ -307,58 +290,55 @@ function ZoneBadgeIcon({ zoneId = 'epipelagic', size = 60, color = '#9DDBF5' }) 
       </>
     ),
 
-    /* ── Abyssal plain: diamond crystal + flat seabed ── */
     abyssopelagic: (
       <>
-        {/* Diamond outline */}
+
         <Path d="M50,14 L76,50 L50,80 L24,50 Z"
           fill="none" stroke={color} strokeWidth={2.5} strokeLinejoin="round" />
-        {/* Inner diamond fill */}
+
         <Path d="M50,24 L68,50 L50,72 L32,50 Z" fill={color} opacity={0.18} />
-        {/* Central glow */}
+
         <SvgCircle cx={50} cy={50} r={4.5} fill={color} opacity={0.9} />
         <SvgCircle cx={50} cy={50} r={10}  fill={color} opacity={0.12} />
-        {/* Flat seabed lines */}
+
         <Line x1={12} y1={88} x2={88} y2={88} stroke={color} strokeWidth={2} opacity={0.35} strokeLinecap="round" />
         <Line x1={22} y1={93} x2={78} y2={93} stroke={color} strokeWidth={1.5} opacity={0.2} strokeLinecap="round" />
       </>
     ),
 
-    /* ── Hadal trenches: nested V-chevrons pointing to trench floor ── */
     hadal: (
       <>
-        {/* Outer trench walls */}
+
         <Path d="M12,12 L50,84 L88,12"
           stroke={color} strokeWidth={2.8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        {/* Middle chevron */}
+
         <Path d="M24,12 L50,68 L76,12"
           stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.6} />
-        {/* Inner chevron */}
+
         <Path d="M36,12 L50,52 L64,12"
           stroke={color} strokeWidth={1.4} fill="none" strokeLinecap="round" strokeLinejoin="round" opacity={0.38} />
-        {/* Trench floor glow */}
+
         <SvgCircle cx={50} cy={84} r={5}  fill={color} opacity={0.82} />
         <SvgCircle cx={50} cy={84} r={10} fill={color} opacity={0.14} />
         <SvgCircle cx={50} cy={84} r={18} fill={color} opacity={0.06} />
       </>
     ),
 
-    /* ── Full column dive: layered zone bands on a central axis ── */
     fullColumn: (
       <>
-        {/* Vertical axis */}
+
         <Path d="M50,8 L50,88" stroke={color} strokeWidth={2} strokeLinecap="round" opacity={0.28} />
-        {/* Zone dots at depth percentages */}
+
         {[14, 28, 44, 62, 76].map((y, i) => (
           <SvgCircle key={i} cx={50} cy={y} r={i === 2 ? 6 : 3.5}
             fill={color} opacity={i === 2 ? 0.9 : 0.5 - i * 0.05} />
         ))}
-        {/* Horizontal ticks */}
+
         {[14, 28, 44, 62, 76].map((y, i) => (
           <Path key={i} d={`M ${44 - i * 1},${y} L ${56 + i * 1},${y}`}
             stroke={color} strokeWidth={1.5} opacity={0.35} strokeLinecap="round" />
         ))}
-        {/* Down arrow at bottom */}
+
         <Path d="M43,80 L50,90 L57,80"
           stroke={color} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
       </>
@@ -372,7 +352,6 @@ function ZoneBadgeIcon({ zoneId = 'epipelagic', size = 60, color = '#9DDBF5' }) 
   );
 }
 
-/** Session Complete subtitle + italic line — tuned by Drift / Swim / Dive and zone */
 function getOceanRewardsMessaging(level) {
   const group = getOceanLevelGroupId(level.id);
   const modeLabel = { drift: 'Drift', swim: 'Swim', dive: 'Dive' }[group];
@@ -399,7 +378,6 @@ function getOceanRewardsMessaging(level) {
   };
 }
 
-/* ── Zone badge accent colours ────────────────────────────────────── */
 const ZONE_BADGE_COLORS = {
   epipelagic:    '#7DD8F0',
   mesopelagic:   '#60A8D8',
@@ -409,7 +387,6 @@ const ZONE_BADGE_COLORS = {
   fullColumn:    '#60B8D8',
 };
 
-/* ── Session mood faces (Very sad → Very happy) — see SessionMoodFaceIcons ── */
 const MOODS = [
   { label: 'Very sad', faceKey: 'verySad' },
   { label: 'Sad', faceKey: 'sad' },
@@ -475,7 +452,6 @@ function MoodCircle({ mood, selected, onPress, selGrad, moodUnselBg, ringSize, i
   );
 }
 
-/* ══════════════════════════════════════════════════════════════════ */
 export default function SessionRewardsScreen() {
   const insets = useSafeAreaInsets();
   const { width: winW } = useWindowDimensions();
@@ -581,9 +557,8 @@ export default function SessionRewardsScreen() {
     setShowEndNumericSurvey(false);
   }, []);
 
-  // Badge entrance animation — springs in on mount
   const badgeAnim = useRef(new Animated.Value(0)).current;
-  /** Continues from BreathSession white flash: fade white → Session Complete gradient */
+
   const introWhiteOpacity = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     Animated.spring(badgeAnim, {
@@ -632,7 +607,6 @@ export default function SessionRewardsScreen() {
 
   const rwTheme = SESSION_REWARDS_THEMES[themeId === 'ocean' ? 'ocean' : 'universe'];
 
-  /** Five mood columns — fit one row within scroll maxWidth 360 */
   const moodRowW = Math.min(winW - 48, 360);
   const moodRingSize = Math.max(44, Math.min(58, Math.floor((moodRowW - 20) / 5)));
   const moodInnerSize = moodRingSize - 6;
@@ -711,10 +685,8 @@ export default function SessionRewardsScreen() {
         ]}
       />
 
-      {/* ── Celebration layer: corner accents + floating motifs ── */}
       <CelebrationOverlay ocean={themeId === 'ocean'} />
 
-      {/* ── Symbol modal ── */}
       <Modal visible={modalIndex !== null} transparent animationType="fade" onRequestClose={() => setModalIndex(null)}>
         <Pressable style={styles.modalBackdrop} onPress={() => setModalIndex(null)}>
           <Pressable style={styles.modalCard} onPress={e => e.stopPropagation()}>
@@ -738,11 +710,7 @@ export default function SessionRewardsScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* ════════════════════════════════════════ */}
-        {/* SESSION COMPLETE                         */}
-        {/* ════════════════════════════════════════ */}
 
-        {/* Session badge — glass bubble (ocean) or sparkle (universe) */}
         <Animated.View style={{ transform: [{ scale: badgeAnim }] }}>
           <LinearGradient colors={rwTheme.iconGrad} style={styles.iconCircle} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
             {themeId === 'ocean' ? <OceanGlassBubble size={38} /> : <SparkleIcon size={32} />}
@@ -754,7 +722,6 @@ export default function SessionRewardsScreen() {
 
         <Text style={styles.quote}>{quote}</Text>
 
-        {/* Zone completed badge (ocean) — tap opens full zone info screen */}
         {themeId === 'ocean' && oceanLevel ? (
           <TouchableOpacity
             activeOpacity={0.88}
@@ -784,7 +751,6 @@ export default function SessionRewardsScreen() {
           </TouchableOpacity>
         ) : null}
 
-        {/* Shells & pearls collected this session (ocean) */}
         {themeId === 'ocean' ? (
           <View style={styles.shellRewards}>
             <Text style={styles.shellRewardsTitle}>Sea shells collected</Text>
@@ -900,7 +866,6 @@ export default function SessionRewardsScreen() {
           </TouchableOpacity>
         ) : null}
 
-        {/* ── Done button ── */}
         <TouchableOpacity style={styles.doneBtn} onPress={goBack} activeOpacity={0.88}>
           <Text style={[styles.doneTxt, { color: rwTheme.doneTxt }]}>Done</Text>
         </TouchableOpacity>
@@ -909,7 +874,6 @@ export default function SessionRewardsScreen() {
   );
 }
 
-/* ── Styles ──────────────────────────────────────────────────────── */
 const styles = StyleSheet.create({
   root: { flex: 1 },
 
@@ -918,14 +882,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
   },
-  /* Session complete badge circle */
+
   iconCircle: {
     width: 68, height: 68, borderRadius: 34,
     alignItems: 'center', justifyContent: 'center',
     marginBottom: 16,
   },
 
-  /* Complete section */
   completeTitle: {
     fontSize: 26, fontWeight: '800',
     color: C.white, textAlign: 'center',
@@ -937,14 +900,12 @@ const styles = StyleSheet.create({
     lineHeight: 20, marginBottom: 20,
   },
 
-  /* Quote */
   quote: {
     fontSize: 13, fontStyle: 'italic',
     color: C.white50, textAlign: 'center',
     marginBottom: 20, paddingHorizontal: 8, lineHeight: 19,
   },
 
-  /* Reward pill — background/border from SESSION_REWARDS_THEMES */
   rewardPill: {
     flexDirection: 'row', alignItems: 'center',
     borderRadius: 14, borderWidth: 1,
@@ -1021,7 +982,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
 
-  /* Section divider */
   sectionDivider: {
     width: '100%', maxWidth: 360,
     height: 1,
@@ -1029,7 +989,6 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
 
-  /* Feedback section */
   feedbackTitle: {
     fontSize: 22, fontWeight: '800',
     color: C.white,
@@ -1074,7 +1033,6 @@ const styles = StyleSheet.create({
     color: C.white, fontWeight: '700',
   },
 
-  /* Journal — card fill/border from SESSION_REWARDS_THEMES */
   journalCard: {
     width: '100%', maxWidth: 360,
     borderRadius: 18,
@@ -1100,7 +1058,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
 
-  /* Done button */
   doneBtn: {
     width: '100%', maxWidth: 360,
     backgroundColor: C.white,
@@ -1132,14 +1089,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
 
-  /* Celebration overlay corners */
   corner: { position: 'absolute' },
   corner_tl: { top: 0,    left: 0  },
   corner_tr: { top: 0,    right: 0 },
   corner_bl: { bottom: 0, left: 0  },
   corner_br: { bottom: 0, right: 0 },
 
-  /* Modals */
   modalBackdrop: {
     flex: 1, backgroundColor: 'rgba(0,8,20,0.58)',
     justifyContent: 'center', alignItems: 'center', padding: 24,

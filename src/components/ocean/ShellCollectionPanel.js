@@ -1,6 +1,4 @@
-/**
- * My Shell Collection — acrylic display-case: 3×5 glass grid (15 shells or 15 pearls per tab).
- */
+
 import React, { useId, useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
@@ -44,19 +42,19 @@ import { shadows } from '../../theme';
 
 const BEACH_COLLECTION_BG = require('../../../assets/shell-collection-beach-bg.png');
 
-/** Three shells per row × five rows (pelagic order) */
+
 const GRID_COLS = 3;
 const GRID_ROWS = 5;
 const TOTAL_SLOTS = GRID_COLS * GRID_ROWS;
 
-/** Heart path — viewBox 0 0 24 24 (classic “rounded” heart silhouette) */
+
 const HEART_PATH_24 =
   'M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z';
 
-/** Heart glyph is smaller than the grid slot so three columns fit cleanly; shell sits dead-centre. */
+
 const HEART_IN_SLOT_SCALE = 0.68;
 
-/** Eight-point sparkle (unit scale); drawn at each glitter site via transform */
+
 const SPARKLE_STAR_D =
   'M0 -1.05 L0.24 -0.24 L1.08 0 L0.24 0.24 L0 1.05 L-0.24 0.24 L-1.08 0 L-0.24 -0.24 Z';
 
@@ -110,7 +108,6 @@ function buildHeartGlitter(uid, filled) {
 }
 
 /**
- * Glossy glass heart — unique SVG ids per instance; shell/pearl centred in the glyph.
  * @param {{ entranceDelayMs?: number; entranceCycleKey?: string }} props
  */
 function HeartShellHolder({
@@ -319,7 +316,7 @@ export default function ShellCollectionPanel({ onClose, resumeToSessionRewards, 
   const nav = useNavigation();
   const { shellCollectionIds, pearlCollectionIds } = useMysession();
   const [tab, setTab] = useState('shells');
-  /** Bumps when the screen is focused again (e.g. back from detail) so glitter replay runs */
+  
   const [entranceEpoch, setEntranceEpoch] = useState(0);
   const focusPassRef = useRef(0);
   useFocusEffect(
@@ -364,7 +361,7 @@ export default function ShellCollectionPanel({ onClose, resumeToSessionRewards, 
   const gutter = 2;
   const caseFullW = Math.min(winW - pad * 2, 400);
   const innerW = caseFullW - casePad * 2;
-  /** Reserve vertical space so the 3×5 grid fits without scrolling (higher = shorter glass panel) */
+  
   const TOP_UI_RESERVE = 182;
   const emptyFooterReserve =
     shellCollectionIds.length === 0 && pearlCollectionIds.length === 0 ? 108 : 0;
@@ -382,7 +379,7 @@ export default function ShellCollectionPanel({ onClose, resumeToSessionRewards, 
     onClose();
   };
 
-  /** Push detail on top of this screen so Got it / back returns here (do not call onClose). */
+  
   const onPressShell = (shell) => {
     nav.navigate('SeaShellDetail', { shellId: shell.id });
   };
