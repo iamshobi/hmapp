@@ -1,10 +1,6 @@
 import React, { useMemo } from 'react';
 import Svg, { Circle, Defs, LinearGradient, RadialGradient, Stop, Path } from 'react-native-svg';
 
-/**
- * Branded help icon used across Progress cards.
- * Replaces static PNG to keep vector crispness at all scales.
- */
 export default function HelpInfoIcon({ size = 18 }) {
   const uid = useMemo(() => Math.random().toString(36).slice(2, 10), []);
   const ringGradId = `help-ring-${uid}`;
@@ -41,7 +37,6 @@ export default function HelpInfoIcon({ size = 18 }) {
         </RadialGradient>
       </Defs>
 
-      {/* soft drop shadow like the reference */}
       <Circle cx="17" cy="18.2" r="12.6" fill="#4B596D" opacity="0.08" />
       <Circle cx="17" cy="17.6" r="11.9" fill="#4B596D" opacity="0.08" />
       <Circle cx="17" cy="13" r="13" fill="#FFFFFF" />

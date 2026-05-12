@@ -1,6 +1,4 @@
-/**
- * Fallback when `iconKey` has no PNG in `oceanIconAssets` (unknown / future keys).
- */
+
 import React from 'react';
 import Svg, { Circle } from 'react-native-svg';
 

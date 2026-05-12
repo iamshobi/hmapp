@@ -130,13 +130,13 @@ export default function BadgeDetailScreen() {
           </View>
           <Text style={styles.desc}>{compactDescription}</Text>
           <Text style={styles.stateMeta}>
-            {getBadgeJourneyState(metrics.sessions) === 'foundation'
-              ? 'Foundation'
-              : getBadgeJourneyState(metrics.sessions) === 'seed'
-              ? 'Seed'
-              : getBadgeJourneyState(metrics.sessions) === 'habit'
-              ? 'Habit'
-              : 'Deep Practice'}{' '}
+            {getBadgeJourneyState(metrics.sessions) === 'settle'
+              ? 'Settle'
+              : getBadgeJourneyState(metrics.sessions) === 'flow'
+              ? 'Flow'
+              : getBadgeJourneyState(metrics.sessions) === 'deep'
+              ? 'Deep'
+              : 'Still'}{' '}
             · Sessions {metrics.sessions} · Streak {metrics.streak} · Quality {metrics.quality} · CP {metrics.points}
           </Text>
         </View>
@@ -146,7 +146,7 @@ export default function BadgeDetailScreen() {
             <TouchableOpacity
               style={[
                 styles.actionPrimary,
-                state === 'deepPractice' && metrics.sessions >= 127 && styles.actionPrimaryPro,
+                state === 'still' && metrics.sessions >= 127 && styles.actionPrimaryPro,
               ]}
               onPress={onShare}
               activeOpacity={0.88}
@@ -161,7 +161,7 @@ export default function BadgeDetailScreen() {
                 <Text style={styles.actionPrimaryTxt}>Share</Text>
               </LinearGradient>
             </TouchableOpacity>
-            {!(state === 'deepPractice' && metrics.sessions >= 127) ? (
+            {!(state === 'still' && metrics.sessions >= 127) ? (
               <TouchableOpacity
                 style={styles.actionSecondary}
                 onPress={() => navigation.goBack()}

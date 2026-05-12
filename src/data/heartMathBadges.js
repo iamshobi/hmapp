@@ -1,12 +1,4 @@
-/**
- * HeartMath badge system source of truth.
- *
- * Product logic:
- * - Badge System has Gallery view + Detail view.
- * - 12 badges shown (locked + unlocked) to preserve motivational incompleteness.
- * - Categories in UI: Milestone, Streak, Performance.
- * - Unlocking is based on session count or streak days.
- */
+
 
 /** @typedef {'Milestone' | 'Streak' | 'Performance'} BadgeCategory */
 
@@ -314,10 +306,7 @@ export const ALL_HEARTMATH_BADGES = [
   },
 ];
 
-/**
- * Badge catalog definition (human-readable product metadata).
- * The category arrays below reflect the exact requested taxonomy.
- */
+
 export const BADGE_CATALOG = {
   Milestone: [
     'First Heartbeat',
@@ -331,9 +320,7 @@ export const BADGE_CATALOG = {
   Performance: ['Vagal Tone Pioneer', 'Stress Alchemist', 'Autonomic Master'],
 };
 
-/**
- * Experience-level copy used by badges screens.
- */
+
 export const BADGE_SYSTEM_OVERVIEW = {
   title: 'Badge System',
   views: ['Gallery', 'Detail'],
@@ -342,9 +329,7 @@ export const BADGE_SYSTEM_OVERVIEW = {
     'Users earn badges after completing sets of coherence sessions, hitting streak milestones, or achieving performance targets. The gallery shows their full collection (locked and unlocked). Tapping a badge opens detailed milestone data, next-level progress, and science context.',
 };
 
-/**
- * Design principles that drive visual/interaction decisions in badges UI.
- */
+
 export const BADGE_DESIGN_PRINCIPLES = [
   {
     key: 'hex-geometry',
@@ -386,11 +371,10 @@ export const BADGE_DESIGN_PRINCIPLES = [
 
 export const BADGE_CATEGORY_FILTERS = ['All', 'Milestone', 'Streak', 'Performance'];
 
-/** Fixed order for gallery category summary (matches design mockup). */
+
 export const BADGE_CATEGORIES = ['Milestone', 'Streak', 'Performance'];
 
 /**
- * Light cards on purple gradient — mirrors BadgesMockup CAT_STYLES.
  * @type {Record<BadgeCategory, { bg: string; border: string; accent: string }>}
  */
 export const GALLERY_CATEGORY_SUMMARY_STYLES = {
@@ -400,7 +384,6 @@ export const GALLERY_CATEGORY_SUMMARY_STYLES = {
 };
 
 /**
- * Per-category unlocked counts for gallery/category summaries.
  * @param {Set<string>} unlockedIds
  * @returns {{ category: BadgeCategory; unlocked: number; total: number }[]}
  */
@@ -437,23 +420,27 @@ export function getUnlockedBadgeIds(totalSessions, streakDays) {
   return out;
 }
 
-/** @typedef {'foundation' | 'seed' | 'habit' | 'deepPractice'} BadgeJourneyState */
+/** @typedef {'settle' | 'flow' | 'deep' | 'still'} BadgeJourneyState */
 
 function normalizePreviewType(type) {
   if (!type) return null;
   const t = String(type);
-  if (t === 'pro') return 'deepPractice';
-  if (t === 'advanced') return 'habit';
-  if (t === 'building') return 'foundation';
+  if (t === 'pro') return 'still';
+  if (t === 'advanced') return 'deep';
+  if (t === 'building') return 'settle';
+  if (t === 'foundation') return 'settle';
+  if (t === 'seed') return 'flow';
+  if (t === 'habit') return 'deep';
+  if (t === 'deepPractice') return 'still';
   return t;
 }
 
 function getPreviewSnapshot(type) {
   const t = normalizePreviewType(type);
-  if (t === 'deepPractice') return { sessions: 35, streak: 10, points: 158, quality: 90 };
-  if (t === 'habit') return { sessions: 18, streak: 6, points: 122, quality: 78 };
-  if (t === 'seed') return { sessions: 8, streak: 4, points: 86, quality: 68 };
-  if (t === 'foundation') return { sessions: 3, streak: 2, points: 54, quality: 58 };
+  if (t === 'still') return { sessions: 35, streak: 10, points: 158, quality: 90 };
+  if (t === 'deep') return { sessions: 18, streak: 6, points: 122, quality: 78 };
+  if (t === 'flow') return { sessions: 8, streak: 4, points: 86, quality: 68 };
+  if (t === 'settle') return { sessions: 3, streak: 2, points: 54, quality: 58 };
   if (t === 'firstTime') return { sessions: 1, streak: 1, points: 40, quality: 50 };
   if (t === 'zero') return { sessions: 0, streak: 0, points: 0, quality: 0 };
   return null;
@@ -482,15 +469,13 @@ function derivePerformanceQuality(lastSurveyResult, totalSessions) {
  */
 export function getBadgeJourneyState(sessions) {
   const s = Math.max(0, Math.floor(Number(sessions) || 0));
-  if (s >= 31) return 'deepPractice';
-  if (s >= 11) return 'habit';
-  if (s >= 6) return 'seed';
-  return 'foundation';
+  if (s >= 31) return 'still';
+  if (s >= 11) return 'deep';
+  if (s >= 6) return 'flow';
+  return 'settle';
 }
 
 /**
- * Build the badge state from sessions/streak/performance quality/coherence points.
- *
  * @param {number} totalSessions
  * @param {number} streakDays
  * @param {{ previewType?: string | null, coherencePoints?: number, lastSurveyResult?: object | null }} [options]

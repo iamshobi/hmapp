@@ -76,13 +76,13 @@ export default function BadgesGalleryScreen() {
       >
         <Text style={styles.screenTitle}>My Badges</Text>
         <Text style={styles.levelMeta}>
-          {state === 'foundation'
-            ? 'Foundation'
-            : state === 'seed'
-            ? 'Seed'
-            : state === 'habit'
-            ? 'Habit'
-            : 'Deep Practice'}
+          {state === 'settle'
+            ? 'Settle'
+            : state === 'flow'
+            ? 'Flow'
+            : state === 'deep'
+            ? 'Deep'
+            : 'Still'}
         </Text>
         <View style={styles.countRow}>
           <View style={styles.countPill}>

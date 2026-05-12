@@ -1,4 +1,4 @@
-/** 5-step coherence → color + label (stressed red → excellent teal) */
+
 export const COHERENCE_LEVELS = [
   { key: 'stressed', label: 'Stressed', color: '#E53935' },
   { key: 'low', label: 'Low', color: '#FB8C00' },

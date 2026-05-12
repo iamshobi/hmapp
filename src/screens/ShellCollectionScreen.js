@@ -1,6 +1,4 @@
-/**
- * Full-screen stack route for My Shell Collection (see PlayStack in App.js).
- */
+
 import React from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ShellCollectionPanel from '../components/ocean/ShellCollectionPanel';

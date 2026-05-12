@@ -4,15 +4,19 @@ import { borderRadius, spacing } from '../theme';
 
 function normalizeType(type) {
   if (type === 'growing') return 'building';
+  if (type === 'foundation') return 'settle';
+  if (type === 'seed') return 'flow';
+  if (type === 'habit') return 'deep';
+  if (type === 'deepPractice') return 'still';
   return type;
 }
 
 function getTypeFromSessions(totalSessions) {
   const n = Math.max(0, Math.floor(Number(totalSessions) || 0));
   if (n >= 100) return 'pro';
-  if (n >= 31) return 'deepPractice';
-  if (n >= 11) return 'habit';
-  if (n >= 6) return 'seed';
+  if (n >= 31) return 'still';
+  if (n >= 11) return 'deep';
+  if (n >= 6) return 'flow';
   if (n >= 2) return 'building';
   if (n >= 1) return 'firstTime';
   return 'zero';
@@ -20,10 +24,10 @@ function getTypeFromSessions(totalSessions) {
 
 function previewByType(type) {
   if (type === 'pro') return { coherence: 4.8, points: 210, durationSec: 494, bpm: 65, streak: 42, sessions: 127 };
-  if (type === 'deepPractice') return { coherence: 3.35, points: 158, durationSec: 402, bpm: 68, streak: 28, sessions: 35 };
-  if (type === 'habit' || type === 'advanced') return { coherence: 3.0, points: 122, durationSec: 356, bpm: 69, streak: 14, sessions: 18 };
-  if (type === 'seed') return { coherence: 2.45, points: 86, durationSec: 298, bpm: 71, streak: 8, sessions: 8 };
-  if (type === 'foundation') return { coherence: 1.85, points: 54, durationSec: 210, bpm: 78, streak: 4, sessions: 3 };
+  if (type === 'still') return { coherence: 3.35, points: 158, durationSec: 402, bpm: 68, streak: 28, sessions: 35 };
+  if (type === 'deep' || type === 'advanced') return { coherence: 3.0, points: 122, durationSec: 356, bpm: 69, streak: 14, sessions: 18 };
+  if (type === 'flow') return { coherence: 2.45, points: 86, durationSec: 298, bpm: 71, streak: 8, sessions: 8 };
+  if (type === 'settle') return { coherence: 1.85, points: 54, durationSec: 210, bpm: 78, streak: 4, sessions: 3 };
   if (type === 'building') return { coherence: 2.4, points: 75, durationSec: 273, bpm: 72, streak: 5, sessions: 5 };
   if (type === 'firstTime') return { coherence: 1.7, points: 40, durationSec: 136, bpm: 83, streak: 1, sessions: 1 };
   return { coherence: 0.0, points: 0, durationSec: 0, bpm: 0, streak: 0, sessions: 0 };
@@ -53,10 +57,10 @@ export default function ProgressSessionMetricsCard({
 
   const title = useMemo(() => {
     if (activeType === 'pro') return '☀️ 127 Sessions · Session Metrics';
-    if (activeType === 'deepPractice') return '🌟 35 Sessions · Session Metrics';
-    if (activeType === 'habit' || activeType === 'advanced') return '🟢 18 Sessions · Session Metrics';
-    if (activeType === 'seed') return '🌱 8 Sessions · Session Metrics';
-    if (activeType === 'foundation') return '💪 3 Sessions · Session Metrics';
+    if (activeType === 'still') return '🌟 35 Sessions · Session Metrics';
+    if (activeType === 'deep' || activeType === 'advanced') return '🟢 18 Sessions · Session Metrics';
+    if (activeType === 'flow') return '🌱 8 Sessions · Session Metrics';
+    if (activeType === 'settle') return '💪 3 Sessions · Session Metrics';
     if (activeType === 'building') return '💪 5 Sessions · Session Metrics';
     if (activeType === 'firstTime') return '🎉 First Session · Session Metrics';
     return '';

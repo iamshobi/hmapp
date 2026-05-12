@@ -1,24 +1,21 @@
-/**
- * HeartMath-style HRV strip: wave phase scrolls slowly; dot sits on the curve and
- * follows target HRV with smooth interpolation. Replace `hrv` with device value when integrated.
- */
+
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 
 const PADDING_H = 24;
 const WAVE_H = 56;
-/** Fewer cycles across the strip = calmer */
+
 const CYCLES = 2.2;
-/** Same formula as legacy setInterval(34ms): phase += base + hrv*boost per tick */
+
 const LEGACY_TICK_S = 0.034;
 const BASE_PHASE = 0.095;
 const BOOST_PHASE = 0.125;
-/** Slower wave than legacy (~45% of prior phase rate) */
+
 const WAVE_SLOWDOWN = 0.45;
-/** Smooth HRV-driven horizontal position (higher = snappier) */
+
 const HRV_SMOOTH_PER_S = 2.8;
-/** Dimmed wave vs bright white — path + dot (keeps dot slightly stronger for readability) */
+
 const WAVE_STROKE = 'rgba(255,255,255,0.52)';
 const DOT_FILL = 'rgba(255,255,255,0.62)';
 

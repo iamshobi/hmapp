@@ -1,6 +1,4 @@
-/**
- * Glassy underwater bubble — SVG highlight + soft cyan glass (ocean UI motif).
- */
+
 import React, { useId, useMemo } from 'react';
 import Svg, {
   Circle,

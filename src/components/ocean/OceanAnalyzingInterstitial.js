@@ -1,7 +1,4 @@
-/**
- * Full-screen interstitial after Dive In — sunlit surface-water gradient, concentric rings,
- * staged copy with per-line fade in / hold / fade out; then navigate to BreathSession.
- */
+
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Platform, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,23 +7,20 @@ import { useSessionAmbient } from '../../hooks/useSessionAmbient';
 import { OCEAN_SESSION_AUDIO_SOURCE } from '../../constants/sessionMedia';
 import { OceanAnalyzingInterstitialDecor } from './OceanAnalyzingInterstitialDecor';
 
-/** Long horizon so overlay music is not faded out before the session hook takes over. */
+
 const INTERSTITIAL_AMBIENT_TOTAL_MS = 24 * 60 * 60 * 1000;
 
-/** Slower fades + longer holds for readability */
+
 const FADE_MS = 520;
 const HOLD_MS = 2800;
 
-/** After the last script line — “Game begins” style countdown */
+
 const COUNTDOWN_SEQUENCE = [3, 2, 1];
 const COUNTDOWN_FADE_IN_MS = 240;
 const COUNTDOWN_HOLD_MS = 620;
 const COUNTDOWN_FADE_OUT_MS = 220;
 
-/**
- * Steps: each line fades in → holds → fades out before the next.
- * Then 3 → 2 → 1 countdown, then `onComplete`.
- */
+
 const STEPS = [
   { text: 'Analyzing your heartbeat...', emphasis: 'light' },
   { text: 'and calculating your coherence...', emphasis: 'bold' },
@@ -42,10 +36,10 @@ const COUNTDOWN_TOTAL_MS = COUNTDOWN_SEQUENCE.length * (
 export const OCEAN_ANALYZING_INTERSTITIAL_MS =
   STEPS.length * (2 * FADE_MS + HOLD_MS) + COUNTDOWN_TOTAL_MS;
 
-/** Epipelagic / sunlit surface: cyan → clear tropical blue (lighter toward top like sky reflection) */
+
 const SURFACE_OCEAN_GRADIENT = ['#5EC4EB', '#3FAFDC', '#2B98CC', '#1F7FA8'];
 
-/** Shared center for rings + digit — avoids flex offset from hint text */
+
 const COUNTDOWN_STAGE = 260;
 const RING_OUTER = 260;
 const RING_INNER = 160;
@@ -132,7 +126,7 @@ function CountdownRippleRings() {
 export default function OceanAnalyzingInterstitial({ onComplete }) {
   const insets = useSafeAreaInsets();
   const [stepIndex, setStepIndex] = useState(0);
-  /** `script` = interstitial lines; `countdown` = 3,2,1 then session */
+  
   const [overlayPhase, setOverlayPhase] = useState('script');
   const [countdownN, setCountdownN] = useState(null);
   const textOpacity = useRef(new Animated.Value(0)).current;
@@ -314,7 +308,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  /** Rings + digit share one box so the number stays optically centered in the circles */
+  
   countdownStage: {
     width: COUNTDOWN_STAGE,
     height: COUNTDOWN_STAGE,

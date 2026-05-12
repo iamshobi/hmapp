@@ -1,6 +1,4 @@
-/**
- * Cinematic zone copy/tint metadata used by the in-session ocean overlay.
- */
+
 export const OCEAN_CINEMATIC_ZONES = [
   {
     id: 'epipelagic',

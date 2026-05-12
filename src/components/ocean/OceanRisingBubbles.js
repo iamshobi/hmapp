@@ -1,7 +1,4 @@
-/**
- * Light rising particles — motion cue that reads as water / pressure without fighting the backdrop pan.
- * Stronger near the surface (start of dive), tapering as depth increases.
- */
+
 import React, { useEffect, useMemo } from 'react';
 import { Animated, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { oceanSessionBackdropEasedU } from '../../constants/oceanSessionScrollMath';
@@ -17,9 +14,9 @@ const DEFAULT_EXTRA_COUNT = 10;
 export default function OceanRisingBubbles({
   active = false,
   opacity = 0.55,
-  /** 0…1 session progress; drives bubble density / brightness (shallow → more). */
+  
   diveProgress = 0,
-  /** Override particle counts (e.g. analyzing interstitial uses more bubbles). */
+  
   coreCount = DEFAULT_CORE_COUNT,
   extraCount = DEFAULT_EXTRA_COUNT,
 }) {
@@ -101,9 +98,9 @@ export default function OceanRisingBubbles({
               },
             ]}
           >
-            {/* Specular highlight — upper-left bright dot */}
+            
             <View style={styles.bubbleSpecular} />
-            {/* Inner refraction arc — subtle crescent in lower-right */}
+            
             <View style={styles.bubbleRefraction} />
           </Animated.View>
         );
@@ -130,7 +127,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(180, 220, 255, 0.78)',
   },
-  /* Bright specular dot — upper-left of bubble (light reflection) */
+  
   bubbleSpecular: {
     position: 'absolute',
     width: '30%',
@@ -140,7 +137,7 @@ const styles = StyleSheet.create({
     top: '13%',
     left: '15%',
   },
-  /* Refraction arc — inner crescent hint in lower-right quadrant */
+  
   bubbleRefraction: {
     position: 'absolute',
     width: '46%',

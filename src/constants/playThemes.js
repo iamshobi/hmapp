@@ -1,7 +1,4 @@
-/**
- * Play hub: themes → games → stack screen (e.g. SacredGeometry).
- * Ocean skips the games list — PlayThemes navigates straight to OceanLevelDetail.
- */
+
 
 export const PLAY_THEMES = [
   {

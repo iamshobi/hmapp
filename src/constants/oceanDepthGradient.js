@@ -1,7 +1,4 @@
-/**
- * Level-relative session progress → 0–1 tint driver (legacy shim for ambient strength).
- * Pelagic water colours: `oceanPelagicLayerColors.js` (diagram-aligned zones).
- */
+
 
 function easeOutQuad(p) {
   const t = Math.min(1, Math.max(0, p));

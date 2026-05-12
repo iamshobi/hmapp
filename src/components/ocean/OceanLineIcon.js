@@ -1,12 +1,4 @@
-/**
- * Ocean decorative icons — minimal SVG glyphs; optional drift + double bioluminescent glow.
- *
- * Double-shadow technique:
- *  Outer View  → wide spread (ambient water halo)
- *  Inner View  → tight bright core (close-range emission)
- * Both layers share the same glowColor so the result looks like the icon
- * is genuinely emitting light into surrounding water.
- */
+
 import React from 'react';
 import { View, Platform } from 'react-native';
 import { isOceanMinimalIconKey } from '../../constants/oceanIconAssets';
@@ -14,7 +6,7 @@ import OceanCreatureLineIcon from './OceanCreatureLineIcon';
 import OceanIconDrift from './OceanIconDrift';
 import OceanMinimalIcon from './OceanMinimalIcon';
 
-/** Outer halo — wide, soft, ambient water-diffusion layer */
+
 function outerHaloStyle(size, glowColor) {
   return {
     width: size,
@@ -42,7 +34,7 @@ function outerHaloStyle(size, glowColor) {
   };
 }
 
-/** Inner core — tight, vivid, close-emission layer */
+
 function innerCoreStyle(glowColor) {
   return {
     alignItems: 'center',

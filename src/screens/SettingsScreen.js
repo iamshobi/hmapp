@@ -6,7 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import SettingsHeaderBrandIcon from '../components/icons/SettingsHeaderBrandIcon';
 
-/** Reference layout — off-white shell, magenta title, airy list + single section divider */
+
 const PAGE_BG = '#F9F9F9';
 const TITLE_MAGENTA = '#A1167F';
 const TITLE_ROW = '#212121';

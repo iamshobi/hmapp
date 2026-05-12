@@ -1,11 +1,8 @@
-/**
- * Per-pelagic-zone collectibles: 3 shells + 3 pearls × 5 zones = 15 + 15.
- * Level unlock: complete all shells and pearls in zone N before zone N+1 opens.
- */
+
 import { OCEAN_FULL_COLUMN_LEVEL_ID, OCEAN_LEVEL_UNLOCK_COUNT } from './oceanDepthLevels';
 import { getShellById } from './seaShells';
 
-/** Five depth layers (matches `OCEAN_DEPTH_LEVELS` pelagic ids, excludes full column). */
+
 export const OCEAN_COLLECTIBLE_ZONE_ORDER = [
   'epipelagic',
   'mesopelagic',
@@ -15,7 +12,6 @@ export const OCEAN_COLLECTIBLE_ZONE_ORDER = [
 ];
 
 /**
- * Shell ids per zone — subset of `SHELLS` in seaShells.js
  * @type {Record<string, string[]>}
  */
 export const OCEAN_ZONE_SHELL_IDS = {
@@ -191,8 +187,6 @@ export function isOceanZoneComplete(zoneId, shellIds, pearlIds) {
 }
 
 /**
- * Highest playable index in `OCEAN_LEVEL_UNLOCK_ORDER` from leading completed zones.
- * Index 0 always playable; index k unlocks when zones 0…k−1 are each complete (3 shells + 3 pearls).
  * @param {string[]} shellCollectionIds
  * @param {string[]} pearlCollectionIds
  * @returns {number} 0 … OCEAN_LEVEL_UNLOCK_COUNT - 1
@@ -213,7 +207,6 @@ export function computeOceanMaxUnlockedLevelIndex(shellCollectionIds, pearlColle
 }
 
 /**
- * Swim / Dive mode locks: Drift zones (epi+meso) complete → Swim; Bathy+Abbysso complete → Dive.
  * @param {string[]} shellCollectionIds
  * @param {string[]} pearlCollectionIds
  */
@@ -228,7 +221,6 @@ export function getOceanSwimDiveUnlockState(shellCollectionIds, pearlCollectionI
 }
 
 /**
- * Weighted pick for session spawns — shell or pearl from the active zone pool only.
  * @param {string | undefined} oceanLevelId
  * @returns {{ kind: 'shell'; item: ReturnType<typeof getShellById> } | { kind: 'pearl'; item: OceanPearl }}
  */

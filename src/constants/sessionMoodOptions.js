@@ -1,7 +1,4 @@
-/**
- * `trackColor` — mood wheel palette for Progress mood tracker **week / month / year** grids only
- * (Trend · Insights and session mood modal stay separate).
- */
+
 export const SESSION_MOOD_OPTIONS = [
   { id: 'excited', label: 'Excited', emoji: '🤩', calendarLevel: 4, trackColor: '#FF9800' },
   { id: 'anxious', label: 'Anxious', emoji: '😟', calendarLevel: 1, trackColor: '#D81B60' },
@@ -17,9 +14,6 @@ export function getMoodOptionById(id) {
   return SESSION_MOOD_OPTIONS.find((m) => m.id === id) ?? null;
 }
 
-/**
- * Legacy `{ start/end… }` or new `{ sessions: [...] }` — list of session records per day.
- */
 export function normalizeMoodDaySessions(dayEntry) {
   if (!dayEntry || typeof dayEntry !== 'object') return [];
   if (Array.isArray(dayEntry.sessions)) return dayEntry.sessions;
@@ -79,12 +73,6 @@ function pickMajorityMoodId(votes) {
   return bestId;
 }
 
-/**
- * Per-day display: majority of logged moods that day.
- * Default (`phase` omitted): each session start and end counts as one vote.
- * `before` / `after`: majority among pre-session or post-session moods only.
- * Skipped only when there are no mood votes for that phase but at least one skip was recorded.
- */
 export function getMoodTrackDisplayForDayEntry(dayEntry, phase) {
   const sessions = normalizeMoodDaySessions(dayEntry);
   if (sessions.length === 0) return { type: 'empty' };
@@ -104,7 +92,6 @@ export function getMoodTrackDisplayForDayEntry(dayEntry, phase) {
   };
 }
 
-/** Keys with a logged mood or skip (for week / month / year fills). */
 export function dayDisplayByKeyFromEntries(moodEntries) {
   const out = {};
   const src = moodEntries && typeof moodEntries === 'object' ? moodEntries : {};
@@ -115,7 +102,6 @@ export function dayDisplayByKeyFromEntries(moodEntries) {
   return out;
 }
 
-/** Readable day number / label color on top of a mood fill (WCAG-ish luminance). */
 export function textColorForMoodFill(hex) {
   const h = (hex || '').replace('#', '');
   if (h.length !== 6) return '#1A2330';
@@ -137,7 +123,6 @@ function hashDateKey(key) {
   return h >>> 0;
 }
 
-/** Stable YYYY-MM-DD from a local `Date` (matches calendar cell keys). */
 export function dateKeyFromLocalDate(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -145,7 +130,6 @@ export function dateKeyFromLocalDate(d) {
   return `${y}-${m}-${day}`;
 }
 
-/** Local-date compare: true if dateKey (YYYY-MM-DD) is after today. */
 export function isFutureDateKey(dateKey) {
   const p = String(dateKey).split('-');
   if (p.length !== 3) return true;
@@ -159,10 +143,6 @@ export function isFutureDateKey(dateKey) {
   return target > endToday;
 }
 
-/**
- * Deterministic “filled calendar” mood when the user has no log for that day.
- * ~75% positive wheel colors, ~15% bored, ~10% anxious/sad/angry — for visuals only.
- */
 export function illustrativeMoodDisplayForDateKey(dateKey) {
   const h = hashDateKey(String(dateKey));
   const r = h % 100;
@@ -183,10 +163,6 @@ export function illustrativeMoodDisplayForDateKey(dateKey) {
   };
 }
 
-/**
- * Week / month / year cells: real logged mood or skip wins; past days without a log get illustrative fills.
- * Future days → null (placeholder in UI).
- */
 export function resolveCalendarDayDisplay(dateKey, moodEntries, phase) {
   if (isFutureDateKey(dateKey)) return null;
   const raw = moodEntries?.[dateKey];
@@ -196,7 +172,6 @@ export function resolveCalendarDayDisplay(dateKey, moodEntries, phase) {
   return { ...illustrativeMoodDisplayForDateKey(dateKey), illustrative: true };
 }
 
-/** Map a day entry to calendar level: 0..4; skipped => -1 (gray); none => null. Uses majority mood. */
 export function getCalendarLevelFromMoodEntry(dayEntry, phase) {
   const disp = getMoodTrackDisplayForDayEntry(dayEntry, phase);
   if (disp.type === 'skipped') return -1;
@@ -204,9 +179,6 @@ export function getCalendarLevelFromMoodEntry(dayEntry, phase) {
   return null;
 }
 
-/**
- * Days with both start and end moods (not skipped): % where end mood score > start.
- */
 function forEachPairedSession(moodEntries, fn) {
   const src = moodEntries && typeof moodEntries === 'object' ? moodEntries : {};
   Object.values(src).forEach((day) => {
@@ -238,9 +210,6 @@ export function computeOverallPairedSessionImprovement(moodEntries) {
   };
 }
 
-/**
- * For each emotion as **pre-session** mood: % of sessions where post-session mood score improved.
- */
 export function computeSessionMoodImprovementByStartEmotion(moodEntries) {
   const stats = {};
   SESSION_MOOD_OPTIONS.forEach((m) => {
@@ -274,10 +243,6 @@ export function computeSessionMoodImprovementByStartEmotion(moodEntries) {
   });
 }
 
-/**
- * Subset of moodEntries for Insights / Trends scope (Day / Week / Month / Year).
- * `anchor`: `{ dayKey?, year?, monthIndex? }` — monthIndex 0–11.
- */
 export function filterMoodEntriesForRange(moodEntries, range, anchor = {}) {
   const src = moodEntries && typeof moodEntries === 'object' ? moodEntries : {};
   const keys = Object.keys(src);

@@ -1,6 +1,4 @@
-/**
- * Full-screen alert when the user enters Gentle Mode (critical strain 3 days in a row).
- */
+
 import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Pressable } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';

@@ -1,7 +1,4 @@
-/**
- * Torus / Lotus of Life — three concentric rings traced inner → outer.
- * Same viewBox as Flower of Life (0 0 240 240), center (120, 120).
- */
+
 
 const CX = 120;
 const CY = 120;
@@ -52,7 +49,7 @@ function trailPointsForCircle(cx, cy, r) {
   return pts;
 }
 
-/** Inner → outer — matches Torus/Lotus energy-flow reading */
+
 const RADII = [24, 44, 62];
 
 const strokes = [];
@@ -75,12 +72,12 @@ function fullCirclePath(cx, cy, r) {
 
 export const TORUS_OUTER_BORDER_PATH = fullCirclePath(CX, CY, RADII[RADII.length - 1] + 4);
 
-/** 45° arc length on radius r */
+
 export function torusArcLength(r) {
   return (Math.PI * r) / 4;
 }
 
-/** Per full circle (8 arcs) — for dash animation */
+
 export const TORUS_PER_CIRCLE_PATH_LENGTHS = RADII.map((r) => 8 * torusArcLength(r));
 
 export const TORUS_CIRCLE_TRAIL_POINTS = RADII.map((r) => trailPointsForCircle(CX, CY, r));

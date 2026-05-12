@@ -1,11 +1,20 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Modal,
+  useWindowDimensions,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X, ArrowDown, ArrowUp } from 'lucide-react-native';
+import { borderRadius, spacing } from '../theme';
 import HelpInfoIcon from './icons/HelpInfoIcon';
 
 const DELTA_GREEN = '#2C9A5F';
 const DELTA_GREEN_BG = 'rgba(44, 154, 95, 0.14)';
-import { borderRadius, spacing } from '../theme';
 
 const PROGRESS_FONT_REGULAR = 'Sailec-Medium';
 const PROGRESS_FONT_BOLD = 'Sailec-Bold';
@@ -37,6 +46,16 @@ function runCountAnimation(fromValue, toValue, onUpdate, duration = 460) {
 }
 
 export default function ProgressSurveyDeltaCard({ averages }) {
+  const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
+  const helpSheetMaxHeight = Math.round(windowHeight * 0.91);
+  const helpSheetChromePx =
+    50 + 30 + 22 + 12 + 48;
+  const helpSheetBottomPadding = Math.max(insets.bottom, 16) + 18;
+  const helpScrollMaxHeight = Math.max(
+    120,
+    helpSheetMaxHeight - helpSheetChromePx - helpSheetBottomPadding,
+  );
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   const [deltaDisplay, setDeltaDisplay] = useState({ stress: 0, energy: 0, mood: 0 });
   const stressBefore = averages?.stressBefore;
@@ -117,7 +136,12 @@ export default function ProgressSurveyDeltaCard({ averages }) {
       >
         <View style={styles.modalRoot}>
           <View style={styles.modalDim} />
-          <View style={styles.modalPopover}>
+          <View
+            style={[
+              styles.modalPopover,
+              { maxHeight: helpSheetMaxHeight, paddingBottom: helpSheetBottomPadding },
+            ]}
+          >
             <View style={styles.modalHeaderRow}>
               <View style={styles.modalTitleWrap}>
                 <Text style={styles.modalTitle}>What has improved</Text>
@@ -132,9 +156,17 @@ export default function ProgressSurveyDeltaCard({ averages }) {
                 <X size={22} color="#6B2D8B" />
               </TouchableOpacity>
             </View>
-            <Text style={styles.modalBody}>
-              Stress is inverted - a lower after-score is an improvement. Energy and Mood are ascending - higher is better.
-            </Text>
+            <ScrollView
+              style={[styles.modalScroll, { maxHeight: helpScrollMaxHeight }]}
+              contentContainerStyle={styles.modalScrollContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator
+            >
+              <Text style={styles.modalBody}>
+                Stress is inverted - a lower after-score is an improvement. Energy and Mood are ascending - higher is
+                better.
+              </Text>
+            </ScrollView>
             <View style={styles.modalActionRow}>
               <TouchableOpacity style={styles.modalActionBtn} onPress={() => setIsHelpOpen(false)} activeOpacity={0.88}>
                 <Text style={styles.modalActionBtnTxt}>Got it!</Text>
@@ -181,10 +213,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 0,
     marginTop: 2,
-  },
-  helpIconImage: {
-    width: 18,
-    height: 18,
   },
   compactRow: {
     marginTop: 0,
@@ -241,7 +269,8 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     width: '100%',
-    height: '75%',
+    flexDirection: 'column',
+    overflow: 'hidden',
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     borderBottomLeftRadius: 0,
@@ -249,7 +278,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 36,
     paddingTop: 50,
-    paddingBottom: 34,
+  },
+  modalScroll: {},
+  modalScrollContent: {
+    paddingBottom: 12,
   },
   modalHeaderRow: {
     minHeight: 30,
@@ -292,11 +324,9 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     textAlign: 'left',
     paddingHorizontal: 0,
-    marginBottom: 20,
   },
   modalActionRow: {
-    marginTop: 'auto',
-    paddingTop: 8,
+    paddingTop: 12,
     alignItems: 'stretch',
     justifyContent: 'center',
   },

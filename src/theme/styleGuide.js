@@ -1,7 +1,4 @@
-/**
- * Style guide — values sourced from `src/constants/hmDesignLibrary.tokens.json`
- * (HM Design Library ColorsPage + theme.css shell).
- */
+
 import hm from '../constants/hmDesignLibrary.tokens.json';
 
 const { brand, neutral, gradients: hmGradients, shell } = hm;

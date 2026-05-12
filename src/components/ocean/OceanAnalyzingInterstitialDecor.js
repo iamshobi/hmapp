@@ -1,7 +1,4 @@
-/**
- * Step-specific background motion for OceanAnalyzingInterstitial.
- * Heart bubbles (heartbeat step), neon PNG creatures (session assets), shells step (one bubble at a time).
- */
+
 import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { Animated, Easing, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { NeonCreaturePng } from './OceanSwimmingCreatures';
@@ -12,13 +9,10 @@ const SEA_SHELLS_STEP = 4;
 
 const SHELL_EMOJIS = ['🐚', '🦪', '🐚'];
 
-/** Pause before the next shell appears (after the previous bubble finishes its burst) */
+
 const SHELL_SEQUENCE_GAP_MS = 420;
 
-/**
- * Place shells/hearts only in edge bands — never in the middle where overlay copy sits.
- * `band`: 'top' | 'bottom' | 'left' | 'right'
- */
+
 function randomPointAwayFromCenter(W, H, bubble, band, seed) {
   const r = (seed % 997) / 997;
   const r2 = ((seed * 13) % 997) / 997;
@@ -63,7 +57,7 @@ function randomPointAwayFromCenter(W, H, bubble, band, seed) {
   }
 }
 
-/** Translucent bubble with heart — smooth drifting motion */
+
 function HeartWaterBubble({ delayMs, startX, startY, size, driftX, driftY, durationMs }) {
   const t = useRef(new Animated.Value(0)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -168,7 +162,7 @@ function HeartBubbleField() {
   );
 }
 
-/** Match OceanSwimmingCreatures SwimSlot glow timing */
+
 const GLOW_MIN = 0.28;
 const GLOW_MAX = 1.0;
 const GLOW_HALF_MS = 1600;
@@ -297,7 +291,7 @@ function SwimmingCreaturesLayer() {
     };
   }, [fishX, fishY, jellyX, jellyY, jellyPulse, glowFish, glowSeahorse]);
 
-  /** Fish stays in upper band — avoids center copy */
+  
   const fishTranslateX = fishX.interpolate({
     inputRange: [0, 1],
     outputRange: [-W * 0.06, W * 0.58],
@@ -307,7 +301,7 @@ function SwimmingCreaturesLayer() {
     outputRange: [4, -10],
   });
 
-  /** Second creature drifts along bottom — clear of center (no jellyfish asset; seahorse matches session pool) */
+  
   const jellyTranslateX = jellyX.interpolate({
     inputRange: [0, 1],
     outputRange: [W * 0.04, W * 0.52],
@@ -357,7 +351,7 @@ function SwimmingCreaturesLayer() {
   );
 }
 
-/** One shell inside a bubble — 2s lifecycle: float in, brief hold, burst */
+
 function ShellBubbleInstance({ id, left, top, shellEmoji, onDone }) {
   const scale = useRef(new Animated.Value(0.35)).current;
   const opacity = useRef(new Animated.Value(0)).current;

@@ -1,16 +1,10 @@
-/**
- * Ocean depth zones — labels and depths match pelagic zone infographic
- * (Epipelagic … Hadalpelagic, boundary markers, 10,994 m hadal floor).
- *
- * Session backdrop maps image Y: top → OCEAN_BACKDROP_DEPTH_MIN_M, bottom → OCEAN_BACKDROP_DEPTH_MAX_M.
- * Pan spans only the selected zone (start → end depth) along that axis.
- */
 
-/** Full-strip depth axis (m) — image top → hadal floor (infographic: 10,994 m) */
+
+
 export const OCEAN_BACKDROP_DEPTH_MIN_M = -8000;
 export const OCEAN_BACKDROP_DEPTH_MAX_M = 10994;
 
-/** Scroll / crossing NOTE: depth (m) and label shown when dash crosses into twilight */
+
 export const OCEAN_DEPTH_NOTE_200M_BRACKET_M = 200;
 export const OCEAN_DEPTH_NOTE_200M_LABEL = 'Mesopelagic Zone';
 
@@ -28,7 +22,7 @@ export function getOceanZoneScrollDepthBoundsM(level) {
   return { startM: b.startM, endM: b.endM };
 }
 
-/** Virtual level: one session pans surface → hadal floor (try-out / full infographic). */
+
 export const OCEAN_FULL_COLUMN_LEVEL_ID = 'fullColumn';
 
 export const FULL_OCEAN_COLUMN_LEVEL = {
@@ -121,15 +115,12 @@ export const OCEAN_DEPTH_LEVELS = [
 
 export const OCEAN_LEVEL_COUNT = OCEAN_DEPTH_LEVELS.length;
 
-/** Drift / Swim / Dive tabs ↔ pelagic levels (matches My Shell Collection groups). */
+
 export const OCEAN_DRIFT_LEVEL_IDS = ['epipelagic', 'mesopelagic'];
 export const OCEAN_SWIM_LEVEL_IDS = ['bathypelagic', 'abyssopelagic'];
 export const OCEAN_DIVE_LEVEL_IDS = ['hadal', OCEAN_FULL_COLUMN_LEVEL_ID];
 
-/**
- * Sequential unlock order on The Ocean Dive list (Epipelagic → … → Full column).
- * Index 0 is unlocked by default; completing a dive unlocks the next index.
- */
+
 export const OCEAN_LEVEL_UNLOCK_ORDER = [
   'epipelagic',
   'mesopelagic',
@@ -162,7 +153,6 @@ export function getOceanLevelGroupId(levelId) {
 }
 
 /**
- * When switching Drift/Swim/Dive: keep the current zone if it belongs to that group; otherwise use the first zone in the group.
  * @param {'drift' | 'swim' | 'dive'} groupId
  * @param {string} currentLevelId
  */
@@ -182,7 +172,7 @@ export function getOceanLevelById(id) {
   return OCEAN_DEPTH_LEVELS.find((l) => l.id === id) ?? OCEAN_DEPTH_LEVELS[0];
 }
 
-/** 0–1: position on backdrop from linear depth map (min m … max m over image height) */
+
 export function depthMToBackdropScrollFraction(depthM) {
   const lo = OCEAN_BACKDROP_DEPTH_MIN_M;
   const hi = OCEAN_BACKDROP_DEPTH_MAX_M;
@@ -191,7 +181,7 @@ export function depthMToBackdropScrollFraction(depthM) {
   return (d - lo) / span;
 }
 
-/** Depth (m) at progress p ∈ [0,1] within a level’s zone span */
+
 export function depthAtProgress(level, progress) {
   const ranges = [
     [0, 200],

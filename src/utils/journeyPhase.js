@@ -1,16 +1,5 @@
-/**
- * Progress journey levels / substates by unique practice days.
- *
- * Settle (Foundation): 2–5 unique days
- * Flow (Seed): 6–12 unique days
- * Deep (Habit): 13–19 unique days
- * Still (Deep Practice): 20+ unique days
- *
- * Values below 2 are treated as pre-Settle (foundation "start").
- */
-
 /** @typedef {'start' | 'middle' | 'end'} JourneyPhaseState */
-/** @typedef {'foundation' | 'seed' | 'habit' | 'deepPractice'} JourneyLevelKey */
+/** @typedef {'settle' | 'flow' | 'deep' | 'still'} JourneyLevelKey */
 
 /**
  * @param {number} practiceDayCount
@@ -25,50 +14,49 @@ export function getJourneyPhaseDetail(practiceDayCount) {
   const n = Math.max(0, Math.floor(Number(practiceDayCount) || 0));
 
   if (n >= 21) {
-    return { practiceDays: n, level: 4, levelKey: 'deepPractice', phaseState: 'ongoing' };
+    return { practiceDays: n, level: 4, levelKey: 'still', phaseState: 'ongoing' };
   }
   if (n === 20) {
-    return { practiceDays: n, level: 4, levelKey: 'deepPractice', phaseState: 'start' };
+    return { practiceDays: n, level: 4, levelKey: 'still', phaseState: 'start' };
   }
   if (n === 19) {
-    return { practiceDays: n, level: 3, levelKey: 'habit', phaseState: 'end' };
+    return { practiceDays: n, level: 3, levelKey: 'deep', phaseState: 'end' };
   }
   if (n >= 14 && n <= 18) {
-    return { practiceDays: n, level: 3, levelKey: 'habit', phaseState: 'middle' };
+    return { practiceDays: n, level: 3, levelKey: 'deep', phaseState: 'middle' };
   }
   if (n === 13) {
-    return { practiceDays: n, level: 3, levelKey: 'habit', phaseState: 'start' };
+    return { practiceDays: n, level: 3, levelKey: 'deep', phaseState: 'start' };
   }
   if (n === 12) {
-    return { practiceDays: n, level: 2, levelKey: 'seed', phaseState: 'end' };
+    return { practiceDays: n, level: 2, levelKey: 'flow', phaseState: 'end' };
   }
   if (n >= 7 && n <= 11) {
-    return { practiceDays: n, level: 2, levelKey: 'seed', phaseState: 'middle' };
+    return { practiceDays: n, level: 2, levelKey: 'flow', phaseState: 'middle' };
   }
   if (n === 6) {
-    return { practiceDays: n, level: 2, levelKey: 'seed', phaseState: 'start' };
+    return { practiceDays: n, level: 2, levelKey: 'flow', phaseState: 'start' };
   }
   if (n === 5) {
-    return { practiceDays: n, level: 1, levelKey: 'foundation', phaseState: 'end' };
+    return { practiceDays: n, level: 1, levelKey: 'settle', phaseState: 'end' };
   }
   if (n >= 3 && n <= 4) {
-    return { practiceDays: n, level: 1, levelKey: 'foundation', phaseState: 'middle' };
+    return { practiceDays: n, level: 1, levelKey: 'settle', phaseState: 'middle' };
   }
-  return { practiceDays: n, level: 1, levelKey: 'foundation', phaseState: 'start' };
+  return { practiceDays: n, level: 1, levelKey: 'settle', phaseState: 'start' };
 }
 
 /**
- * Editorial quote pool key for ProgressMainScreen.
  * @param {ReturnType<typeof getJourneyPhaseDetail>} detail
  * @param {boolean} hasSurveyInsightsOptOut
  */
 export function getEditorialQuotePoolKey(detail, hasSurveyInsightsOptOut) {
   if (hasSurveyInsightsOptOut) return 'inactive';
-  if (detail.levelKey === 'deepPractice') return 'deep';
-  if (detail.levelKey === 'habit' && detail.phaseState === 'end') return 'deep';
-  if (detail.levelKey === 'habit') return 'building';
-  if (detail.levelKey === 'seed') return 'building';
-  if (detail.levelKey === 'foundation' && detail.phaseState === 'end') return 'building';
-  if (detail.levelKey === 'foundation' && detail.phaseState === 'start') return 'early';
+  if (detail.levelKey === 'still') return 'deep';
+  if (detail.levelKey === 'deep' && detail.phaseState === 'end') return 'deep';
+  if (detail.levelKey === 'deep') return 'building';
+  if (detail.levelKey === 'flow') return 'building';
+  if (detail.levelKey === 'settle' && detail.phaseState === 'end') return 'building';
+  if (detail.levelKey === 'settle' && detail.phaseState === 'start') return 'early';
   return 'early';
 }

@@ -8,21 +8,44 @@ import { spacing, borderRadius } from '../theme';
 const PROGRESS_FONT_REGULAR = 'Sailec-Medium';
 const PROGRESS_FONT_BOLD = 'Sailec-Bold';
 
-/** Preview states grouped like the Temporary Preview States layout (This release / Future release). */
-const STATE_OPTIONS = [
+const PREVIEW_OPTIONS_THIS_RELEASE = [
   { label: 'Zero sessions', previewType: 'zero' },
-  { label: 'Settle (2–5 unique practice days)', previewType: 'foundation' },
-  { label: 'Flow (6–12 unique practice days)', previewType: 'seed' },
-  { label: 'Deep (13–19 unique practice days)', previewType: 'habit' },
+  { label: 'Settle (2–5 unique practice days)', previewType: 'settle' },
+  { label: 'Flow (6–12 unique practice days)', previewType: 'flow' },
+  { label: 'Deep (13–19 unique practice days)', previewType: 'deep' },
   { label: 'Inactive Survey', previewType: 'inactiveSurvey' },
   { label: 'Partial Survey', previewType: 'partialSurveyOptOut' },
-  { label: 'Still (20+ unique practice days)', previewType: 'deepPractice' },
+];
+
+const PREVIEW_OPTIONS_FUTURE_RELEASE = [
+  { label: 'Still (20+ unique practice days)', previewType: 'still' },
   { label: '100+ sessions', previewType: 'pro' },
+];
+
+const PREVIEW_SECTIONS = [
+  {
+    key: 'this',
+    header: 'Scope: This release',
+    headerVariant: 'first',
+    items: PREVIEW_OPTIONS_THIS_RELEASE,
+    leadingDivider: false,
+  },
+  {
+    key: 'future',
+    header: 'Scope: Future release',
+    headerVariant: 'default',
+    items: PREVIEW_OPTIONS_FUTURE_RELEASE,
+    leadingDivider: true,
+  },
 ];
 
 export default function ProgressStatePickerScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+
+  const openPreview = (previewType) => {
+    navigation.navigate('ProgressMain', { previewType });
+  };
 
   return (
     <View style={styles.root}>
@@ -40,22 +63,28 @@ export default function ProgressStatePickerScreen() {
         <Text style={styles.title}>Temporary Preview States</Text>
         <Text style={styles.subtitle}>Tap a button to open the corresponding Progress preview by Journey logic.</Text>
 
-        {STATE_OPTIONS.map((item) => (
-          <React.Fragment key={item.previewType}>
-            {item.previewType === 'zero' ? (
-              <Text style={[styles.scopeHeader, styles.scopeHeaderFirst]}>Scope: This release</Text>
-            ) : null}
-            {item.previewType === 'deepPractice' ? <View style={styles.scopeDivider} /> : null}
-            {item.previewType === 'deepPractice' ? (
-              <Text style={styles.scopeHeader}>Scope: Future release</Text>
-            ) : null}
-            <TouchableOpacity
-              style={styles.optionBtn}
-              activeOpacity={0.88}
-              onPress={() => navigation.navigate('ProgressMain', { previewType: item.previewType })}
+        {PREVIEW_SECTIONS.map((section) => (
+          <React.Fragment key={section.key}>
+            {section.leadingDivider ? <View style={styles.scopeDivider} /> : null}
+            <Text
+              style={
+                section.headerVariant === 'first'
+                  ? [styles.scopeHeader, styles.scopeHeaderFirst]
+                  : styles.scopeHeader
+              }
             >
-              <Text style={styles.optionBtnTxt}>{item.label}</Text>
-            </TouchableOpacity>
+              {section.header}
+            </Text>
+            {section.items.map((item) => (
+              <TouchableOpacity
+                key={item.previewType}
+                style={styles.optionBtn}
+                activeOpacity={0.88}
+                onPress={() => openPreview(item.previewType)}
+              >
+                <Text style={styles.optionBtnTxt}>{item.label}</Text>
+              </TouchableOpacity>
+            ))}
           </React.Fragment>
         ))}
       </ScrollView>

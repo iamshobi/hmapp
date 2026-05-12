@@ -1,6 +1,4 @@
-/**
- * Session insights tokens + value helpers for survey-linked reflection screens.
- */
+
 export const sessionInsightsTokens = {
   spacing: { 4: 4, 8: 8, 12: 12, 16: 16, 20: 20, 24: 24, 32: 32 },
   radius: { sm: 16, md: 20, lg: 24, pill: 999, cta: 26 },
@@ -53,10 +51,7 @@ export function getMetricEndpointLabels(metric, leftLabel, rightLabel) {
   };
 }
 
-/**
- * Percent of movable tension toward “low stress” when stress decreases (scale 1–10).
- * Uses the distance from current toward 1 as the denominator.
- */
+
 export function computeTensionOffloadPercent(beforeValue, afterValue) {
   const before = normalizeScaleValue(beforeValue);
   const after = normalizeScaleValue(afterValue);
@@ -73,9 +68,7 @@ export function hasAnyStateShiftMetric(stressBefore, stressAfter, energyBefore, 
   );
 }
 
-/**
- * Narrative lines for positive stress recovery, energy lift, and mood lift (this session).
- */
+
 export function getStateShiftMessages({
   stressBefore,
   stressAfter,
@@ -114,7 +107,7 @@ export function getStateShiftMessages({
   return messages;
 }
 
-/** Single block for compact State shift card (headline + summary under the hero). */
+
 export function getStateShiftSummaryBody({
   stressBefore,
   stressAfter,

@@ -1,16 +1,4 @@
-/**
- * OceanLevelDetailScreen — per-zone detail, dive mode selector, and Dive In button.
- *
- * Mirrors the Constellation Game detail screens (Basic / Medium / Advanced)
- * adapted to the Ocean theme:
- *
- *   Drift  (Basic)    — sine-wave card  + "build your breath rhythm" coaching
- *   Swim   (Medium)   — HRV card        + sustain medium coherence
- *   Dive   (Advanced) — HRV card        + sustain high coherence
- *
- * Navigation params (in) :  levelId, themeId, durationSec
- * Navigates to            :  BreathSession (all required params)
- */
+
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   View,
@@ -39,7 +27,7 @@ import { useMysession } from '../context/mysessionContext';
 import OceanGlassBubble from '../components/ocean/OceanGlassBubble';
 import OceanAnalyzingInterstitial from '../components/ocean/OceanAnalyzingInterstitial';
 
-/* ── Zone accent gradients (matches OceanTideScreen thumbnails) ─── */
+
 const ZONE_GRADS = {
   fullColumn:    ['#2AA8D2', '#145FB0'],
   epipelagic:    ['#5ABCE0', '#1688C6'],
@@ -49,8 +37,8 @@ const ZONE_GRADS = {
   hadal:         ['#6A3A90', '#2A1240'],
 };
 
-/* ── Dive mode definitions ──────────────────────────────────────── */
-/** Shown under the Drift / Swim / Dive control — matches pelagic level groupings. */
+
+
 const MODE_ZONE_HINT = {
   drift: 'Epipelagic · Mesopelagic',
   swim: 'Bathypelagic · Abyssopelagic',
@@ -79,12 +67,12 @@ const MODES = [
   },
 ];
 
-/* Mock HRV session history — real app would pull from data store */
+
 const MOCK_HRV = { low: 10, med: 10, high: 80 };
 
-/* ══════════════════════════════════════════════════════════════════ */
-/*  HERO ORB (self-contained, matches OceanTideScreen style)          */
-/* ══════════════════════════════════════════════════════════════════ */
+
+
+
 function OceanHeroOrb() {
   const floatY = useRef(new Animated.Value(0)).current;
   const S = 128;
@@ -174,11 +162,11 @@ const heroSt = StyleSheet.create({
   sp4: { position: 'absolute', bottom: 46, left: 22 },
 });
 
-/* ══════════════════════════════════════════════════════════════════ */
-/*  INFO CARD CONTENTS                                                 */
-/* ══════════════════════════════════════════════════════════════════ */
 
-/* Drift mode — sine-wave visual (mirrors Constellation "Basic" card) */
+
+
+
+
 function WaveCard() {
   return (
     <View style={cardSt.waveWrap}>
@@ -197,7 +185,7 @@ function WaveCard() {
   );
 }
 
-/* Swim / Dive mode — HRV percentage breakdown + coaching */
+
 function HrvCard({ mode }) {
   const { activeHrv, coaching } = mode;
   const tiers = [
@@ -277,9 +265,9 @@ const cardSt = StyleSheet.create({
   bold: { fontWeight: '700' },
 });
 
-/* ══════════════════════════════════════════════════════════════════ */
-/*  MAIN SCREEN                                                        */
-/* ══════════════════════════════════════════════════════════════════ */
+
+
+
 export default function OceanLevelDetailScreen() {
   const insets = useSafeAreaInsets();
   const nav    = useNavigation();
@@ -295,7 +283,7 @@ export default function OceanLevelDetailScreen() {
 
   const [selectedMode, setSelectedMode] = useState(() => getOceanLevelGroupId(levelId));
   const [activeLevelId, setActiveLevelId] = useState(levelId);
-  /** Dark analyzing interstitial → navigate to BreathSession (fade-in entry, no white flash). */
+  
   const [showAnalyzingOverlay, setShowAnalyzingOverlay] = useState(false);
   const pendingBreathParams = useRef(null);
 
@@ -306,7 +294,7 @@ export default function OceanLevelDetailScreen() {
     }, [])
   );
 
-  /** If this timeline zone is Swim/Dive but that mode is not unlocked yet, fall back to the best allowed mode + zone. */
+  
   useEffect(() => {
     const g = getOceanLevelGroupId(levelId);
     let nextMode = g;
@@ -417,26 +405,26 @@ export default function OceanLevelDetailScreen() {
         showsVerticalScrollIndicator={false}
         scrollEnabled={!showAnalyzingOverlay}
       >
-        {/* ── Title + zone subtitle ── */}
+        
         <Text style={styles.title}>The Ocean Dive</Text>
         <Text style={styles.subtitle}>{level.zone}</Text>
 
-        {/* ── Description ── */}
+        
         <Text style={styles.description}>
           Use your heart's coherence to descend through the{' '}
           <Text style={styles.descBold}>{level.zone}</Text>
           {'\n'}and explore the depths of {level.depthRange}
         </Text>
 
-        {/* ── Hero orb ── */}
+        
         <OceanHeroOrb />
 
-        {/* ── Info card (white) ── */}
+        
         <View style={styles.card}>
           {mode.cardType === 'wave' ? <WaveCard /> : <HrvCard mode={mode} />}
         </View>
 
-        {/* ── Dive mode selector (Drift always; Swim/Dive unlock via Drift+shells / Swim+shells) ── */}
+        
         <View style={styles.modeBar}>
           {MODES.map((m) => {
             const active = m.id === selectedMode;
@@ -492,7 +480,7 @@ export default function OceanLevelDetailScreen() {
           </Text>
         ) : null}
 
-        {/* ── Dive In button ── */}
+        
         <TouchableOpacity
           onPress={startSession}
           activeOpacity={0.88}
@@ -518,7 +506,7 @@ export default function OceanLevelDetailScreen() {
   );
 }
 
-/* ── Styles ──────────────────────────────────────────────────────── */
+
 const styles = StyleSheet.create({
   root: { flex: 1 },
 
@@ -550,22 +538,20 @@ const styles = StyleSheet.create({
   },
   descBold: { fontWeight: '700', color: 'rgba(255,255,255,0.96)' },
 
-  /* White card */
+  
   card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
     marginBottom: 28,
-    // iOS shadow
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.12,
     shadowRadius: 8,
-    // Android
     elevation: 5,
     overflow: 'hidden',
   },
 
-  /* Mode selector bar */
+  
   modeBar: {
     flexDirection: 'row',
     borderRadius: 24,
@@ -630,7 +616,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
 
-  /* Dive In button */
+  
   diveTouchable: {
     borderRadius: 28,
     overflow: 'hidden',

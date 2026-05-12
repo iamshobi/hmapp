@@ -1,6 +1,4 @@
-/**
- * Session Complete — "How do you feel now?" faces (30×30 viewBox, scaled to `size`).
- */
+
 import React from 'react';
 import Svg, { Circle, Path, Line } from 'react-native-svg';
 

@@ -11,11 +11,9 @@ const SNAPSHOT_ACCENT = '#C26D1A';
 const SNAPSHOT_TEXT = '#FFFFFF';
 const SNAPSHOT_SUBTEXT = '#FFFFFF';
 const SNAPSHOT_TEXT_MUTED = 'rgba(255,255,255,0.62)';
-/** Matches Progress Snapshot collapsed row (`ProgressMainScreen` snapshotCompactRow). */
 const SNAPSHOT_PANEL_GRADIENT = ['#F6A400', '#F18A1F', '#EB6A33'];
 const SNAPSHOT_PANEL_GRADIENT_START = { x: 0.05, y: 0.1 };
 const SNAPSHOT_PANEL_GRADIENT_END = { x: 0.95, y: 0.95 };
-/** Frosted glass fill + border shared by coherence column + metric tiles */
 const SNAPSHOT_GLASS_SURFACE_BG = 'rgba(255,255,255,0.2)';
 const SNAPSHOT_GLASS_SURFACE_BORDER = 'rgba(255,255,255,0.46)';
 const SNAPSHOT_GLASS_SURFACE_SHADOW = {
@@ -26,11 +24,14 @@ const SNAPSHOT_GLASS_SURFACE_SHADOW = {
   elevation: 1,
 };
 
-/** Decorative dots around the coherence donut — white; opacity varies per dot */
 const COHERENCE_GLOW_DOT_COLOR = '#FFFFFF';
 
 function normalizeType(type) {
   if (type === 'growing') return 'building';
+  if (type === 'foundation') return 'settle';
+  if (type === 'seed') return 'flow';
+  if (type === 'habit') return 'deep';
+  if (type === 'deepPractice') return 'still';
   return type;
 }
 
@@ -45,16 +46,16 @@ function getSnapshotForType(type) {
   if (t === 'pro') {
     return { sessions: 100, streak: 14, coherence: 4.8 };
   }
-  if (t === 'deepPractice') {
+  if (t === 'still') {
     return { sessions: 35, streak: 10, coherence: 3.35 };
   }
-  if (t === 'habit' || t === 'advanced') {
+  if (t === 'deep' || t === 'advanced') {
     return { sessions: 18, streak: 6, coherence: 3.0 };
   }
-  if (t === 'seed') {
+  if (t === 'flow') {
     return { sessions: 8, streak: 4, coherence: 2.45 };
   }
-  if (t === 'foundation') {
+  if (t === 'settle') {
     return { sessions: 3, streak: 2, coherence: 1.85 };
   }
   if (t === 'building') {
@@ -69,9 +70,9 @@ function getSnapshotForType(type) {
 function getTypeFromTotalSessions(totalSessions) {
   const n = Math.max(0, Math.floor(Number(totalSessions) || 0));
   if (n >= 100) return 'pro';
-  if (n >= 31) return 'deepPractice';
-  if (n >= 11) return 'habit';
-  if (n >= 6) return 'seed';
+  if (n >= 31) return 'still';
+  if (n >= 11) return 'deep';
+  if (n >= 6) return 'flow';
   if (n >= 2) return 'building';
   if (n >= 1) return 'firstTime';
   return 'zero';
@@ -91,14 +92,14 @@ function previewCoherencePointsForType(activeType) {
   switch (activeType) {
     case 'pro':
       return 210;
-    case 'deepPractice':
+    case 'still':
       return 158;
-    case 'habit':
+    case 'deep':
     case 'advanced':
       return 122;
-    case 'seed':
+    case 'flow':
       return 86;
-    case 'foundation':
+    case 'settle':
       return 54;
     case 'inactiveSurvey':
       return 92;
@@ -178,7 +179,7 @@ export default function ProgressSnapshotBar({
   coherencePoints = 0,
   previewType = null,
 }) {
-  const activeType = previewType || getTypeFromTotalSessions(totalSessions);
+  const activeType = previewType ? normalizeType(previewType) : getTypeFromTotalSessions(totalSessions);
   const snapshot = getSnapshotForType(activeType);
   const sessionsValue = previewType ? snapshot.sessions : totalSessions;
   const streakValue = previewType ? snapshot.streak : streak;
@@ -203,7 +204,6 @@ export default function ProgressSnapshotBar({
     const intensity = Math.max(0, Math.min(1, sessionsFactor * 0.55 + coherenceFactor * 0.45));
     const dotCount = 6 + Math.round(intensity * 18);
 
-    // Deterministic pseudo-random generator so dots stay stable per state.
     let seed = Math.round(sessionsValue * 31 + (Number(coherenceDisplay) || 0) * 137 + 73);
     const rand = () => {
       seed = (seed * 1664525 + 1013904223) % 4294967296;
@@ -214,11 +214,9 @@ export default function ProgressSnapshotBar({
     let attempts = 0;
     while (dots.length < dotCount && attempts < dotCount * 16) {
       attempts += 1;
-      const x = 8 + rand() * 84; // %
-      const y = 8 + rand() * 84; // %
+      const x = 8 + rand() * 84;
+      const y = 8 + rand() * 84;
 
-      // Keep center (coherence ring) and top label zone visually clear.
-      // Circular exclusion prevents sparkles from appearing as distorted fill.
       const dx = x - 50;
       const dy = y - 55;
       const inCoherenceCore = Math.sqrt(dx * dx + dy * dy) < 30;
@@ -370,7 +368,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     borderRadius: 999,
   },
-  /** Fills tile; centers donut in the block (title is separate, absolute top). */
   coherenceCircleWrap: {
     ...StyleSheet.absoluteFillObject,
     alignItems: 'center',

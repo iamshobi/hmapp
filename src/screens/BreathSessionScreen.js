@@ -1,6 +1,4 @@
-/**
- * Breath play session — theme gradient + ambient audio from `sessionMedia`.
- */
+
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   View,
@@ -74,12 +72,12 @@ if (
 }
 
 const CAL_MS = 4000;
-/** Header / UI icons — 34×34 pt */
+
 const SESSION_HEADER_ICON_PX = 34;
-/** Ocean bottom HUD: HRV wave starts after divider; ends before glass edge */
+
 const OCEAN_WAVE_INSET_AFTER_DIVIDER = 20;
 const OCEAN_WAVE_INSET_BEFORE_GLASS_END = 30;
-/** Glass HUD: visible for this long, then fades out; tap empty band to show again */
+
 const OCEAN_HUD_VISIBLE_MS = 5000;
 const OCEAN_HUD_FADE_MS = 320;
 
@@ -98,9 +96,9 @@ export default function BreathSessionScreen() {
   } = useMysession();
   const sessionWallStartRef = useRef(Date.now());
   const [wallMs, setWallMs] = useState(0);
-  /** Fades session UI to white before `replace` → SessionRewards */
+  
   const sessionCompleteWhiteOpacity = useRef(new Animated.Value(0)).current;
-  /** Ocean: navigate from level detail — fade session content in (no white flash). */
+  
   const oceanEntryFadeIn = route.params?.oceanEntryFadeIn === true;
   const sessionRootOpacity = useRef(
     new Animated.Value(oceanEntryFadeIn && (route.params?.themeId ?? 'universe') === 'ocean' ? 0 : 1)
@@ -127,27 +125,27 @@ export default function BreathSessionScreen() {
     return getOceanZoneScrollDepthBoundsM(oceanLevel);
   }, [oceanLevel, oceanFullColumn]);
   const globalLevelIndex = route.params?.globalLevelIndex ?? 0;
-  /** Mandala completes with session — max 2 minutes (sacred geometry timing). */
+  
   const durationSec = Math.min(120, Math.max(30, route.params?.durationSec ?? 120));
 
   const [phase, setPhase] = useState('calibrating');
   const [elapsedMs, setElapsedMs] = useState(0);
   const scoreRef = useRef(0.45);
   const [scoreDisplay, setScoreDisplay] = useState(0.45);
-  /** Coherence-driven dive progress — accumulates faster at high coherence, slower at low. */
+  
   const coherenceDiveProgressRef = useRef(0);
   const [coherenceDiveProgress, setCoherenceDiveProgress] = useState(0);
   const sessionDoneRef = useRef(false);
   const totalSessionsRef = useRef(totalSessions);
   const [showZoneInfo, setShowZoneInfo] = useState(false);
   const [showStartMoodChooser, setShowStartMoodChooser] = useState(true);
-  /** Width for `HrvWaveStripHeart` when embedded in bottom HUD (insets applied on track). */
+  
   const [oceanWaveEmbedW, setOceanWaveEmbedW] = useState(0);
-  /** After fade-out completes — tap the band to fade HUD back in for another 5s */
+  
   const [oceanHudDismissed, setOceanHudDismissed] = useState(false);
   const oceanHudOpacity = useRef(new Animated.Value(1)).current;
   const oceanHudHideTimerRef = useRef(null);
-  /** Unique sea shell / pearl ids collected this session (ocean only). */
+  
   const collectedShellIdsRef = useRef([]);
   const collectedPearlIdsRef = useRef([]);
 
@@ -274,7 +272,7 @@ export default function BreathSessionScreen() {
     [nav, sessionCompleteWhiteOpacity]
   );
 
-  /** Ocean session end: white flash, then Session Complete. */
+  
   const completeOceanSessionAndNavigateToRewards = useCallback(() => {
     if (!oceanLevel) return;
     const mins = Math.max(1, Math.round(durationSec / 60));
@@ -317,11 +315,6 @@ export default function BreathSessionScreen() {
     const id = setInterval(() => {
       const e = Date.now() - started;
       setElapsedMs(e);
-      // Coherence drives BOTH the speed of descent AND the maximum depth reached.
-      // Normalize score (0.15 – 1.45) → 0–1, then map to factor range 0.05 – 1.40:
-      //   Low coherence  ≈ 0.05 — barely descending
-      //   Medium         ≈ 0.70 — moderate pace
-      //   High           ≈ 1.40 — fast dive, reaches full depth ahead of time
       const coherenceT = Math.max(0, Math.min(1, (scoreRef.current - 0.15) / 1.3));
       const coherenceFactor = 0.05 + coherenceT * 1.35;
       coherenceDiveProgressRef.current = Math.min(
@@ -384,24 +377,20 @@ export default function BreathSessionScreen() {
     return { lowPct: low, medPct: med, highPct: high };
   }, [scoreDisplay]);
 
-  /** 0–1 HRV-style drive for the wave; replace with HeartMath device HRV when integrated */
+  
   const hrvNormalized = useMemo(() => {
     const t = (scoreDisplay - 0.15) / 1.3;
     return Math.max(0, Math.min(1, t));
   }, [scoreDisplay]);
 
   const elapsedSec = Math.floor(elapsedMs / 1000);
-  /** Raw time-based progress (0–1) — drives session end timer only. */
+  
   const sessionProgress = phase === 'active' ? Math.min(1, elapsedMs / (durationSec * 1000)) : 0;
-  /**
-   * Coherence-gated dive progress (0–1).
-   * Advances at a rate proportional to coherence score: score ≥1.0 = full speed, lower = slower (min 20%).
-   * Drives all visual ocean descent: backdrop scroll, depth meter, bubbles, creatures, tints.
-   */
+  
   const diveDriveProgress = phase === 'active' ? coherenceDiveProgress : 0;
   const mandalaSize = Math.min(winW - 24, 420);
 
-  /** Modeled depth (m) — matches backdrop pan + tints (split zone or full column) */
+  
   const modeledOceanDepthM = useMemo(() => {
     if (themeId !== 'ocean' || !oceanLevel) return 0;
     if (phase !== 'active') return oceanZoneBounds.startM;
@@ -411,13 +400,13 @@ export default function BreathSessionScreen() {
     );
   }, [themeId, oceanLevel, phase, diveDriveProgress, oceanZoneBounds]);
 
-  /** 0–1 along full axis (−8000 m … 10,994 m) for light-band shimmer strength */
+  
   const oceanDepthT = useMemo(() => {
     if (themeId !== 'ocean' || !oceanLevel) return 0;
     return pelagicNormalizedDepthM(modeledOceanDepthM);
   }, [themeId, oceanLevel, modeledOceanDepthM]);
 
-  /** Same easing as backdrop — drives extra “going deeper” tint + vignette */
+  
   const oceanDiveVisualU = useMemo(() => {
     if (phase !== 'active') return 0;
     return oceanSessionBackdropEasedU(diveDriveProgress);
@@ -558,7 +547,7 @@ export default function BreathSessionScreen() {
         />
       ) : null}
 
-      {/* ── Ocean bottom HUD: glass panel fades out after 5s; tap band to fade in again ── */}
+      
       {themeId === 'ocean' && oceanLevel && phase === 'active' ? (
         <View
           style={[styles.oceanBottomHud, { bottom: 96 + Math.min(insets.bottom, 10) }]}
@@ -712,7 +701,7 @@ export default function BreathSessionScreen() {
         </View>
       )}
 
-      {/* ── Zone info modal ── */}
+      
       <Modal
         visible={showZoneInfo && !!oceanLevel}
         transparent
@@ -721,7 +710,7 @@ export default function BreathSessionScreen() {
       >
         <View style={styles.zoneInfoBackdrop}>
           <View style={styles.zoneInfoCard}>
-            {/* Coloured accent bar */}
+            
             <View style={[styles.zoneInfoAccentBar, { backgroundColor: oceanAccent }]} />
 
             <ScrollView
@@ -729,7 +718,7 @@ export default function BreathSessionScreen() {
               contentContainerStyle={styles.zoneInfoScrollContent}
               showsVerticalScrollIndicator={false}
             >
-              {/* Title block */}
+              
               <Text style={styles.zoneInfoTitle}>
                 {(ZONE_INFO[oceanLevel?.id] ?? ZONE_INFO.epipelagic).title}
               </Text>
@@ -737,15 +726,15 @@ export default function BreathSessionScreen() {
                 {(ZONE_INFO[oceanLevel?.id] ?? ZONE_INFO.epipelagic).subtitle}
               </Text>
 
-              {/* Divider */}
+              
               <View style={styles.zoneInfoDivider} />
 
-              {/* Body */}
+              
               <Text style={styles.zoneInfoBody}>
                 {(ZONE_INFO[oceanLevel?.id] ?? ZONE_INFO.epipelagic).body}
               </Text>
 
-              {/* Coherence note */}
+              
               <View style={styles.zoneInfoNotePill}>
                 <Text style={styles.zoneInfoNoteText}>
                   Coherence is simulated until a HeartMath sensor is connected.
@@ -753,7 +742,7 @@ export default function BreathSessionScreen() {
               </View>
             </ScrollView>
 
-            {/* Close button */}
+            
             <TouchableOpacity
               style={[styles.zoneInfoCloseBtn, { backgroundColor: oceanAccent }]}
               onPress={() => setShowZoneInfo(false)}
@@ -813,7 +802,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
   },
-  /** Let taps reach sea-shell layer in empty areas (shells render below this column in tree). */
+  
   activeColumnOceanTouch: {
     pointerEvents: 'box-none',
   },
@@ -822,7 +811,7 @@ const styles = StyleSheet.create({
     zIndex: 16,
     elevation: 16,
   },
-  /** Bottom HUD: one glass panel — coherence | divider | wave + hearts */
+  
   oceanBottomHud: {
     position: 'absolute',
     left: 10,
@@ -834,12 +823,12 @@ const styles = StyleSheet.create({
   oceanBottomHudAnimated: {
     width: '100%',
   },
-  /** Invisible hit area when HUD is faded out — same footprint as glass row */
+  
   oceanBottomHudTapBand: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 2,
   },
-  /** Single frosted panel — no inner fill layer; content sits on this surface only */
+  
   oceanBottomHudGlass: {
     flexDirection: 'row',
     alignItems: 'stretch',
@@ -871,7 +860,7 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
     backgroundColor: 'transparent',
   },
-  /** Insets: wave starts 20px after divider, ends 30px before glass right — no inner fill */
+  
   oceanHrvWaveTrack: {
     width: '100%',
     paddingLeft: OCEAN_WAVE_INSET_AFTER_DIVIDER,
@@ -1106,7 +1095,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
-  /* ── Zone info modal ─────────────────────────────────────────── */
+  
   zoneInfoBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0, 6, 18, 0.72)',
