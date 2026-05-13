@@ -1,0 +1,118 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/v1.0/json/schema.json",
+  "_meta": {
+    "source": "wellness-app: src/theme.js + ProgressMainScreen.js",
+    "figmaImport": "Use Figma Variables (Local) → paste hex; or Tokens Studio / Variables plugin JSON import if configured for W3C format.",
+    "spacingUnit": "px (React Native numeric density-independent pixels)",
+    "radiusUnit": "px"
+  },
+  "spacing": {
+    "xs": { "$value": 4, "$type": "dimension", "$description": "theme.spacing.xs" },
+    "sm": { "$value": 8, "$type": "dimension", "$description": "theme.spacing.sm" },
+    "md": { "$value": 12, "$type": "dimension", "$description": "theme.spacing.md" },
+    "lg": { "$value": 16, "$type": "dimension", "$description": "theme.spacing.lg" },
+    "xl": { "$value": 24, "$type": "dimension", "$description": "theme.spacing.xl" },
+    "xxl": { "$value": 32, "$type": "dimension", "$description": "theme.spacing.xxl" },
+    "xxxl": { "$value": 48, "$type": "dimension", "$description": "theme.spacing.xxxl" }
+  },
+  "radius": {
+    "sm": { "$value": 8, "$type": "dimension", "$description": "theme.borderRadius.sm" },
+    "md": { "$value": 12, "$type": "dimension", "$description": "theme.borderRadius.md" },
+    "lg": { "$value": 20, "$type": "dimension", "$description": "theme.borderRadius.lg" },
+    "xl": { "$value": 28, "$type": "dimension", "$description": "theme.borderRadius.xl" },
+    "sheet": { "$value": 32, "$type": "dimension", "$description": "theme.borderRadius.sheet — Progress header bottom corners, banner overlap" },
+    "full": { "$value": 9999, "$type": "dimension", "$description": "theme.borderRadius.full" }
+  },
+  "color": {
+    "palette": {
+      "white": { "$value": "#FFFFFF", "$type": "color", "$description": "palette.white / neutral.white" },
+      "black": { "$value": "#212121", "$type": "color", "$description": "palette.black" },
+      "hmBrandPurple": { "$value": "#763784", "$type": "color", "$description": "palette.hmBrandPurple" },
+      "hmBrandMagenta": { "$value": "#C62B75", "$type": "color", "$description": "palette.hmBrandMagenta" },
+      "hmDeepPurple": { "$value": "#5a2a65", "$type": "color", "$description": "palette.hmDeepPurple" },
+      "hmAppBlue": { "$value": "#0EABD4", "$type": "color", "$description": "palette.hmAppBlue" },
+      "hmAppOrange": { "$value": "#F18E3E", "$type": "color", "$description": "palette.hmAppOrange" },
+      "hmAppGreen": { "$value": "#14BB9A", "$type": "color", "$description": "palette.hmAppGreen" },
+      "hmLightPurple": { "$value": "#B9A1CA", "$type": "color", "$description": "palette.hmLightPurple" },
+      "hmSurfacePurple": { "$value": "#F3EDF5", "$type": "color", "$description": "palette.hmSurfacePurple" },
+      "hmPink": { "$value": "#EC407A", "$type": "color", "$description": "palette.hmPink" },
+      "hmPurple": { "$value": "#6A1B9A", "$type": "color", "$description": "palette.hmPurple" },
+      "hmPurpleDark": { "$value": "#311B92", "$type": "color", "$description": "palette.hmPurpleDark" },
+      "hmPurpleMid": { "$value": "#8E24AA", "$type": "color", "$description": "palette.hmPurpleMid" },
+      "hmViolet": { "$value": "#7C4DFF", "$type": "color", "$description": "palette.hmViolet" },
+      "orangeDeep": { "$value": "#F57C00", "$type": "color", "$description": "palette.orangeDeep" },
+      "orangeBright": { "$value": "#FF9800", "$type": "color", "$description": "palette.orangeBright" },
+      "yellowWarm": { "$value": "#FFB74D", "$type": "color", "$description": "palette.yellowWarm" },
+      "yellowLight": { "$value": "#FFCA28", "$type": "color", "$description": "palette.yellowLight" },
+      "teal": { "$value": "#00897B", "$type": "color", "$description": "palette.teal" },
+      "cyan": { "$value": "#00ACC1", "$type": "color", "$description": "palette.cyan" },
+      "tealBright": { "$value": "#00BFA5", "$type": "color", "$description": "palette.tealBright" },
+      "blueBright": { "$value": "#0091EA", "$type": "color", "$description": "palette.blueBright" },
+      "maroonSession": { "$value": "#4A0E2E", "$type": "color", "$description": "palette.maroonSession" },
+      "magentaDeep": { "$value": "#C2185B", "$type": "color", "$description": "palette.magentaDeep" },
+      "greenZone": { "$value": "#2EA071", "$type": "color", "$description": "palette.greenZone — neutral.successGreen" },
+      "zoneBlue": { "$value": "#2196F3", "$type": "color", "$description": "palette.zoneBlue" },
+      "zoneOrange": { "$value": "#FF9800", "$type": "color", "$description": "palette.zoneOrange" },
+      "navyControl": { "$value": "#1E2A3B", "$type": "color", "$description": "palette.navyControl" },
+      "textOnLight": { "$value": "#333333", "$type": "color", "$description": "palette.textOnLight" },
+      "textSecondary": { "$value": "#616161", "$type": "color", "$description": "palette.textSecondary" },
+      "textMuted": { "$value": "#7A7A7A", "$type": "color", "$description": "palette.textMuted (HM muted)" },
+      "borderLight": { "$value": "rgba(0, 0, 0, 0.1)", "$type": "color", "$description": "palette.borderLight — shell border" },
+      "overlayBokeh": { "$value": "rgba(255,255,255,0.35)", "$type": "color", "$description": "palette.overlayBokeh" },
+      "inputBackground": { "$value": "#f3f3f5", "$type": "color", "$description": "palette.inputBackground — shell" },
+      "sage": { "$value": "#91A88C", "$type": "color", "$description": "palette.sage" },
+      "sageDark": { "$value": "#6B8B6E", "$type": "color", "$description": "palette.sageDark" }
+    },
+    "progress": {
+      "accentOrange": { "$value": "#E18B31", "$type": "color", "$description": "Progress UI accent — chevrons, swipe icons, banner close, toggles" },
+      "bannerSurface": { "$value": "#FFF8EE", "$type": "color", "$description": "Survey settings banner background" },
+      "bannerBottomDivider": { "$value": "rgba(0,0,0,0.08)", "$type": "color", "$description": "Banner hairline border" },
+      "screenBg": { "$value": "#F3F3F5", "$type": "color", "$description": "Progress root scroll background" },
+      "snapshotGradientStart": { "$value": "#F6A400", "$type": "color", "$description": "Compact snapshot / community gradient stop 1" },
+      "snapshotGradientMid": { "$value": "#F18A1F", "$type": "color", "$description": "Gradient stop 2" },
+      "snapshotGradientEnd": { "$value": "#EB6A33", "$type": "color", "$description": "Gradient stop 3" },
+      "trendPeakDotStart": { "$value": "#FCD303", "$type": "color", "$description": "Weekly trends peak / bubble gradient" },
+      "trendPeakDotMid": { "$value": "#ED8B00", "$type": "color", "$description": "Weekly trends gradient" },
+      "trendPeakDotEnd": { "$value": "#D50056", "$type": "color", "$description": "Weekly trends gradient" },
+      "trendFillStart": { "$value": "#6B2D8B", "$type": "color", "$description": "Trend spike SVG gradient start" },
+      "trendFillEnd": { "$value": "#C31F64", "$type": "color", "$description": "Trend spike SVG gradient end" },
+      "editorialQuoteBgStart": { "$value": "#FFFDF9", "$type": "color", "$description": "Editorial quote card gradient" },
+      "editorialQuoteBgMid": { "$value": "#FFF3E6", "$type": "color", "$description": "Editorial quote gradient" },
+      "editorialQuoteBgDeep": { "$value": "#FFE8D4", "$type": "color", "$description": "Editorial quote gradient" },
+      "editorialQuoteBgEnd": { "$value": "#FFD9BC", "$type": "color", "$description": "Editorial quote gradient" },
+      "swipeDelete": { "$value": "#C92262", "$type": "color", "$description": "Notes swipe delete icon" },
+      "textBody": { "$value": "#171717", "$type": "color", "$description": "Primary body on cards" },
+      "textSecondaryAlpha": { "$value": "#1717177A", "$type": "color", "$description": "Microcopy (italic) — 7A = ~48% opacity on #171717" },
+      "headingSecondary": { "$value": "#2C2C2E", "$type": "color", "$description": "Collapsible titles" },
+      "ctaOutlineBorder": { "$value": "rgba(225,139,49,0.42)", "$type": "color", "$description": "Journey Next Steps outline button" },
+      "ctaOutlineText": { "$value": "#C26D1A", "$type": "color", "$description": "Journey CTA label" },
+      "toggleKnobBorder": { "$value": "rgba(225,139,49,0.45)", "$type": "color", "$description": "Survey toggle track border" },
+      "toggleKnobFillOff": { "$value": "#FFE8CC", "$type": "color", "$description": "Toggle on-state fill (warm)" },
+      "insightsPurple": { "$value": "#6B2D8B", "$type": "color", "$description": "Modal close / accents" },
+      "modalOverlay": { "$value": "rgba(23,23,23,0.7)", "$type": "color", "$description": "Help / edit overlays" },
+      "placeholderNote": { "$value": "rgba(52,37,61,0.46)", "$type": "color", "$description": "Notes placeholder text" },
+      "sessionInsightsSurface": { "$value": "#FFF4E8", "$type": "color", "$description": "Insights inner surfaces" },
+      "insightsBorderMuted": { "$value": "rgba(225,139,49,0.22)", "$type": "color", "$description": "Insights panel borders" },
+      "successConfirmation": { "$value": "#2C9A5F", "$type": "color", "$description": "Survey preference saved" },
+      "cardShadowTint": { "$value": "#8AB2FF", "$type": "color", "$description": "Snapshot expanded soft shadow (unusual blue tint)" },
+      "dividerNeutral": { "$value": "#D1D1D1", "$type": "color", "$description": "Timeline / utility divider" }
+    },
+    "gradient": {
+      "progressHeader": {
+        "$value": "linear-gradient(135deg, #F6A400 15%, #F18A1F 50%, #EB6A33 85%)",
+        "$type": "color",
+        "$description": "Approximation — ProgressMainScreen LinearGradient header (see theme gradients.progressHeader for stops)"
+      },
+      "progressHeaderStops": {
+        "$value": ["#F6A400", "#F18A1F", "#EB6A33"],
+        "$type": "color",
+        "$description": "Expo LinearGradient colors array — recreate as multi-stop in Figma"
+      },
+      "shellHeaderStops": {
+        "$value": ["#311B92", "#4527A0", "#6A1B9A", "#8E24AA", "#AB47BC"],
+        "$type": "color",
+        "$description": "theme.gradients.shellHeader — other app headers"
+      }
+    }
+  }
+}

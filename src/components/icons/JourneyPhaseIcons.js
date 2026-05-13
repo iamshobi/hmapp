@@ -6,6 +6,17 @@ import Svg, { Circle, Path, Defs, LinearGradient, Stop } from 'react-native-svg'
 
 const VB = 24;
 
+/** Shared orange ink gradient for phase glyphs (modal / marketing surfaces). */
+function OrangeInkGradient({ id }) {
+  return (
+    <LinearGradient id={id} x1="2" y1="3" x2="22" y2="21" gradientUnits="userSpaceOnUse">
+      <Stop offset="0" stopColor="#FFCA70" />
+      <Stop offset="0.48" stopColor="#F57C00" />
+      <Stop offset="1" stopColor="#E65100" />
+    </LinearGradient>
+  );
+}
+
 
 const HEART_FILL_PATH =
   'M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z';
@@ -49,30 +60,41 @@ function buildSpiralPath(cx, cy, turns, maxR, segments = 56) {
   return d;
 }
 
-function SettleGlyph({ color, size }) {
+function SettleGlyph({ color, size, fillGradientId }) {
   return (
     <Svg width={size} height={size} viewBox={`0 0 ${VB} ${VB}`}>
-      <Circle cx={12} cy={12} r={4.25} fill={color} />
+      {fillGradientId ? (
+        <Defs>
+          <OrangeInkGradient id={fillGradientId} />
+        </Defs>
+      ) : null}
+      <Circle cx={12} cy={12} r={4.25} fill={fillGradientId ? `url(#${fillGradientId})` : color} />
     </Svg>
   );
 }
 
-function FlowGlyph({ color, size }) {
+function FlowGlyph({ color, size, fillGradientId }) {
   const amp = 2.25;
   const upper = buildParallelWavePath(9.6, amp, 3, 21, 2);
   const lower = buildParallelWavePath(14.4, amp, 3, 21, 2);
+  const strokePaint = fillGradientId ? `url(#${fillGradientId})` : color;
   return (
     <Svg width={size} height={size} viewBox={`0 0 ${VB} ${VB}`} fill="none">
+      {fillGradientId ? (
+        <Defs>
+          <OrangeInkGradient id={fillGradientId} />
+        </Defs>
+      ) : null}
       <Path
         d={upper}
-        stroke={color}
+        stroke={strokePaint}
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <Path
         d={lower}
-        stroke={color}
+        stroke={strokePaint}
         strokeWidth={2}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -81,13 +103,19 @@ function FlowGlyph({ color, size }) {
   );
 }
 
-function DeepGlyph({ color, size }) {
+function DeepGlyph({ color, size, fillGradientId }) {
   const spiral = buildSpiralPath(12, 12, 3.1, 9.2, 58);
+  const strokePaint = fillGradientId ? `url(#${fillGradientId})` : color;
   return (
     <Svg width={size} height={size} viewBox={`0 0 ${VB} ${VB}`} fill="none">
+      {fillGradientId ? (
+        <Defs>
+          <OrangeInkGradient id={fillGradientId} />
+        </Defs>
+      ) : null}
       <Path
         d={spiral}
-        stroke={color}
+        stroke={strokePaint}
         strokeWidth={1.65}
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -100,7 +128,25 @@ function DeepGlyph({ color, size }) {
 const STILL_INACTIVE_STROKE = '#9B9BA8';
 const STILL_INACTIVE_FILL = 'rgba(155, 155, 168, 0.28)';
 
-function StillGlyph({ color, size, variant }) {
+function StillGlyph({ color, size, variant, fillGradientId }) {
+  if (fillGradientId) {
+    return (
+      <Svg width={size} height={size} viewBox={`0 0 ${VB} ${VB}`} fill="none">
+        <Defs>
+          <OrangeInkGradient id={fillGradientId} />
+        </Defs>
+        <Path
+          d={HEART_FILL_PATH}
+          fill={`url(#${fillGradientId})`}
+          stroke="#BF360C"
+          strokeWidth={1.15}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+      </Svg>
+    );
+  }
+
   const isInactive = variant === 'future' || variant === 'zero';
 
   if (isInactive) {
@@ -220,11 +266,15 @@ function ActivePhasePulseWrap({ size, children }) {
  * @param {'Settle'|'Flow'|'Deep'|'Still'} props.phase
  * @param {'completed'|'active'|'future'|'zero'} props.variant
  * @param {number} [props.size]
+ * @param {boolean} [props.useOrangeGradient] — warm orange linear ink (e.g. journey intro modal)
  */
-export function JourneyPhaseIcon({ phase, variant, size = 18 }) {
+export function JourneyPhaseIcon({ phase, variant, size = 18, useOrangeGradient = false }) {
   const Glyph = GLYPHS[phase] || SettleGlyph;
+  const uid = React.useId().replace(/[^a-zA-Z0-9_-]/g, '') || 'g';
+  const orangeGradId = `journeyOrangeInk_${uid}`;
+  const fillGradientId = useOrangeGradient ? orangeGradId : null;
   const color = toneToColor(variant);
-  const glyph = <Glyph color={color} size={size} variant={variant} />;
+  const glyph = <Glyph color={color} size={size} variant={variant} fillGradientId={fillGradientId} />;
   if (variant === 'active') {
     return <ActivePhasePulseWrap size={size}>{glyph}</ActivePhasePulseWrap>;
   }
