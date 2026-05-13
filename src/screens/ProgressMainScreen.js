@@ -2362,9 +2362,9 @@ const styles = StyleSheet.create({
   trendsChartWrap: {
     height: 222,
     borderRadius: 14,
-    backgroundColor: '#F3EFFA',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(107, 45, 139, 0.14)',
+    borderColor: 'rgba(0,0,0,0.07)',
     overflow: 'hidden',
     position: 'relative',
   },
