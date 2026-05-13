@@ -12,7 +12,8 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { CalendarDays, Filter, Trash2 } from 'lucide-react-native';
-import Svg, { Defs, LinearGradient as SvgLinearGradient, RadialGradient, Rect, Path, Stop } from 'react-native-svg';
+import Svg, { Defs, LinearGradient as SvgLinearGradient, Path, Stop } from 'react-native-svg';
+import SessionHasNoteLabelGraphic from '../components/icons/SessionHasNoteLabelGraphic';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useMysession } from '../context/mysessionContext';
@@ -22,7 +23,6 @@ const FONT_REGULAR = 'Sailec-Medium';
 const FONT_BOLD = 'Sailec-Bold';
 const PAGE_BG = '#F3F3F5';
 const SUBTITLE_TEXT_COLOR = '#171717';
-const META_TEXT_COLOR = '#171717AD';
 const TYPE = {
   title: 28,
   h2: 16,
@@ -65,6 +65,21 @@ const TREND_TOOLTIP_LEFT = '22%';
 const SESSION_SWIPE_COL_WIDTH = 58;
 const HEADER_TO_FILTER_GAP = 36;
 const FILTER_ROW_BOTTOM_GAP = 36;
+
+/** Note chip width (SVG scales proportionally); gap keeps title from crowding the chip */
+const NOTE_GRAPHIC_WIDTH = 108;
+const NOTE_CHIP_GAP = 12;
+const NOTE_TITLE_INSET = NOTE_GRAPHIC_WIDTH + NOTE_CHIP_GAP;
+
+/** Session list card — aligned with handoff (warm beige border, ~22px radius) */
+const SESSION_CARD = {
+  radius: 22,
+  border: '#F5EBE0',
+  /** Vertical gradient: bright orange (top) → deep orange-red (bottom) */
+  iconGradient: ['#FFB020', '#F57C00', '#E64A28'],
+  pillBg: '#F5EBE0',
+  pillText: '#6E4A32',
+};
 
 const RANGE_FILTER_CHIPS = [
   { key: '7d', label: 'Last 7 Days', Icon: CalendarDays },
@@ -167,24 +182,26 @@ function SessionSwipeRow({
   );
 
   return (
-    <View style={styles.sessionSwipeRowWrap}>
-      <View style={[styles.sessionSwipeActions, { width: stripWidth }]}>
-        <TouchableOpacity
-          style={[styles.sessionSwipeActionBtn, styles.sessionSwipeDeleteBtn]}
-          onPress={onDelete}
-          activeOpacity={0.86}
-          accessibilityRole="button"
-          accessibilityLabel="Delete session"
+    <View style={styles.sessionSwipeRowOuter}>
+      <View style={styles.sessionSwipeRowWrap}>
+        <View style={[styles.sessionSwipeActions, { width: stripWidth }]}>
+          <TouchableOpacity
+            style={[styles.sessionSwipeActionBtn, styles.sessionSwipeDeleteBtn]}
+            onPress={onDelete}
+            activeOpacity={0.86}
+            accessibilityRole="button"
+            accessibilityLabel="Delete session"
+          >
+            <Trash2 size={16} color="#C92262" strokeWidth={2.2} />
+          </TouchableOpacity>
+        </View>
+        <Animated.View
+          style={[styles.sessionSwipeContent, { transform: [{ translateX }] }]}
+          {...panResponder.panHandlers}
         >
-          <Trash2 size={16} color="#C92262" strokeWidth={2.2} />
-        </TouchableOpacity>
+          {children}
+        </Animated.View>
       </View>
-      <Animated.View
-        style={[styles.sessionSwipeContent, { transform: [{ translateX }] }]}
-        {...panResponder.panHandlers}
-      >
-        {children}
-      </Animated.View>
     </View>
   );
 }
@@ -247,20 +264,15 @@ function toPercent(score) {
   return Math.max(55, Math.min(99, Math.round(score * 20)));
 }
 
-function toneByPct(pct) {
-  if (pct >= 90) return { bg: '#FFE6C4', text: '#8B4C12' };
-  if (pct >= 82) return { bg: '#FDE2CF', text: '#9A4B26' };
-  return { bg: '#F4E5DC', text: '#8F5A3A' };
-}
-
 function formatDate(value) {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return 'Recently';
   return d.toLocaleString('en-US', {
     month: 'short',
     day: '2-digit',
-    hour: '2-digit',
+    hour: 'numeric',
     minute: '2-digit',
+    hour12: true,
   });
 }
 
@@ -331,58 +343,25 @@ function sanitizeSvgId(value) {
   return String(value || 'default').replace(/[^a-zA-Z0-9_-]/g, '-');
 }
 
-function SessionIconBg({ size = 44, opacity = 0.5, idSuffix = 'default', glyphPaths = [] }) {
+/** Square tile: vertical orange gradient + white glyph (matches session list handoff) */
+function SessionListTileIcon({ size = 44, idSuffix = 'default', glyphPaths = [] }) {
   const uid = sanitizeSvgId(idSuffix);
-  const gradA = `session-icon-bg-a-${uid}`;
-  const gradB = `session-icon-bg-b-${uid}`;
-  const gradC = `session-icon-bg-c-${uid}`;
+  const cornerRadius = Math.round((12 * size) / 44);
   return (
-    <Svg width={size} height={size} viewBox="0 0 60 60" fill="none" style={{ opacity }}>
-      <Defs>
-        <RadialGradient
-          id={gradA}
-          cx="0"
-          cy="0"
-          r="1"
-          gradientUnits="userSpaceOnUse"
-          gradientTransform="matrix(34.5113 -49.1729 61.5146 11.808 10.5263 52.6316)"
-        >
-          <Stop stopColor="#F6A400" />
-          <Stop offset="0.515625" stopColor="#F18A1F" />
-          <Stop offset="0.9375" stopColor="#FFFFFF" stopOpacity="0" />
-        </RadialGradient>
-        <RadialGradient
-          id={gradB}
-          cx="0"
-          cy="0"
-          r="1"
-          gradientUnits="userSpaceOnUse"
-          gradientTransform="translate(56.9173 43.609) rotate(-141.968) scale(60.0424 47.0707)"
-        >
-          <Stop stopColor="#EB6A33" />
-          <Stop offset="0.494792" stopColor="#C31F64" stopOpacity="0.62" />
-          <Stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
-        </RadialGradient>
-        <RadialGradient
-          id={gradC}
-          cx="0"
-          cy="0"
-          r="1"
-          gradientUnits="userSpaceOnUse"
-          gradientTransform="translate(20.1504 2.10526) rotate(88.8596) scale(64.2232 86.2412)"
-        >
-          <Stop offset="0.109375" stopColor="#F6A400" />
-          <Stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
-        </RadialGradient>
-      </Defs>
-      <Rect width="60" height="60" rx="12" fill="#FFFFFF" />
-      <Rect width="60" height="60" rx="12" fill={`url(#${gradA})`} />
-      <Rect width="60" height="60" rx="12" fill={`url(#${gradB})`} />
-      <Rect width="60" height="60" rx="12" fill={`url(#${gradC})`} />
-      {glyphPaths.map((d, idx) => (
-        <Path key={`glyph-${idx}`} d={d} fill="#FFFFFF" />
-      ))}
-    </Svg>
+    <View style={{ width: size, height: size, borderRadius: cornerRadius, overflow: 'hidden' }}>
+      <LinearGradient
+        colors={SESSION_CARD.iconGradient}
+        locations={[0, 0.48, 1]}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+      <Svg width={size} height={size} viewBox="0 0 60 60" fill="none" pointerEvents="none">
+        {glyphPaths.map((d, idx) => (
+          <Path key={`session-tile-glyph-${uid}-${idx}`} d={d} fill="#FFFFFF" />
+        ))}
+      </Svg>
+    </View>
   );
 }
 
@@ -502,7 +481,6 @@ export default function SessionHistoryScreen() {
     const allRows = source.map((entry, idx) => {
       const score = getCoherenceScoreFromSurvey(entry, fallbackScore);
       const pct = toPercent(score);
-      const tone = toneByPct(pct);
       const seed = `${entry?.at || entry?.createdAt || entry?.date || ''}-${idx}`;
       let hash = 0;
       for (let i = 0; i < seed.length; i += 1) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
@@ -527,7 +505,6 @@ export default function SessionHistoryScreen() {
         date: formatDate(entry?.at || entry?.createdAt || entry?.date),
         minutes: 10 + (idx % 3) * 5,
         pct,
-        tone,
         iconVariantPaths,
         hasNote,
       };
@@ -738,30 +715,40 @@ export default function SessionHistoryScreen() {
                 <View style={[styles.sessionCard, styles.sessionCardInSwipeRow]}>
                   <View style={styles.sessionLeft}>
                     <View style={styles.sessionIconWrap}>
-                      <SessionIconBg size={44} opacity={1} idSuffix={row.id} glyphPaths={row.iconVariantPaths} />
+                      <SessionListTileIcon size={48} idSuffix={row.id} glyphPaths={row.iconVariantPaths} />
                     </View>
-                    <View style={styles.sessionTextBlock}>
+                    <View style={[styles.sessionTextBlock, row.hasNote && styles.sessionTextBlockHasNote]}>
                       <View style={styles.sessionTitleRow}>
-                        <Text style={[styles.sessionName, styles.sessionTitleFlex]} numberOfLines={2}>
+                        <Text
+                          style={[styles.sessionName, row.hasNote ? styles.sessionTitleBesideNote : styles.sessionTitleFlex]}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                        >
                           {row.title}
                         </Text>
-                        {row.hasNote ? (
-                          <View style={[styles.sessionNoteBadge, styles.sessionNoteBadgeInline]}>
-                            <Text style={styles.sessionNoteBadgeTxt}>Has note</Text>
-                          </View>
-                        ) : null}
                       </View>
+                      {row.hasNote ? (
+                        <View style={styles.sessionHasNoteChip} pointerEvents="none">
+                          <SessionHasNoteLabelGraphic width={NOTE_GRAPHIC_WIDTH} compact />
+                        </View>
+                      ) : null}
                       <View style={styles.sessionMetaRow}>
-                        <Text style={[styles.sessionMeta, styles.sessionMetaFlex]} numberOfLines={1}>
-                          {row.date}
-                        </Text>
-                        <View style={styles.sessionCohDurationRow}>
-                          <View style={[styles.sessionMetaPill, { backgroundColor: row.tone.bg }]}>
-                            <Text style={[styles.sessionMetaPillMinutes, { color: row.tone.text }]}>
-                              {`${row.minutes} min, `}
+                        <View style={styles.sessionMetaPillsRow}>
+                          <View style={[styles.sessionMetaPill, styles.sessionMetaPillSurface]}>
+                            <Text style={[styles.sessionMetaPillStrong, styles.sessionMetaPillText]}>
+                              {row.pct}% COH
                             </Text>
-                            <Text style={[styles.cohPillTxt, { color: row.tone.text }]}>{row.pct}% COH</Text>
                           </View>
+                          <View style={[styles.sessionMetaPill, styles.sessionMetaPillSurface]}>
+                            <Text style={[styles.sessionMetaPillMuted, styles.sessionMetaPillText]}>
+                              {row.minutes} min
+                            </Text>
+                          </View>
+                        </View>
+                        <View style={styles.sessionMetaDateWrap}>
+                          <Text style={[styles.sessionMeta, styles.sessionMetaDate]} numberOfLines={1}>
+                            {row.date}
+                          </Text>
                         </View>
                       </View>
                     </View>
@@ -1091,41 +1078,48 @@ const styles = StyleSheet.create({
   },
   sessionCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    paddingHorizontal: spacing.md + 2,
-    paddingVertical: spacing.md + 2,
+    borderRadius: SESSION_CARD.radius,
+    paddingHorizontal: spacing.lg + 2,
+    paddingVertical: spacing.lg + 6,
     flexDirection: 'row',
     justifyContent: 'flex-start',
-    alignItems: 'flex-start',
+    alignItems: 'stretch',
     marginBottom: 0,
-    borderWidth: 1,
-    borderColor: WARM.cardBorder,
-    shadowColor: WARM.cardShadow,
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 12,
-    elevation: 2,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: SESSION_CARD.border,
   },
   sessionCardInSwipeRow: {
     alignSelf: 'stretch',
     borderTopRightRadius: 0,
     borderBottomRightRadius: 0,
-    borderTopLeftRadius: 24,
-    borderBottomLeftRadius: 24,
+    borderTopLeftRadius: SESSION_CARD.radius,
+    borderBottomLeftRadius: SESSION_CARD.radius,
     borderWidth: 0,
-    shadowOpacity: 0.03,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+  },
+  sessionSwipeRowOuter: {
+    marginBottom: spacing.lg,
+    borderRadius: SESSION_CARD.radius,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.09,
+        shadowRadius: 12,
+      },
+      android: {
+        elevation: 4,
+      },
+      default: {},
+    }),
   },
   sessionSwipeRowWrap: {
-    marginBottom: spacing.lg,
-    borderRadius: 24,
+    marginBottom: 0,
+    borderRadius: SESSION_CARD.radius,
     overflow: 'hidden',
     width: '100%',
     backgroundColor: PAGE_BG,
-    borderWidth: 1,
-    borderColor: WARM.cardBorder,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: SESSION_CARD.border,
   },
   sessionSwipeActions: {
     position: 'absolute',
@@ -1137,8 +1131,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     zIndex: 0,
     elevation: 0,
-    borderTopRightRadius: 24,
-    borderBottomRightRadius: 24,
+    borderTopRightRadius: SESSION_CARD.radius,
+    borderBottomRightRadius: SESSION_CARD.radius,
     overflow: 'hidden',
   },
   sessionSwipeContent: {
@@ -1158,7 +1152,7 @@ const styles = StyleSheet.create({
   sessionLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md + 2,
+    gap: spacing.md + 4,
     flex: 1,
     minWidth: 0,
   },
@@ -1166,42 +1160,66 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  /** Note chip is position:absolute — avoids tall SVG stretching the title row (fixes sparse vertical gap). */
+  sessionTextBlockHasNote: {
+    position: 'relative',
+    zIndex: 0,
+  },
   sessionTitleRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: spacing.sm,
+    width: '100%',
   },
   sessionTitleFlex: {
     flex: 1,
     minWidth: 0,
   },
+  sessionTitleBesideNote: {
+    flex: 1,
+    minWidth: 0,
+    paddingRight: NOTE_TITLE_INSET,
+  },
   sessionMetaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    flexWrap: 'wrap',
     gap: spacing.sm,
-    marginTop: spacing.xs,
+    rowGap: spacing.sm,
+    marginTop: 10,
     width: '100%',
   },
-  sessionMetaFlex: {
-    flex: 1,
+  sessionMetaPillsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexShrink: 0,
+    gap: 8,
+  },
+  sessionMetaDateWrap: {
+    flexGrow: 1,
+    flexShrink: 1,
     minWidth: 0,
-    paddingRight: spacing.sm,
+    alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  sessionMetaDate: {
+    textAlign: 'right',
   },
   sessionIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 48,
+    height: 48,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
     flexShrink: 0,
   },
   sessionName: {
-    fontFamily: FONT_REGULAR,
+    fontFamily: FONT_BOLD,
     fontSize: 15,
-    lineHeight: 22,
-    fontWeight: '500',
+    lineHeight: 21,
+    fontWeight: '700',
+    letterSpacing: -0.2,
     color: SUBTITLE_TEXT_COLOR,
     ...Platform.select({
       android: { includeFontPadding: false },
@@ -1212,44 +1230,50 @@ const styles = StyleSheet.create({
     fontFamily: FONT_REGULAR,
     fontSize: TYPE.caption,
     lineHeight: 16,
-    color: META_TEXT_COLOR,
+    color: '#6E6E6E',
     fontWeight: '400',
     ...Platform.select({
       android: { includeFontPadding: false },
       default: {},
     }),
   },
-  sessionNoteBadge: {
-    marginBottom: 6,
-    paddingHorizontal: 8,
-    height: 18,
-    borderRadius: 999,
-    backgroundColor: 'rgba(225,139,49,0.16)',
-    borderWidth: 1,
-    borderColor: 'rgba(225,139,49,0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  sessionHasNoteChip: {
+    position: 'absolute',
+    /** Negative inset shifts chip toward the trailing card edge (was −12px; +6px right → −18) */
+    right: -18,
+    /** Subtle nudge to align with cap height; shifted up 5px from prior */
+    top: -4,
+    zIndex: 2,
+    borderRadius: 11,
+    overflow: 'hidden',
   },
-  sessionNoteBadgeTxt: {
-    fontFamily: FONT_BOLD,
-    fontSize: 10,
-    lineHeight: 12,
-    color: '#9B4E16',
+  sessionMetaPillSurface: {
+    backgroundColor: SESSION_CARD.pillBg,
   },
-  sessionNoteBadgeInline: {
-    marginBottom: 0,
-    flexShrink: 0,
-    marginTop: 1,
+  sessionMetaPillText: {
+    color: SESSION_CARD.pillText,
   },
   sessionMetaPill: {
     flexDirection: 'row',
-    alignItems: 'baseline',
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 5,
     flexShrink: 0,
   },
-  sessionMetaPillMinutes: {
+  sessionMetaPillStrong: {
+    fontFamily: FONT_BOLD,
+    fontSize: 11,
+    lineHeight: 14,
+    letterSpacing: 0.35,
+    fontWeight: '700',
+    ...Platform.select({
+      android: { includeFontPadding: false },
+      default: {},
+    }),
+  },
+  sessionMetaPillMuted: {
     fontFamily: FONT_REGULAR,
     fontSize: 11,
     lineHeight: 14,
@@ -1258,23 +1282,6 @@ const styles = StyleSheet.create({
       android: { includeFontPadding: false },
       default: {},
     }),
-  },
-  cohPillTxt: {
-    fontFamily: FONT_REGULAR,
-    fontSize: 11,
-    lineHeight: 14,
-    letterSpacing: 0.3,
-    fontWeight: '600',
-    ...Platform.select({
-      android: { includeFontPadding: false },
-      default: {},
-    }),
-  },
-  sessionCohDurationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    flexShrink: 0,
   },
   graphCard: {
     borderRadius: 28,
